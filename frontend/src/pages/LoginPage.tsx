@@ -152,17 +152,6 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Stats Footer */}
-          <div className="mt-6 pt-5 border-t border-slate-200/70 grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-lg font-bold text-slate-900">99.8%</div>
-              <div className="text-[10px] text-slate-500 font-medium">Phản hồi đúng hạn</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-slate-900">&lt; 0.4s</div>
-              <div className="text-[10px] text-slate-500 font-medium">Tốc độ truy vấn RAG</div>
-            </div>
-          </div>
         </div>
 
         {/* Right Side: Tabbed Login Form */}
