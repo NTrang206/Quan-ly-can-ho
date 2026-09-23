@@ -1,0 +1,415 @@
+HỆ THỐNG QUẢN LÝ THUÊ CĂN HỘ CÓ TÍCH HỢP AI - NHÓM 12
+ĐẶC TẢ YÊU CẦU ỨNG DỤNG – V1.0
+NỘI DUNG
+1. GIỚI THIỆU CHUNG2
+1.1. Mục đích2
+1.2. Phạm vi3
+1.3. Các định nghĩa, thuật ngữ, từ viết tắt3
+1.4. Tài liệu tham khảo4
+2. MÔ TẢ TỔNG QUAN ỨNG DỤNG4
+2.1. Mô hình Use case4
+2.2. Danh sách các tác nhân và mô tả5
+2.3. Danh sách Use case và mô tả6
+2.4. Các điều kiện phụ thuộc7
+3. ĐẶC TẢ CÁC YÊU CẦU CHỨC NĂNG (FUNCTIONAL)8
+3.1. UC001_Lập hợp đồng thuê và Đặt cọc (kèm AI tóm tắt)9
+3.2. UC002_Quản lý Tiền cọc, Gia hạn & Thanh lý HĐ12
+3.3. UC003_Sinh khoản thu định kỳ và Ghi nhận thanh toán14
+3.4. UC004_Tiếp nhận và Nghiệm thu bảo trì sự cố16
+3.5. UC005_Quét cảnh báo tự động và AI soạn thông báo đôn đốc18
+3.6. UC006_Chatbot RAG tra cứu nội quy tòa nhà20
+3.7. UC007_Quản lý Tòa nhà, Căn hộ & Tiện ích21
+3.8. UC008_Quản lý Hồ sơ Khách thuê & Người ở cùng21
+3.9. UC009_Đăng nhập, Xác thực & Phân quyền RBAC22
+3.10. UC010_Thống kê, Báo cáo & Dashboard25
+4. CÁC THÔNG TIN HỖ TRỢ KHÁC25
+1. GIỚI THIỆU CHUNG
+1.1. Mục đích
+Tài liệu Đặc tả Yêu cầu Ứng dụng (Software Requirements Specification - SRS) mô tả một cách đầy đủ, toàn diện các yêu cầu chức năng (Functional Requirements), yêu cầu phi chức năng (Non-Functional Requirements) và các ràng buộc về mặt thiết kế kỹ thuật của "Hệ thống Quản lý Thuê Căn hộ có Tích hợp AI" (Đề tài 12). Tài liệu cung cấp cơ sở kỹ thuật và nghiệp vụ thống nhất giữa ban quản lý, giảng viên hướng dẫn và nhóm phát triển phần mềm trong suốt chu trình phân tích, thiết kế, cài đặt và nghiệm thu hệ thống.
+1.2. Phạm vi
+• Đặc điểm của ứng dụng: Hệ thống quản lý vận hành tòa nhà căn hộ cho thuê theo chu trình khép kín, tích hợp các công nghệ Trí tuệ Nhân tạo tạo sinh (GenAI) và truy xuất ngữ cảnh (RAG) nhằm tự động hóa việc tóm tắt hợp đồng, soạn văn bản đôn đốc công nợ và trả lời nội quy tự động 24/7.• Phạm vi và đối tượng phục vụ: Ban quản lý tòa nhà, nhân viên vận hành, bộ phận kế toán tài chính và cư dân/khách thuê căn hộ.• Các phân hệ chính: Quản lý Tài khoản & Phân quyền (RBAC), Quản lý Tòa nhà - Căn hộ - Tiện ích, Quản lý Khách thuê & Người ở cùng, Quản lý Hợp đồng & Tiền cọc, Quản lý Khoản thu & Thanh toán công nợ, Quản lý Bảo trì sự cố, Quản lý Cảnh báo tự động, Thống kê Dashboard, Cổng thông tin Khách hàng & Đặt phòng trực tuyến và Phân hệ Trợ lý AI (GenAI/RAG).• Đối tượng sử dụng tài liệu: Giảng viên hướng dẫn, nhóm sinh viên phát triển dự án (Nhóm 12), kỹ sư kiểm thử (Tester/QA) và quản trị viên hệ thống.
+1.3. Các định nghĩa, thuật ngữ, từ viết tắt
+Các thuật ngữ và từ viết tắt kỹ thuật/nghiệp vụ sử dụng xuyên suốt trong tài liệu:
+STT
+Thuật ngữ, từ viết tắt
+Giải thích
+Ghi chú
+1
+SRS
+Software Requirements Specification - Tài liệu đặc tả yêu cầu phần mềm
+Chuẩn tài liệu đề tài
+2
+AI / GenAI
+Artificial Intelligence / Generative AI - Trí tuệ nhân tạo tạo sinh
+OpenAI / Gemini API
+3
+RAG
+Retrieval-Augmented Generation - Truy xuất dữ liệu tăng cường cho LLM
+Tra cứu nội quy tòa nhà
+4
+RBAC
+Role-Based Access Control - Kiểm soát truy cập dựa trên vai trò người dùng
+Quản lý, Nhân viên, Kế toán, Khách thuê
+5
+JWT
+JSON Web Token - Chuỗi mã định danh phiên làm việc phi trạng thái
+Xác thực API bảo mật
+6
+AVAILABLE
+Trạng thái căn hộ còn trống, sẵn sàng cho khách ký hợp đồng thuê
+Quản lý phòng
+7
+OCCUPIED
+Trạng thái căn hộ đang có khách thuê cư trú hợp pháp theo hợp đồng
+Quản lý phòng
+8
+MAINTENANCE
+Trạng thái căn hộ đang tạm khóa để sửa chữa, khắc phục sự cố kỹ thuật
+Quản lý phòng
+9
+RESERVED
+Trạng thái căn hộ đang giữ chỗ do khách hàng đã gửi yêu cầu đặt phòng (Booking) chờ xác nhận/ký HĐ
+Quản lý phòng & Đặt phòng
+10
+BOOKING
+Yêu cầu giữ chỗ, đặt phòng căn hộ trực tuyến của khách hàng trước khi ký hợp đồng chính thức
+Cổng thông tin khách hàng
+11
+IDOR
+Insecure Direct Object References - Lỗ hổng tham chiếu đối tượng trực tiếp; hệ thống ngăn chặn bằng cơ chế cô lập dữ liệu khách thuê
+Bảo mật Cổng cư dân
+1.4. Tài liệu tham khảo
+STT
+Tên tài liệu
+Ghi chú
+1
+Đề cương chi tiết Đề tài 12: Hệ thống quản lý thuê căn hộ có tích hợp AI
+Bộ môn Công nghệ phần mềm
+2
+Tài liệu Thu thập và làm rõ yêu cầu ứng dụng (02_GenAI_SoftwareDevelopment_requirements-qa.docx)
+Nhóm 12 hoàn thiện
+3
+Bộ sơ đồ Draw.io chuẩn hệ thống: Use case, Class, Sequence và Activity Diagrams
+4 tệp .drawio đồng bộ
+2. MÔ TẢ TỔNG QUAN ỨNG DỤNG
+2.1. Mô hình Use case
+Mô hình Use case ở mức tổng quát thể hiện toàn bộ các ca sử dụng chính trong 10 phân hệ nghiệp vụ của hệ thống, phản ánh tương tác giữa 4 tác nhân người dùng (Quản lý, Nhân viên, Kế toán, Khách hàng / Khách thuê) cùng Dịch vụ AI (GenAI Service):
+Hình 2.1: Sơ đồ Use case Tổng quan Hệ thống 
+2.2. Danh sách các tác nhân và mô tả
+Tác nhân
+Mô tả tác nhân
+Ghi chú
+Quản lý (Admin)
+Chủ tòa nhà hoặc Quản lý cấp cao: có toàn quyền quản trị danh mục tòa nhà, căn hộ, duyệt hợp đồng thuê, phân quyền tài khoản người dùng và xem Dashboard thống kê doanh thu toàn diện.
+Tác nhân chính
+Nhân viên (Staff)
+Nhân viên vận hành, lễ tân: tiếp nhận và xử lý yêu cầu đặt phòng (Booking), quản lý hồ sơ khách thuê, lập hợp đồng thuê dự thảo, tiếp nhận phiếu yêu cầu bảo trì hỏng hóc, điều phối phân công thợ kỹ thuật.
+Tác nhân chính
+Kế toán (Accountant)
+Bộ phận quản lý tài chính: phụ trách ghi nhận tiền cọc giữ chỗ/thu cọc, sinh khoản thu tiền phòng và dịch vụ định kỳ, ghi nhận thanh toán tiền mặt/chuyển khoản (VietQR), theo dõi công nợ quá hạn và in biên lai thu tiền.
+Tác nhân chính
+Khách hàng / Khách thuê (Customer / Tenant)
+Người dùng bên ngoài hệ thống, gồm 2 giai đoạn: 1. Khách tìm thuê: tra cứu phòng trống, nhờ AI tư vấn chọn phòng, gửi yêu cầu đặt phòng (Booking) và nhận mã giữ chỗ; 2. Khách thuê chính thức (Cư dân): đăng nhập Cổng thông tin (Tenant Portal) để theo dõi hợp đồng và bản tóm tắt AI, tra cứu hóa đơn & quét mã VietQR thanh toán, chủ động gửi phản ánh sự cố kèm ảnh chụp hiện trường, và tương tác trực tiếp với Chatbot RAG nội quy 24/7.
+Tác nhân người dùng bên ngoài
+Dịch vụ AI (GenAI Service)
+Hệ thống trí tuệ nhân tạo bên ngoài: hỗ trợ tư vấn gợi ý tìm phòng phù hợp cho khách hàng, tóm tắt điều khoản hợp đồng pháp lý, sinh dự thảo thông báo nhắc nợ/hết hạn và truy xuất nội quy trả lời câu hỏi tự động (RAG).
+Tác nhân hệ thống
+2.3. Danh sách Use case và mô tả
+Danh mục 11 Use case chuẩn hóa của hệ thống tương ứng với các nhóm yêu cầu chức năng (FR) đã phân tích làm rõ tại tài liệu Lab 2 (bổ sung ca sử dụng Đặt phòng trực tuyến cho Khách hàng):
+ID
+Tên Use case
+Mô tả ngắn gọn Use case
+Chức năng
+Ghi chú
+UC001
+Lập & Duyệt HĐ thuê (kèm AI)
+Lập hợp đồng thuê căn hộ từ thông tin Booking hoặc khách trực tiếp, kiểm tra trùng lịch, AI tóm tắt 5 điều khoản, Quản lý phê duyệt và thu cọc kích hoạt HĐ
+Quản lý Hợp đồng (FR-11..13)
+Tích hợp AI
+UC002
+Quản lý Tiền cọc, Gia hạn & Thanh lý
+Quản lý cọc giữ chỗ, cọc hợp đồng (HELD), xử lý thủ tục gia hạn và thanh lý hoàn/khấu trừ cọc có lưu vết
+Quản lý Hợp đồng (FR-14..15)
+Tài chính
+UC003
+Sinh Khoản thu & Ghi nhận Thanh toán
+Tự động sinh phí phòng/dịch vụ định kỳ, khách thuê quét VietQR hoặc nộp trực tiếp, hỗ trợ thanh toán nhiều đợt (Partial Payment), tính nợ
+Quản lý Thu chi (FR-16..19, FR-33)
+Tài chính
+UC004
+Tiếp nhận & Nghiệm thu Bảo trì
+Khách thuê gửi phản ánh sự cố trực tuyến kèm ảnh (hoặc nhân viên tạo), khóa MAINTENANCE nếu nặng, điều phối thợ kỹ thuật, nghiệm thu ĐẠT
+Quản lý Bảo trì (FR-20..22, FR-34)
+Vận hành
+UC005
+Quét Cảnh báo & AI Soạn tin đôn đốc
+Rule Engine tự động quét nợ quá hạn và HĐ sắp hết hạn; AI soạn dự thảo tin nhắn đôn đốc gửi duyệt
+Quản lý Cảnh báo & AI (FR-23..25)
+Tích hợp AI
+UC006
+Chatbot RAG Tra cứu Nội quy
+Cư dân hỏi đáp quy định, giờ giấc, rác thải, biểu phí; RAG tra cứu tài liệu nội quy trả lời chính xác có trích dẫn nguồn
+Trợ lý AI (RAG - FR-35)
+Tích hợp AI
+UC007
+Quản lý Tòa nhà, Căn hộ & Tiện ích
+Thiết lập danh mục tòa nhà, số tầng, tiện ích phòng và quản lý 4 trạng thái căn hộ (AVAILABLE, RESERVED, OCCUPIED, MAINTENANCE)
+Quản lý Danh mục (FR-04..07)
+Cốt lõi
+UC008
+Quản lý Hồ sơ Khách thuê & Người ở cùng
+Lưu trữ lý lịch khách đại diện, CCCD, SĐT, danh sách người ở cùng, liên kết tài khoản đặt phòng và cấp tài khoản Cổng cư dân
+Quản lý Khách thuê (FR-08..10)
+Cốt lõi
+UC009
+Đăng nhập, Xác thực & Phân quyền RBAC
+Xác thực tài khoản người dùng qua JWT, tự động phân luồng giao diện (Admin Dashboard và Tenant Portal), phân chia quyền hạn 4 vai trò, cô lập dữ liệu
+Quản lý Tài khoản (FR-01..03)
+Bảo mật
+UC010
+Thống kê, Báo cáo & Dashboard
+Thống kê tỷ lệ lấp đầy phòng (%), báo cáo doanh thu thực thu, danh sách nợ và biểu đồ trực quan
+Báo cáo Vận hành (FR-26..29)
+Thống kê
+UC011
+Tra cứu căn hộ & Đặt phòng (Booking)
+Khách hàng tìm kiếm, lọc căn hộ trống, AI tư vấn gợi ý phòng theo nhu cầu, gửi thông tin đặt phòng/giữ chỗ trực tuyến và tự động chuyển phòng sang RESERVED
+Cổng thông tin Khách hàng (FR-30..31, FR-35)
+Khách hàng & Booking
+Trong đó: UC: Quy cách đánh số Use case; 001, 002...: số thứ tự của Use case trong hệ thống.
+2.4. Các điều kiện phụ thuộc
+• Hạ tầng phần cứng: Máy chủ cấu hình tối thiểu 4 Core CPU, 8GB RAM, ổ cứng SSD đáp ứng truy vấn đồng thời; thiết bị đầu cuối của người dùng có kết nối mạng Internet ổn định.• Hệ thống phần mềm: Nền tảng Backend triển khai trên môi trường Node.js / Java Spring Boot; Cơ sở dữ liệu quan hệ PostgreSQL (tích hợp extension pgvector phục vụ lưu trữ Vector Embeddings của RAG).• Dịch vụ Trí tuệ Nhân tạo bên thứ ba: Kết nối cổng OpenAI API (mô hình GPT-4o-mini hoặc Text-Embedding-3-Small) hoặc Google Gemini API; hạn mức quota API đảm bảo tính liên tục của hệ thống.• Ràng buộc an toàn & bảo mật: Dữ liệu định danh CCCD và thông tin cá nhân khách thuê được mã hóa an toàn; mật khẩu người dùng băm bằng thuật toán BCrypt; cơ chế Human-in-the-loop bắt buộc nhân viên phê duyệt nội dung do AI sinh ra trước khi gửi tới khách hàng.• Cổng thông tin Cư dân & Khách hàng (Tenant Portal): Giao diện web responsive tối ưu cho cả máy tính và thiết bị di động (smartphone/tablet), áp dụng cơ chế cô lập dữ liệu cá nhân (Multi-tenant Data Isolation) đảm bảo mỗi khách thuê chỉ truy xuất được thông tin căn hộ và giao dịch của chính mình.
+3. ĐẶC TẢ CÁC YÊU CẦU CHỨC NĂNG (FUNCTIONAL)
+Phần này mô tả chi tiết toàn bộ 11 ca sử dụng của hệ thống theo mẫu chuẩn 9 mục (Use case, Mục đích, Mô tả, Tác nhân, Điều kiện trước, Điều kiện sau, Luồng chính, Luồng phụ) đi kèm Biểu đồ Hoạt động (Activity Diagram) và Biểu đồ Tuần tự (Sequence Diagram) xuất trực tiếp từ các tệp Draw.io chuẩn của đề tài:
+3.1. UC001_Lập hợp đồng thuê và Đặt cọc (kèm AI tóm tắt)
+Mô tả use case UC001
+Use case: UC001_Lập hợp đồng thuê và Đặt cọc (kèm AI tóm tắt)
+Mục đích:
+Khách thuê chọn căn hộ AVAILABLE hoặc đã đặt chỗ RESERVED, nhân viên lập hợp đồng dự thảo (kế thừa từ yêu cầu Booking), AI trích xuất 5 điều khoản chính, Quản lý duyệt và ghi nhận nộp tiền cọc giữ chỗ, kích hoạt hợp đồng sang ACTIVE.
+Mô tả:
+Quy trình khép kín từ khâu tiếp nhận yêu cầu thuê/đặt phòng, kiểm tra phòng trống không trùng lịch, lập dự thảo HĐ, AI trích xuất 5 điều khoản pháp lý cốt lõi, Quản lý phê duyệt và thu cọc bàn giao căn hộ.
+Tác nhân:
+Khách hàng / Khách thuê, Nhân viên, Quản lý, Kế toán, Dịch vụ AI (GenAI Service).
+Điều kiện trước:
+Căn hộ lựa chọn đang ở trạng thái AVAILABLE hoặc RESERVED; Khách thuê có thông tin CCCD hợp lệ trên hệ thống.
+Điều kiện sau:
+Hợp đồng chuyển trạng thái ACTIVE; Trạng thái cọc là HELD; Căn hộ tự động cập nhật sang OCCUPIED; Lưu vết nhật ký AI (NhatKyAI).
+Luồng sự kiện chính (Basic flows):
+1. Khách hàng tìm phòng và đặt phòng trực tuyến hoặc liên hệ trực tiếp; Nhân viên tiếp nhận thông tin Booking (hoặc tra cứu căn AVAILABLE/RESERVED) tạo hồ sơ HĐ dự thảo (DRAFT). 2. Hệ thống kiểm tra ràng buộc: Ngày kết thúc > Ngày bắt đầu, căn hộ chưa bị trùng lịch thuê. 3. Trợ lý AI tự động phân tích hợp đồng, trích xuất 5 điều khoản cốt lõi (Giá thuê, Tiền cọc, Ngày nộp tiền, Chu kỳ thanh toán, Quy định bồi hoàn cọc). 4. Nhân viên rà soát kết quả AI trích xuất và chuyển hồ sơ lên Quản lý phê duyệt. 5. Quản lý kiểm tra và duyệt hợp đồng; Kế toán ghi nhận khoản tiền cọc khách nộp (HELD) và xuất biên lai thu cọc. 6. Hợp đồng chuyển trạng thái ACTIVE; Căn hộ tự động cập nhật sang OCCUPIED, hệ thống kích hoạt tài khoản Cổng cư dân cho khách thuê.
+Luồng sự kiện phụ (Alternative Flows):
+2a. Căn hộ bị trùng lịch thuê hoặc không ở trạng thái AVAILABLE: Hệ thống báo lỗi, yêu cầu chọn phòng khác.4a. Quản lý từ chối phê duyệt: Trả lại hợp đồng kèm lý do, trạng thái HĐ chuyển về REJECTED.5a. Khách không nộp cọc đúng thời hạn quy định: Hợp đồng tự động hủy bỏ (CANCELLED), căn hộ giữ nguyên trạng thái AVAILABLE.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC001 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+ 
+Hình 3.1.1: Sơ đồ Hoạt động ACT01: Quy trình Lập HĐ, Đặt cọc & AI tóm tắt 
+Hình 3.1.2: Sơ đồ Tuần tự SQ01: Lập Hợp đồng thuê & Đặt cọc giữ chỗ 
+3.2. UC002_Quản lý Tiền cọc, Gia hạn & Thanh lý HĐ
+Mô tả use case UC002
+Use case: UC002_Quản lý Tiền cọc, Gia hạn & Thanh lý HĐ
+Mục đích:
+Quản lý toàn diện chu trình giữ tiền cọc (HELD), gia hạn hợp đồng mới khi sắp hết hạn và thanh lý hợp đồng bàn giao phòng kèm hoàn/khấu trừ cọc.
+Mô tả:
+Đảm bảo tính minh bạch tài chính trong việc giữ và hoàn tiền cọc; kiểm tra nghiệm thu hiện trạng phòng trước khi chốt thanh lý; tự động cập nhật căn hộ về AVAILABLE hoặc MAINTENANCE.
+Tác nhân:
+Nhân viên, Quản lý, Kế toán, Khách thuê.
+Điều kiện trước:
+Hợp đồng đã được duyệt và đang ở trạng thái ACTIVE hoặc EXPIRED.
+Điều kiện sau:
+Hợp đồng chuyển TERMINATED (hoặc RENEWED); Tiền cọc chuyển REFUNDED hoặc DEDUCTED; Biên bản thanh lý có chữ ký xác nhận 2 bên.
+Luồng sự kiện chính (Basic flows):
+1. Khách thuê thông báo gia hạn hoặc trả phòng trước 15-30 ngày kết thúc hợp đồng.2. Nhân viên kiểm tra lịch sử HĐ: Nếu gia hạn, nhân viên lập phụ lục/HĐ mới giữ nguyên hoặc điều chỉnh giá thuê, chuyển Quản lý duyệt.3. Nếu thanh lý, nhân viên tiến hành nghiệm thu căn hộ thực tế, đối chiếu danh mục tiện ích ban đầu.4. Nhân viên ghi nhận hư hại (nếu có), nhập số tiền đề xuất khấu trừ cọc và lý do chi tiết.5. Kế toán chốt công nợ kỳ cuối và số tiền cọc thực tế hoàn trả: Số hoàn = Tiền cọc - Tiền khấu trừ - Tiền nợ còn lại.6. Quản lý duyệt thanh lý; Kế toán hoàn tiền cho khách; HĐ chuyển sang TERMINATED; Căn hộ chuyển sang AVAILABLE (hoặc MAINTENANCE nếu cần sửa chữa).
+Luồng sự kiện phụ (Alternative Flows):
+4a. Căn hộ hư hỏng nặng vượt quá tiền cọc: Kế toán lập phiếu thu bổ sung yêu cầu khách bồi thường.2a. Quản lý từ chối gia hạn: Chuyển sang quy trình thanh lý đúng ngày kết thúc hợp đồng.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC002 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+ 
+Hình 3.2.1: Sơ đồ Tuần tự SQ03: Gia hạn Hợp đồng thuê 
+Hình 3.2.2: Sơ đồ Tuần tự SQ04: Thanh lý HĐ & Quyết toán Tiền cọc 
+3.3. UC003_Sinh khoản thu định kỳ và Ghi nhận thanh toán
+Mô tả use case UC003
+Use case: UC003_Sinh khoản thu định kỳ và Ghi nhận thanh toán
+Mục đích:
+Tự động phát sinh hóa đơn tiền phòng và phí dịch vụ mỗi tháng cho các hợp đồng đang hiệu lực; ghi nhận các đợt thanh toán (hỗ trợ trả góp nhiều lần) và cập nhật công nợ tức thời.
+Mô tả:
+Quản lý chu trình tài chính doanh thu, cho phép cư dân thanh toán tiền phòng/điện nước thành nhiều đợt, hệ thống tự động trừ dần số dư nợ và xuất biên lai hợp lệ.
+Tác nhân:
+Kế toán, Cron Job hệ thống, Khách thuê.
+Điều kiện trước:
+Hợp đồng thuê đang ở trạng thái ACTIVE; Đơn giá điện nước và dịch vụ tháng đã được cấu hình.
+Điều kiện sau:
+Khoản thu cập nhật sang PAID (nếu nợ = 0) hoặc PARTIALLY_PAID (nếu còn nợ); Sinh bản ghi Thanh toán; Công nợ căn hộ được khấu trừ tương ứng.
+Luồng sự kiện chính (Basic flows):
+1. Định kỳ đầu tháng, Cron Job hệ thống quét các hợp đồng ACTIVE và sinh khoản thu mới kèm hạn nộp (dueDate), trạng thái UNPAID.2. Khách thuê nộp tiền (chuyển khoản ngân hàng hoặc tiền mặt); Kế toán mở biểu mẫu ghi nhận thanh toán.3. Kế toán nhập số tiền khách nộp; Hệ thống kiểm tra số tiền hợp lệ (> 0).4. Hệ thống cập nhật: Số đã thanh toán += Số tiền nộp; Số nợ còn lại = Tổng tiền - Số đã thanh toán.5. Nếu Số nợ còn lại == 0, chuyển trạng thái khoản thu sang PAID; Nếu còn nợ, chuyển sang PARTIALLY_PAID.6. Hệ thống cấp mã giao dịch và in biên lai thanh toán giao cho khách thuê.
+Luồng sự kiện phụ (Alternative Flows):
+1a. Đã tồn tại khoản thu cùng kỳ tháng/năm cho hợp đồng: Hệ thống bỏ qua, chống tạo trùng hóa đơn.3a. Số tiền thanh toán lớn hơn số tiền nợ hiện tại: Hệ thống cảnh báo nộp thừa tiền và yêu cầu xác nhận.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC003 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+Hình 3.3.1: Sơ đồ Hoạt động ACT02: Quy trình Sinh Khoản thu & Thanh toán nợ 
+Hình 3.3.2: Sơ đồ Tuần tự SQ05: Sinh Khoản thu & Ghi nhận Thanh toán 
+3.4. UC004_Tiếp nhận và Nghiệm thu bảo trì sự cố
+Mô tả use case UC004
+Use case: UC004_Tiếp nhận và Nghiệm thu bảo trì sự cố
+Mục đích:
+Tiếp nhận báo cáo sự cố hư hỏng trực tuyến từ khách thuê qua Cổng cư dân hoặc do nhân viên tiếp nhận, phân loại mức độ khẩn cấp, giao thợ xử lý và nghiệm thu.
+Mô tả:
+Quy trình bảo trì kỹ thuật chuẩn hóa, bảo đảm căn hộ được sửa chữa kịp thời; tự động tạm khóa căn hộ nếu hư hỏng nặng ảnh hưởng an toàn sinh hoạt.
+Tác nhân:
+Khách thuê (Cư dân), Nhân viên vận hành, Thợ kỹ thuật.
+Điều kiện trước:
+Căn hộ đang tồn tại trong hệ thống quản lý.
+Điều kiện sau:
+Phiếu yêu cầu bảo trì chuyển COMPLETED; Ghi nhận chi phí thực tế; Căn hộ hoàn trả trạng thái ban đầu.
+Luồng sự kiện chính (Basic flows):
+1. Khách thuê chủ động tạo phiếu báo hỏng thiết bị trên Cổng thông tin cư dân (mô tả sự cố, đính kèm ảnh chụp hiện trường) hoặc gọi điện để Nhân viên tiếp nhận tạo hộ trên hệ thống. 2. Nhân viên phân loại mức độ ưu tiên (Thấp/Trung bình/Cao/Khẩn cấp) và điều phối thợ kỹ thuật phù hợp. 3. Nếu sự cố nghiêm trọng ảnh hưởng sinh hoạt: Chuyển trạng thái căn hộ sang MAINTENANCE (bảo trì). 4. Thợ kỹ thuật đến kiểm tra, sửa chữa và cập nhật tiến độ xử lý lên hệ thống. 5. Khách thuê và Nhân viên tiến hành nghiệm thu sự cố sau khi sửa xong. 6. Kế toán/Nhân viên ghi nhận chi phí sửa chữa phát sinh (nếu có), đóng phiếu bảo trì (COMPLETED), và tự động hoàn trả trạng thái căn hộ sang OCCUPIED (hoặc AVAILABLE).
+Luồng sự kiện phụ (Alternative Flows):
+5a. Nghiệm thu KHÔNG ĐẠT: Yêu cầu thợ sửa chữa lại, giữ nguyên trạng thái IN_PROGRESS.1a. Khách thuê báo hủy yêu cầu do tự khắc phục được: Chuyển trạng thái phiếu sang CANCELLED.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC004 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+Hình 3.4.1: Sơ đồ Hoạt động ACT03: Quy trình Tiếp nhận & Nghiệm thu Bảo trì
+Hình 3.4.2: Sơ đồ Tuần tự SQ08: Xử lý & Nghiệm thu Bảo trì Sự cố 
+3.5. UC005_Quét cảnh báo tự động và AI soạn thông báo đôn đốc
+Mô tả use case UC005
+Use case: UC005_Quét cảnh báo tự động và AI soạn thông báo đôn đốc
+Mục đích:
+Tự động phát hiện các khoản thu nợ quá hạn và hợp đồng sắp hết hạn; Trợ lý AI tự động soạn thảo nội dung tin nhắn đôn đốc gửi nhân viên kiểm duyệt trước khi phát hành.
+Mô tả:
+Kết hợp Rule Engine quét dữ liệu định kỳ và Generative AI cá nhân hóa nội dung thông báo, giảm tải công việc nhắc nợ thủ công của nhân viên.
+Tác nhân:
+Cron Job hệ thống, Rule Engine, Trợ lý AI, Nhân viên / Kế toán.
+Điều kiện trước:
+Hệ thống có các bản ghi hợp đồng hoặc khoản thu đến hạn kiểm tra.
+Điều kiện sau:
+Phát sinh bản ghi cảnh báo (Alert); Bản thảo tin nhắn AI được nhân viên duyệt và gửi tới khách qua Zalo/Email.
+Luồng sự kiện chính (Basic flows):
+1. Cron Job định kỳ kích hoạt tác vụ quét nợ và hợp đồng theo lịch cấu hình tự động.2. Rule Engine phát hiện các khoản thu quá ngày hạn (dueDate) mà còn nợ (conNo > 0), hoặc HĐ còn dưới 30 ngày hết hạn.3. Hệ thống tạo bản ghi Cảnh báo (Alert) với mức độ ưu tiên tương ứng.4. Trợ lý AI tiếp nhận thông tin ngữ cảnh (Tên khách, Số tiền nợ, Số ngày trễ, Mã căn) và sinh dự thảo tin nhắn đôn đốc lịch sự, chuẩn mực.5. Nhân viên/Kế toán xem trước bản thảo trên giao diện điều khiển, có thể chỉnh sửa câu chữ nếu cần.6. Nhân viên nhấn Duyệt; Hệ thống gửi thông báo qua Zalo/Email/SMS và lưu vết lịch sử cảnh báo.
+Luồng sự kiện phụ (Alternative Flows):
+2a. Không có khoản nợ hay hợp đồng nào vi phạm: Kết thúc tác vụ quét, không sinh cảnh báo.5a. Nhân viên từ chối nội dung AI: Chuyển sang soạn tin thủ công hoặc hủy gửi thông báo.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC005 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+ 
+Hình 3.5.1: Sơ đồ Hoạt động ACT04: Quy trình Quét Cảnh báo & AI Soạn tin
+Hình 3.5.2: Sơ đồ Tuần tự SQ12: Quét Cảnh báo & AI Soạn tin đôn đốc 
+3.6. UC006_Chatbot RAG tra cứu nội quy tòa nhà
+Mô tả use case UC006
+Use case: UC006_Chatbot RAG tra cứu nội quy tòa nhà
+Mục đích:
+Cung cấp trợ lý ảo thông minh cho khách hàng hỏi đáp tư vấn tìm phòng và cho cư dân hỏi đáp nội quy, quy định gửi xe, rác thải, biểu phí, thủ tục tạm trú 24/7 từ tài liệu nội bộ.
+Mô tả:
+Ứng dụng mô hình RAG (Retrieval-Augmented Generation) kết hợp Guardrails an toàn, hỗ trợ khách hàng tìm kiếm phòng phù hợp và giải đáp thắc mắc của cư dân chính xác có trích dẫn nguồn quy định.
+Tác nhân:
+Khách hàng / Khách thuê (Cư dân), Nhân viên, Gateway Guardrail, Vector Database, Mô hình LLM.
+Điều kiện trước:
+Bộ tài liệu Nội quy tòa nhà đã được vector hóa và lưu trữ sẵn sàng trong Vector Database.
+Điều kiện sau:
+Cư dân nhận được câu trả lời chính xác có kèm số điều/khoản trích dẫn; Nhật ký hội thoại được lưu vết.
+Luồng sự kiện chính (Basic flows):
+1. Cư dân nhập câu hỏi tra cứu nội quy vào khung chat ứng dụng.2. Gateway Guardrail kiểm tra an toàn: Câu hỏi không chứa mã độc, nội dung thù địch hay nhạy cảm.3. Embedding Model mã hóa câu hỏi và truy vấn độ tương đồng cosine trong Vector Database.4. Hệ thống trích xuất các đoạn văn bản (chunks) có điểm tương đồng vượt ngưỡng tin cậy (> 0.75).5. LLM tiếp nhận prompt chứa ngữ cảnh trích xuất và sinh câu trả lời rõ ràng, kèm trích dẫn số điều khoản quy định.6. Hệ thống hiển thị câu trả lời cho cư dân và ghi lại nhật ký truy vấn để kiểm soát chất lượng.
+Luồng sự kiện phụ (Alternative Flows):
+2a. Phát hiện câu hỏi vi phạm chính sách an toàn: Hệ thống từ chối trả lời ngay tại Gateway.4a. Không tìm thấy đoạn trích nào đạt ngưỡng tin cậy: Chatbot thông báo 'Nội quy không đề cập đến vấn đề này' và đề xuất kết nối nhân viên hỗ trợ, tuyệt đối không bịa đặt thông tin.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC006 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+Biểu đồ
+Hình 3.6.1: Sơ đồ Hoạt động ACT05: Quy trình Chatbot RAG Tra cứu Nội quy 
+Hình 3.6.2: Sơ đồ Tuần tự SQ13: Chatbot RAG Tra cứu Nội quy Tòa nhà 
+3.7. UC007_Quản lý Tòa nhà, Căn hộ & Tiện ích
+Mô tả use case UC007
+Use case: UC007_Quản lý Tòa nhà, Căn hộ & Tiện ích
+Mục đích:
+Thiết lập và quản lý danh mục toàn bộ tòa nhà, danh sách các căn hộ, thông số diện tích, giá thuê, tiện ích nội thất đi kèm và đồng bộ 4 trạng thái phòng (AVAILABLE, RESERVED, OCCUPIED, MAINTENANCE).
+Mô tả:
+Phân hệ dữ liệu nền tảng cho phép tra cứu nhanh phòng trống (AVAILABLE), phòng đang giữ chỗ (RESERVED), phòng đang thuê (OCCUPIED), kiểm soát công suất phòng theo từng tầng/tòa nhà, phục vụ đặt phòng trực tuyến, ký hợp đồng và bảo trì.
+Tác nhân:
+Quản lý (Admin), Nhân viên (Staff).
+Điều kiện trước:
+Người dùng đã đăng nhập hệ thống với vai trò Quản lý hoặc Nhân viên.
+Điều kiện sau:
+Thông tin tòa nhà/căn hộ/tiện ích được lưu trữ hoặc cập nhật vào CSDL.
+Luồng sự kiện chính (Basic flows):
+1. Quản lý/Nhân viên truy cập phân hệ Quản lý Tòa nhà & Căn hộ.2. Người dùng chọn chức năng thêm mới hoặc chỉnh sửa thông tin căn hộ (mã căn, số phòng, diện tích, giá thuê cơ bản).3. Người dùng cấu hình danh mục tiện ích gắn với căn hộ (điều hòa, tủ lạnh, máy giặt, ban công, giường nệm).4. Hệ thống kiểm tra tính hợp lệ của dữ liệu (mã căn không trùng lặp, giá thuê > 0, diện tích > 0).5. Hệ thống lưu bản ghi vào CSDL và gán trạng thái ban đầu là AVAILABLE.6. Danh sách phòng trống tự động cập nhật lên giao diện tra cứu vận hành.
+Luồng sự kiện phụ (Alternative Flows):
+4a. Mã căn hộ đã tồn tại trong cùng tòa nhà: Hệ thống cảnh báo trùng lặp và yêu cầu đổi mã căn.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC007 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+3.8. UC008_Quản lý Hồ sơ Khách thuê & Người ở cùng
+Mô tả use case UC008
+Use case: UC008_Quản lý Hồ sơ Khách thuê & Người ở cùng
+Mục đích:
+Lưu trữ lý lịch pháp lý của khách thuê đại diện (CCCD, SĐT, quê quán) và danh sách người ở cùng/liên hệ khẩn cấp; tra cứu lịch sử hợp đồng và công nợ của khách.
+Mô tả:
+Đảm bảo công tác quản lý cư trú tuân thủ quy định pháp luật; hỗ trợ nhân viên tra cứu nhanh lịch sử thanh toán và uy tín khách thuê khi làm thủ tục ký HĐ mới.
+Tác nhân:
+Nhân viên (Staff), Quản lý (Admin).
+Điều kiện trước:
+Người dùng có quyền truy cập phân hệ khách thuê.
+Điều kiện sau:
+Hồ sơ khách thuê được lưu trữ an toàn; liên kết chặt chẽ với bản ghi Đặt phòng (Booking), Hợp đồng thuê và tài khoản Cổng thông tin cư dân.
+Luồng sự kiện chính (Basic flows):
+1. Nhân viên mở giao diện Quản lý Khách thuê và chọn chức năng thêm mới hồ sơ.2. Nhân viên nhập thông tin khách đại diện: Họ tên, Số CCCD/Hộ chiếu, Ngày sinh, Số điện thoại, Email, Địa chỉ thường trú.3. Nhân viên nhập danh sách người ở cùng (Họ tên, Mối quan hệ, Số CCCD, SĐT).4. Hệ thống kiểm tra định dạng CCCD (12 chữ số) và SĐT hợp lệ.5. Hệ thống lưu hồ sơ khách thuê vào CSDL và cấp mã định danh duy nhất (maKhachThue).6. Hồ sơ khách sẵn sàng để liên kết khi lập hợp đồng thuê mới.
+Luồng sự kiện phụ (Alternative Flows):
+4a. Số CCCD đã tồn tại trên hệ thống: Hiển thị thông tin khách cũ để nhân viên tái sử dụng hồ sơ, tránh trùng lặp.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC008 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+3.9. UC009_Đăng nhập, Xác thực & Phân quyền RBAC
+Mô tả use case UC009
+Use case: UC009_Đăng nhập, Xác thực & Phân quyền RBAC
+Mục đích:
+Xác thực danh tính người dùng (Quản lý, Nhân viên, Kế toán, Khách thuê), cấp phát mã định danh JWT, phân quyền truy cập và tự động điều hướng đúng giao diện theo vai trò.
+Mô tả:
+Đảm bảo an toàn bảo mật cho toàn bộ hệ thống; ngăn chặn truy cập trái phép; tự động phân luồng giao diện: Admin Dashboard cho nhân viên quản lý và Tenant Portal cho khách thuê; áp dụng cơ chế cô lập dữ liệu cá nhân (Multi-tenant Data Isolation).
+Tác nhân:
+Người dùng (Quản lý, Nhân viên, Kế toán, Khách hàng / Khách thuê).
+Điều kiện trước:
+Tài khoản người dùng đã được tạo và đang ở trạng thái hoạt động (dangHoatDong = true).
+Điều kiện sau:
+Cấp phát JWT Token hợp lệ; chuyển hướng người dùng đến giao diện chức năng phù hợp (Admin Dashboard hoặc Tenant Portal).
+Luồng sự kiện chính (Basic flows):
+1. Người dùng nhập Tên đăng nhập (Username/Email) và Mật khẩu vào form đăng nhập.2. Hệ thống kiểm tra tài khoản trong CSDL và dùng thuật toán BCrypt so khớp mật khẩu băm.3. Hệ thống kiểm tra trạng thái tài khoản: Nếu đang hoạt động, sinh mã phiên JWT có hạn sử dụng (ví dụ 8 giờ) chứa thông tin vai trò (role).4. Hệ thống phản hồi JWT Token về trình duyệt; lưu trữ an toàn trong HttpOnly Cookie/LocalStorage.5. Hệ thống điều hướng người dùng vào trang chủ Dashboard theo quyền hạn: Quản lý (toàn quyền), Kế toán (thu chi/công nợ), Nhân viên (hợp đồng/bảo trì).6. Người dùng thực hiện các thao tác trong phiên; khi hết ca làm việc, nhấn Đăng xuất để thu hồi phiên.
+Luồng sự kiện phụ (Alternative Flows):
+2a. Sai tên đăng nhập hoặc mật khẩu: Báo lỗi 'Tài khoản hoặc mật khẩu không chính xác', không tiết lộ cụ thể trường sai.3a. Tài khoản bị khóa (dangHoatDong = false): Thông báo 'Tài khoản đã bị tạm khóa, vui lòng liên hệ Quản trị viên'.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC009 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+3.10. UC010_Thống kê, Báo cáo & Dashboard
+Mô tả use case UC010
+Use case: UC010_Thống kê, Báo cáo & Dashboard
+Mục đích:
+Cung cấp bức tranh toàn cảnh về hoạt động kinh doanh tòa nhà: Tỷ lệ lấp đầy phòng trống (công suất thuê), báo cáo doanh thu thực thu, tổng nợ đọng quá hạn và xuất dữ liệu Excel/PDF.
+Mô tả:
+Hỗ trợ Chủ tòa nhà và Bộ phận Kế toán ra quyết định nhanh, nắm bắt tức thời các căn hộ sắp hết hạn, khoản thu chậm trễ và các phiếu bảo trì đang tồn đọng.
+Tác nhân:
+Quản lý (Admin), Kế toán (Accountant).
+Điều kiện trước:
+Dữ liệu hợp đồng, khoản thu, thanh toán và bảo trì đã được ghi nhận trong CSDL.
+Điều kiện sau:
+Hiển thị biểu đồ trực quan; kết xuất báo cáo chuẩn xác theo mốc thời gian lọc.
+Luồng sự kiện chính (Basic flows):
+1. Quản lý/Kế toán truy cập màn hình Dashboard Tổng quan.2. Hệ thống tự động tính toán và hiển thị các chỉ số KPI: Tỷ lệ phòng OCCUPIED / Tổng phòng (%), Tổng doanh thu thực thu tháng này, Tổng nợ quá hạn, Số sự cố bảo trì OPEN.3. Người dùng chọn bộ lọc thời gian (Theo tháng, quý, năm) và theo từng tòa nhà.4. Hệ thống truy vấn CSDL, tổng hợp số liệu và kết xuất biểu đồ cột/tròn trực quan.5. Người dùng nhấn nút 'Xuất báo cáo' (Excel hoặc PDF).6. Hệ thống tạo file báo cáo định dạng chuẩn và tự động tải về máy người dùng.
+Luồng sự kiện phụ (Alternative Flows):
+3a. Không có dữ liệu trong khoảng thời gian lọc: Hiển thị thông báo 'Không phát sinh giao dịch trong kỳ tra cứu'.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ UC010 trong bộ sơ đồ thiết kế Draw.io chuẩn.
+3.11. UC011_Tra cứu căn hộ & Đặt phòng trực tuyến (Booking)
+Mô tả use case UC011
+Use case: UC011_Tra cứu căn hộ & Đặt phòng trực tuyến (Booking)
+Mục đích:
+Cho phép khách hàng tìm kiếm, lọc danh mục căn hộ trống trực tuyến, nhờ AI tư vấn chọn phòng phù hợp nhu cầu/ngân sách và gửi yêu cầu đặt phòng & giữ chỗ (Booking).
+Mô tả:
+Quy trình tương tác công khai cho khách hàng vãng lai hoặc khách tìm thuê: tra cứu thông tin phòng niêm yết, xem hình ảnh thực tế, trò chuyện với Trợ lý AI tìm phòng, điền biểu mẫu đặt phòng trực tuyến. Hệ thống tự động ghi nhận mã Booking, chuyển trạng thái căn hộ sang RESERVED (đang giữ chỗ) và thông báo tới nhân viên vận hành.
+Tác nhân:
+Khách hàng (Customer / Khách tìm thuê), Nhân viên vận hành (Staff), Trợ lý AI (GenAI Service).
+Điều kiện trước:
+Căn hộ mong muốn đang ở trạng thái AVAILABLE (trống/sẵn sàng cho thuê); Hệ thống đã cấu hình thông tin giá niêm yết và danh mục tiện ích.
+Điều kiện sau:
+Sinh bản ghi Đặt phòng mới (Booking) với mã định danh duy nhất; Trạng thái căn hộ tự động chuyển từ AVAILABLE sang RESERVED; Thông báo đặt phòng được gửi tới Nhân viên quản lý.
+Luồng sự kiện chính (Basic flows):
+1. Khách hàng truy cập Cổng thông tin, sử dụng bộ lọc tìm kiếm căn hộ trống theo tòa nhà, mức giá, diện tích và tiện ích. 2. Khách hàng xem chi tiết hình ảnh, thông số kỹ thuật và có thể tương tác với Trợ lý AI để nhận gợi ý phòng phù hợp. 3. Khách hàng chọn căn hộ ưng ý và nhấn nút 'Đặt phòng ngay'. 4. Hệ thống hiển thị biểu mẫu đăng ký đặt phòng: Họ tên, Số điện thoại, Email, Số CCCD, Ngày dự kiến dọn vào và ghi chú đặc biệt. 5. Khách hàng kiểm tra thông tin và nhấn 'Gửi yêu cầu đặt phòng'. 6. Hệ thống kiểm tra căn hộ vẫn đang AVAILABLE, tạo bản ghi Booking ở trạng thái PENDING, cấp mã Booking cho khách và tự động đổi trạng thái căn hộ sang RESERVED. 7. Hệ thống phát thông báo tới Nhân viên vận hành để liên hệ xác nhận và tiến hành thủ tục ký hợp đồng.
+Luồng sự kiện phụ (Alternative Flows):
+6a. Căn hộ vừa có khách khác đặt trước (trạng thái đã chuyển sang RESERVED hoặc OCCUPIED): Hệ thống thông báo 'Căn hộ vừa được giữ chỗ, vui lòng chọn căn hộ khác' và hiển thị các gợi ý tương đương. 4a. Khách hàng chỉ muốn hẹn lịch xem phòng thực tế: Khách chọn chế độ 'Hẹn lịch xem phòng', hệ thống ghi nhận lịch hẹn và thông báo nhân viên sắp xếp đón tiếp.
+Ghi chú bổ sung:
+Đồng bộ với phân hệ nghiệp vụ Cổng thông tin Khách hàng (FR-30, FR-31) và sơ đồ luồng đặt phòng Booking.
+4. CÁC THÔNG TIN HỖ TRỢ KHÁC
+Các thông tin hỗ trợ có vai trò làm cho tài liệu đặc tả yêu cầu ứng dụng hoàn chỉnh và khả thi trong triển khai thực tế:• Quy chuẩn an toàn thông tin cá nhân: Thông tin nhạy cảm của khách thuê (số CCCD, số điện thoại, tài khoản thanh toán) phải được mã hóa ở mức cơ sở dữ liệu. Toàn bộ phiên kết nối giữa máy khách và máy chủ đều chạy qua giao thức bảo mật HTTPS/TLS.• Nguyên tắc kiểm soát an toàn AI (AI Safety & Human-in-the-loop): Mọi nội dung do AI sinh ra (tóm tắt điều khoản hợp đồng, tin nhắn nhắc nợ) chỉ mang tính chất dự thảo khuyến nghị, bắt buộc phải có bước phê duyệt thủ công của nhân viên hoặc quản lý trước khi chính thức gửi đến khách thuê hoặc lưu vào hồ sơ pháp lý.• Hướng dẫn sao lưu và phục hồi: Hệ thống thực hiện sao lưu CSDL tự động hàng ngày (Daily automated backup) vào lúc 02:00 sáng; dữ liệu nhúng Vector DB được đồng bộ định kỳ cùng tài liệu nội quy để duy trì tính nhất quán khi có sửa đổi quy định tòa nhà.• Cơ chế phân quyền và cô lập dữ liệu khách thuê (Multi-tenant Data Isolation): Mỗi khách thuê chỉ được truy xuất dữ liệu liên quan đến chính căn hộ, hợp đồng, hóa đơn và yêu cầu bảo trì của mình (kiểm tra chặt chẽ tenant_id = current_user.tenant_id tại tầng Backend API), triệt tiêu hoàn toàn nguy cơ rò rỉ thông tin chéo giữa các cư dân (lỗ hổng IDOR).

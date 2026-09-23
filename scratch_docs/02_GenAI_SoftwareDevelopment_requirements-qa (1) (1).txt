@@ -1,0 +1,533 @@
+THU THẬP, LÀM RÕ YÊU CẦU CỦA ỨNG DỤNG
+Nhóm 12 - Thành viên nhóm
+Nguyễn Thị Trang (Trưởng nhóm)
+Lê Quang Khánh
+Tên ứng dụng: Hệ thống quản lý thuê căn hộ có tích hợp AI
+Thời gian thực hiện: Từ 27/07/2026 đến 27/09/2026 (9 tuần)
+Yêu cầu chức năng của một hệ thống là quan trọng vì yêu cầu cung cấp các cơ sở cho tất cả công việc phát triển hệ thống sau đó.
+1. Danh sách các câu hỏi khi thu thập và làm rõ yêu cầu của ứng dụng
+STT
+Câu hỏi (Questions)
+Trả lời (Answers)
+Ghi chú
+1
+Hiện tại đơn vị quản lý vận hành các tòa nhà và căn hộ bằng phương pháp nào?
+Chủ yếu ghi chép sổ tay và dùng file Excel rời rạc; hay quên ngày thu tiền phòng, sót hạn hợp đồng và khó theo dõi căn nào còn trống.
+Khảo sát hiện trạng & Lý do cần phần mềm
+2
+Những đối tượng nào sẽ trực tiếp sử dụng phần mềm? Khách thuê có tài khoản riêng không?
+Hệ thống phục vụ 4 nhóm tác nhân chính: 3 nhóm người dùng nội bộ gồm Quản lý (Admin), Nhân viên vận hành (Staff), Kế toán (Accountant); và nhóm người dùng bên ngoài là Khách hàng / Khách thuê (Customer / Tenant). Khách hàng có thể tìm kiếm căn hộ, gửi yêu cầu đặt phòng (Booking) trực tuyến. Sau khi ký hợp đồng, khách thuê được cấp tài khoản Cổng thông tin cư dân (Tenant Portal) để theo dõi hợp đồng, tra cứu hóa đơn, thanh toán và gửi yêu cầu bảo trì.
+Phạm vi 4 nhóm người dùng & Cổng thông tin khách thuê
+3
+Danh mục căn hộ và trang thiết bị tiện ích đi kèm được tổ chức quản lý ra sao?
+Quản lý theo từng Tòa nhà -> Căn hộ (mã căn, diện tích, đơn giá). Mỗi căn hộ có danh mục tiện ích/nội thất (điều hòa, nóng lạnh, bếp...) kèm tình trạng sử dụng.
+Phân hệ Căn hộ & Tiện ích (FR-04..07)
+4
+Căn hộ có những trạng thái hoạt động nào trong thực tế?
+Có 4 trạng thái hoạt động chính: Trống (AVAILABLE - sẵn sàng cho thuê/đặt phòng), Đang giữ chỗ (RESERVED - khách đã đặt phòng/chờ ký HĐ), Đang thuê (OCCUPIED - đã ký HĐ và đang ở), Bảo trì (MAINTENANCE - phòng đang sửa chữa). Trạng thái tự cập nhật theo luồng đặt phòng, hợp đồng và bảo trì.
+Quản lý 4 trạng thái căn hộ (FR-07)
+5
+Khách thuê có người ở cùng thì đơn vị quản lý thông tin như thế nào?
+Lưu thông tin khách đại diện ký hợp đồng (CCCD, SĐT, email) và danh sách người ở cùng/người liên hệ khẩn cấp để quản lý tạm trú và liên lạc khi cần.
+Phân hệ Khách thuê (FR-08..10)
+6
+Khi tạo mới hợp đồng thuê cần lưu trữ những thông tin cốt lõi nào?
+Mã hợp đồng, căn hộ, khách thuê đại diện, ngày bắt đầu, ngày kết thúc, giá thuê thỏa thuận, chu kỳ thu tiền (1 tháng/3 tháng) và file hợp đồng scan đính kèm.
+Lập hợp đồng thuê (FR-11)
+7
+Có những quy tắc nghiệp vụ bắt buộc nào khi lập hợp đồng thuê?
+Bắt buộc ngày kết thúc > ngày bắt đầu; phòng phải đang ở trạng thái AVAILABLE; tuyệt đối không cho phép tạo hợp đồng trùng lịch thuê trên cùng một căn.
+Ràng buộc nghiệp vụ HĐ (FR-12)
+8
+Hợp đồng thuê trải qua những giai đoạn và trạng thái nào trong vòng đời?
+Trải qua 4 trạng thái: Dự thảo (DRAFT) -> Đang hiệu lực (ACTIVE) -> Hết hạn (EXPIRED) hoặc Chấm dứt trước hạn (TERMINATED).
+Vòng đời hợp đồng (FR-13)
+9
+Tiền đặt cọc được thu bao nhiêu và quản lý thế nào trong suốt kỳ thuê?
+Thu 1 - 2 tháng tiền thuê lúc ký hợp đồng. Khoản tiền cọc được giữ ở trạng thái Đang giữ (HELD) suốt thời gian thuê, tách biệt với tiền phòng hàng tháng.
+Quản lý tiền cọc (FR-14)
+10
+Khi thanh lý hợp đồng hoặc trả phòng, quy trình xử lý tiền cọc diễn ra thế nào?
+Kiểm tra bàn giao phòng: nếu nguyên vẹn thì hoàn đủ 100% cọc (REFUNDED); nếu hư hại đồ đạc hoặc còn nợ tiền dịch vụ thì khấu trừ (DEDUCTED, ghi rõ lý do).
+Hoàn trả & Khấu trừ cọc (FR-14, FR-15)
+11
+Các khoản thu tiền phòng và phí dịch vụ phát sinh được lập theo chu kỳ nào?
+Hàng tháng hệ thống tự động sinh khoản phải thu định kỳ theo hợp đồng kèm hạn nộp (dueDate); có cơ chế kiểm tra chống sinh trùng hóa đơn trong cùng một kỳ.
+Sinh khoản phải thu (FR-16, FR-17)
+12
+Nếu khách thuê xin đóng tiền phòng làm nhiều lần trong tháng thì hệ thống xử lý ra sao?
+Cho phép ghi nhận thanh toán từng phần (Partial Payment). Mỗi lần nộp tiền sẽ ghi phiếu thu và trừ dần số nợ còn lại cho đến khi thanh toán đủ 100%.
+Thanh toán nhiều đợt (FR-18)
+13
+Công nợ được tính như thế nào và khi nào thì bị xác định là nợ quá hạn?
+Công nợ = Tổng phải thu - Tổng đã trả (hệ thống tự tính). Cứ quá ngày hẹn nộp (dueDate) mà nợ > 0 thì tự động chuyển sang trạng thái Quá hạn (OVERDUE).
+Quản lý công nợ & Quá hạn (FR-19)
+14
+Quy trình tiếp nhận và giải quyết sự cố hư hỏng trong căn hộ diễn ra thế nào?
+Nhân viên tạo phiếu sự cố (mô tả lỗi, ảnh chụp) -> giao thợ sửa chữa -> nghiệm thu hoàn thành và ghi nhận chi phí sửa chữa thực tế phát sinh.
+Tiếp nhận sự cố bảo trì (FR-20..22)
+15
+Trường hợp căn hộ bị sự cố nghiêm trọng cần sửa chữa lâu ngày thì xử lý ra sao?
+Tạm khóa căn hộ sang trạng thái Bảo trì (MAINTENANCE) để ngừng cho thuê; chỉ khi nghiệm thu xong phiếu sự cố mới chuyển lại trạng thái Trống (AVAILABLE).
+Khóa phòng bảo trì (FR-22)
+16
+Hệ thống cần cảnh báo hợp đồng sắp hết hạn trước bao nhiêu ngày?
+Tự động phát hiện và cảnh báo trước 15 - 30 ngày trên màn hình quản lý để nhân viên kịp thời hỏi nhu cầu gia hạn hoặc chuẩn bị tìm khách thuê mới.
+Cảnh báo hết hạn HĐ (FR-23)
+17
+Cảnh báo nợ quá hạn hoạt động ra sao để đôn đốc thu tiền phòng?
+Hệ thống tự động lọc các khoản thu quá hạn nộp, hiển thị rõ số ngày trễ hạn và số tiền còn thiếu để kế toán gửi thông báo nhắc nợ kịp thời.
+Cảnh báo nợ quá hạn (FR-24)
+18
+Cấp Quản lý cần theo dõi những chỉ số tổng hợp nào trên Dashboard?
+Xem nhanh 4 chỉ số: Tỷ lệ lấp đầy phòng (%), Tổng doanh thu thực thu, Tổng công nợ còn thiếu, và danh sách các sự cố/hợp đồng cần xử lý gấp.
+Báo cáo & Dashboard (FR-26..29)
+19
+Ba tính năng AI được đưa vào hệ thống nhằm hỗ trợ những nghiệp vụ cụ thể nào?
+1. AI Tóm tắt hợp đồng (5 điều khoản: thời hạn, tiền thuê, tiền cọc, nghĩa vụ thanh toán, điều kiện chấm dứt);
+2. AI Soạn thông báo nhắc nợ/gia hạn;
+3. Chatbot RAG tra cứu nội quy.
+3 Tính năng AI cốt lõi (AI-FR01..03)
+20
+Ranh giới an toàn của AI được thiết lập như thế nào để đảm bảo an toàn dữ liệu?
+AI chỉ là trợ lý hỗ trợ: Tuyệt đối không tự sửa CSDL, không tự tính tiền nợ, không tự gửi tin khi chưa có người duyệt; chatbot từ chối nếu không có trong tài liệu.
+Ranh giới an toàn AI (Mục 4.2)
+21
+Quy trình khách hàng tìm kiếm và đặt phòng (Booking) trực tuyến trên hệ thống diễn ra như thế nào?
+Khách hàng tìm kiếm căn hộ trống theo tòa nhà, mức giá, diện tích, tiện ích; xem hình ảnh thực tế và chi tiết phòng. Khi ưng ý, khách điền thông tin liên hệ, chọn ngày dự kiến vào ở và gửi yêu cầu Đặt phòng (Booking). Hệ thống tự động chuyển trạng thái phòng sang Đang giữ chỗ (RESERVED) và thông báo cho nhân viên vận hành liên hệ xác nhận.
+Phân hệ Đặt phòng (FR-30, FR-31)
+22
+Luồng chuyển đổi từ yêu cầu đặt phòng sang Hợp đồng thuê chính thức diễn ra ra sao?
+Nhân viên tiếp nhận yêu cầu đặt phòng, liên hệ khách xác nhận hoặc dẫn xem phòng thực tế. Nhân viên tạo dự thảo Hợp đồng (DRAFT) kế thừa trực tiếp thông tin từ Booking. Khi khách đóng đủ tiền cọc và ký hợp đồng, Hợp đồng chuyển sang ACTIVE, trạng thái căn hộ đổi từ RESERVED sang OCCUPIED, hệ thống tự động kích hoạt tài khoản Cư dân chính thức cho khách thuê.
+Chuyển đổi Booking -> Hợp đồng (FR-13, FR-32)
+23
+Khách thuê chính thức (Cư dân) có thể thực hiện những tương tác tự phục vụ nào trên hệ thống?
+Khách thuê đăng nhập Cổng thông tin (Tenant Portal) để: 1. Xem chi tiết hợp đồng và bản tóm tắt 5 điều khoản do AI trích xuất; 2. Tra cứu hóa đơn định kỳ, số tiền nợ và quét mã VietQR chuyển khoản; 3. Tạo phiếu báo sự cố hỏng hóc đính kèm ảnh và đánh giá nghiệm thu; 4. Trò chuyện 24/7 với Chatbot RAG giải đáp nội quy tòa nhà.
+Cổng thông tin Cư dân (FR-32..35)
+24
+Hệ thống bảo vệ dữ liệu riêng tư giữa các khách thuê như thế nào (Tránh rò rỉ thông tin chéo)?
+Áp dụng cơ chế kiểm soát truy cập nghiêm ngặt tại Backend (Multi-tenant Data Isolation): Mỗi khách thuê chỉ có quyền xem và thao tác trên dữ liệu liên quan trực tiếp đến căn hộ, hợp đồng, hóa đơn và phiếu bảo trì của chính mình (kiểm tra tenant_id = current_user.tenant_id), tuyệt đối không được xem dữ liệu của căn hộ hay khách thuê khác (chống triệt để lỗ hổng IDOR).
+Bảo mật RBAC & Cô lập dữ liệu
+2. Yêu cầu chức năng/phi chức năng của ứng dụng
+2.1. Yêu cầu chức năng (Functional Requirements - FR)
+Dựa trên kết quả phân tích nghiệp vụ và thu thập yêu cầu bám sát Đề tài 12, các yêu cầu chức năng của hệ thống được phân rã thành 10 nhóm chức năng cụ thể như sau:
+2.1.1. Phân hệ Quản lý Tài khoản & Xác thực (Authentication & User Management)
+• FR-01 (Đăng nhập & Xác thực): Đăng nhập bằng username/email và mật khẩu cho Quản lý, Nhân viên, Kế toán và Khách hàng/Khách thuê. Phân luồng giao diện tự động theo vai trò (Admin Dashboard cho quản trị nội bộ và Tenant Portal cho khách thuê). Xác thực qua JWT, tự động hết hạn phiên và hỗ trợ đăng xuất an toàn.
+• FR-02 (Quản lý Tài khoản): Tạo mới, cập nhật và khóa/mở khóa tài khoản nội bộ; gán vai trò người dùng (chi tiết quyền hạn xem tại Mục 4 - Ma trận RBAC).
+• FR-03 (Đổi mật khẩu): Cho phép người dùng xem thông tin tài khoản cá nhân và chủ động đổi mật khẩu định kỳ.
+2.1.2. Phân hệ Quản lý Danh mục Tòa nhà, Căn hộ & Tiện ích
+• FR-04 (Quản lý Tòa nhà): Thêm, sửa, xem chi tiết và tra cứu danh mục tòa nhà (mã, tên, địa chỉ, số tầng, số lượng căn hộ).
+• FR-05 (Quản lý Căn hộ): Quản lý danh mục căn hộ theo từng tòa nhà (mã căn, số phòng ngủ, diện tích, giá thuê cơ bản, trạng thái hiện tại).
+• FR-06 (Quản lý Tiện ích): Quản lý danh mục trang thiết bị, tiện ích gắn với từng căn hộ (nội thất, điều hòa, tủ lạnh, máy giặt, ban công...).
+• FR-07 (Trạng thái căn hộ): Quản lý 4 trạng thái chính: AVAILABLE (trống/sẵn sàng cho thuê), RESERVED (đang giữ chỗ đặt phòng), OCCUPIED (đang thuê), MAINTENANCE (bảo trì). Trạng thái tự động đồng bộ theo yêu cầu đặt phòng, hợp đồng và bảo trì.
+2.1.3. Phân hệ Quản lý Khách thuê & Người liên hệ
+• FR-08 (Quản lý Khách thuê): Lưu trữ thông tin khách thuê đại diện (họ tên, ngày sinh, CCCD, SĐT, email, địa chỉ). Khách thuê được cấp tài khoản Cổng thông tin cư dân (Tenant Portal) để chủ động theo dõi hợp đồng, hóa đơn và gửi yêu cầu, đồng thời ban quản lý quản lý hồ sơ tập trung.
+• FR-09 (Người liên hệ): Quản lý danh sách người ở cùng hoặc người liên hệ khẩn cấp gắn với từng khách thuê (họ tên, quan hệ, SĐT, CCCD).
+• FR-10 (Lịch sử khách thuê): Tra cứu toàn bộ lịch sử các kỳ hợp đồng, lịch sử thanh toán tiền và các phiếu yêu cầu bảo trì của từng khách thuê.
+2.1.4. Phân hệ Quản lý Hợp đồng thuê & Tiền cọc
+• FR-11 (Lập Hợp đồng thuê): Quản lý thông tin hợp đồng: mã HĐ, căn hộ, khách thuê, ngày bắt đầu/kết thúc, giá thuê, tiền cọc, chu kỳ thanh toán và file đính kèm.
+• FR-12 (Ràng buộc Hợp đồng): Tự động kiểm tra: ngày kết thúc > ngày bắt đầu, căn hộ phải đang AVAILABLE, tuyệt đối không cho trùng lịch thuê trên cùng một căn.
+• FR-13 (Vòng đời Hợp đồng): Theo dõi hợp đồng qua 4 trạng thái: Dự thảo (DRAFT) -> Đang hiệu lực (ACTIVE) -> Hết hạn (EXPIRED) hoặc Chấm dứt trước hạn (TERMINATED).
+• FR-14 (Quản lý Tiền cọc): Theo dõi tiền cọc: Đang giữ (HELD), Đã hoàn trả (REFUNDED), Đã khấu trừ (DEDUCTED do vi phạm/hư hại). Lưu vết lý do và số tiền trừ cọc.
+• FR-15 (Gia hạn & Thanh lý): Hỗ trợ gia hạn tạo hợp đồng mới; khi kết thúc HĐ: nghiệm thu bàn giao phòng, chốt nợ và cọc, cập nhật căn hộ về AVAILABLE hoặc MAINTENANCE.
+2.1.5. Phân hệ Quản lý Khoản phải thu, Thanh toán & Công nợ
+• FR-16 (Sinh Khoản phải thu): Tự động tạo khoản thu định kỳ từ hợp đồng ACTIVE (tiền thuê + các loại phí dịch vụ điện nước, gửi xe...) kèm hạn nộp (dueDate), chống tạo trùng.
+• FR-17 (Trạng thái Khoản thu): Theo dõi 4 trạng thái: Chưa thanh toán (UNPAID), Thanh toán một phần (PARTIALLY_PAID), Đã thanh toán (PAID), Quá hạn (OVERDUE).
+• FR-18 (Ghi nhận Thanh toán): Ghi nhận giao dịch trả tiền (tiền mặt/chuyển khoản). Hỗ trợ thanh toán nhiều lần (Partial Payment), tự động trừ dần số dư cho đến khi hết nợ.
+• FR-19 (Tính Công nợ & Quá hạn): Công nợ = Tổng phải thu - Tổng đã trả (hệ thống tự tính). Tự động gắn cờ OVERDUE khi quá ngày hẹn thanh toán mà chưa trả đủ.
+2.1.6. Phân hệ Quản lý Yêu cầu Bảo trì
+• FR-20 (Tiếp nhận Bảo trì): Tạo phiếu yêu cầu bảo trì sự cố gắn căn hộ: do Khách thuê chủ động tạo trực tuyến từ Cổng cư dân (kèm mô tả, ảnh chụp hiện trường) hoặc do Nhân viên tiếp nhận qua điện thoại/trực tiếp nhập vào hệ thống; phân loại mức độ ưu tiên (Thấp/Trung bình/Cao/Khẩn cấp).
+• FR-21 (Xử lý Bảo trì): Quản lý tiến độ sửa chữa: Mới tiếp nhận (OPEN) -> Đang xử lý (IN_PROGRESS) -> Hoàn tất (COMPLETED, ghi chi phí thực tế) hoặc Đã hủy (CANCELLED).
+• FR-22 (Đồng bộ Căn hộ Bảo trì): Cho phép chuyển căn hộ sang MAINTENANCE nếu hư hỏng nặng không thể ở; tự động chuyển lại AVAILABLE sau khi hoàn tất sửa chữa.
+2.1.7. Phân hệ Cảnh báo Tự động (Automated Alerts)
+• FR-23 (Cảnh báo Hết hạn HĐ): Rule Engine tự động phát hiện và cảnh báo trước 15 - 30 ngày đối với các hợp đồng sắp hết hạn để kịp thời làm thủ tục gia hạn.
+• FR-24 (Cảnh báo Nợ quá hạn): Tự động lọc các khoản thu quá hạn nộp, hiển thị số ngày trễ và số tiền nợ đọng trên Dashboard và danh sách cảnh báo để đôn đốc thu nợ.
+• FR-25 (Lịch sử Cảnh báo): Lưu trữ toàn bộ lịch sử phát sinh và xử lý cảnh báo phục vụ theo dõi và truy vết vận hành.
+2.1.8. Phân hệ Thống kê, Báo cáo & Dashboard
+• FR-26 (Thống kê Công suất thuê): Tính toán tỷ lệ lấp đầy phòng (%): Công suất thuê = (Số căn OCCUPIED / Tổng số căn khai thác) * 100%.
+• FR-27 (Báo cáo Doanh thu): Thống kê tổng số tiền thực thu từ các giao dịch thanh toán hợp lệ đã ghi nhận trong kỳ (tách biệt với tổng tiền phải thu).
+• FR-28 (Báo cáo Công nợ): Tổng hợp tổng số tiền công nợ còn phải thu, danh sách khách nợ quá hạn và tình trạng tiền cọc đang giữ.
+• FR-29 (Dashboard Vận hành): Hiển thị trực quan: tỷ lệ phòng trống/thuê, số hợp đồng sắp hết hạn, số sự cố bảo trì đang tồn đọng và danh sách việc cần làm gấp.
+2.1.9. Phân hệ Trí tuệ Nhân tạo (AI Features - Bám sát Đề tài 12)
+• AI-FR01 (AI Tóm tắt Hợp đồng): Tự động phân tích file hợp đồng (PDF/DOCX) và tóm tắt thành 5 điều khoản chính: thời hạn, tiền thuê, tiền cọc, nghĩa vụ thanh toán, điều kiện chấm dứt. Người dùng đối chiếu văn bản gốc và duyệt trước khi lưu.
+• AI-FR02 (AI Soạn Thông báo): Dựa trên số tiền nợ hoặc ngày hết hạn thực tế từ hệ thống, AI tự sinh bản thảo email/tin nhắn nhắc nhở lịch sự, đúng ngữ cảnh. Người dùng kiểm duyệt nội dung trước khi gửi.
+• AI-FR03 (Chatbot Tra cứu Quy định): Chatbot RAG trả lời câu hỏi về nội quy tòa nhà, chính sách cọc, giờ giấc từ tài liệu nội bộ; trích dẫn nguồn cụ thể (tài liệu, điều/khoản) và từ chối nếu không có thông tin.
+2.1.10. Phân hệ Cổng thông tin Khách hàng & Đặt phòng (Customer & Tenant Portal)
+• FR-30 (Tra cứu & Tìm kiếm căn hộ trống): Cho phép khách hàng tìm kiếm, lọc danh mục căn hộ trống theo tòa nhà, khoảng giá thuê, diện tích, số phòng ngủ và danh mục tiện ích đi kèm với hình ảnh trực quan.
+• FR-31 (Đặt phòng & Giữ chỗ - Booking): Khách hàng chọn căn hộ ưng ý, chọn ngày dự kiến dọn vào, điền thông tin liên hệ và gửi yêu cầu đặt phòng trực tuyến. Hệ thống tự động ghi nhận mã Booking và chuyển trạng thái căn hộ sang RESERVED (đang giữ chỗ).
+• FR-32 (Theo dõi Hợp đồng & Nhận bàn giao): Khách thuê đăng nhập Cổng thông tin cư dân để xem chi tiết hợp đồng thuê, xem bản tóm tắt 5 điều khoản cốt lõi do AI trích xuất và tra cứu tình trạng tiền cọc đang nắm giữ.
+• FR-33 (Tra cứu Hóa đơn & Thanh toán VietQR): Khách thuê theo dõi chi tiết các khoản phải thu hàng tháng (tiền phòng, điện, nước, dịch vụ), xem số dư nợ còn lại và quét mã VietQR động để chuyển khoản thanh toán nhanh chóng.
+• FR-34 (Gửi Yêu cầu Bảo trì Trực tuyến): Khách thuê chủ động tạo phiếu báo hỏng thiết bị trong căn hộ, đính kèm ảnh chụp hiện trường, theo dõi tiến độ xử lý của kỹ thuật viên và xác nhận đánh giá nghiệm thu sự cố.
+• FR-35 (Chatbot Tư vấn & Hỗ trợ Cư dân): Cung cấp khung chat AI trực tuyến hỗ trợ khách hàng tìm kiếm phòng phù hợp ngân sách và hỗ trợ khách thuê tra cứu nội quy tòa nhà 24/7.
+2.2. Yêu cầu phi chức năng (Non-Functional Requirements - NFR)
+Các yêu cầu phi chức năng đặt ra các tiêu chuẩn chất lượng kỹ thuật, an toàn và hiệu năng mà hệ thống phải đáp ứng:
+• NFR-01 (Hiệu năng (Performance)): Thao tác CRUD và truy vấn CSDL <= 1.0 giây; tải trang Dashboard <= 2.0 giây; thời gian phản hồi chức năng AI <= 3 - 5 giây.
+• NFR-02 (An toàn & Bảo mật (Security)): Mật khẩu băm bằng bcrypt/Argon2; xác thực phiên qua JWT; kiểm soát phân quyền RBAC tại Backend; bảo mật thông tin CCCD khách thuê; lưu nhật ký kiểm toán (Audit Log) các thao tác quan trọng. Áp dụng cơ chế cô lập dữ liệu (Multi-tenant Data Isolation): khách thuê chỉ được truy xuất dữ liệu (hợp đồng, hóa đơn, sự cố) của chính mình, chống triệt để lỗ hổng IDOR.
+• NFR-03 (Tính tin cậy & Kiểm thử): Đảm bảo toàn vẹn CSDL (ACID), chống trùng lấn lịch thuê; tính toán công nợ chính xác 100%; sao lưu định kỳ, Uptime >= 99.5%. Có bộ test tự động bắt buộc cho: hợp đồng, thanh toán, cảnh báo và AI tóm tắt.
+• NFR-04 (An toàn AI (AI Safety)): Chatbot RAG tuân thủ 'NO CONTEXT -> NO ANSWER' (không bịa đặt ngoài tài liệu nội bộ); kết quả AI bắt buộc qua người dùng duyệt trước khi dùng; AI không tự sửa CSDL và không tự tính nợ.
+• NFR-05 (Giao diện & Trải nghiệm (UX)): Giao diện web responsive (desktop, tablet, mobile); tương thích các trình duyệt hiện đại; thông báo lỗi và hướng dẫn bằng tiếng Việt rõ ràng, dễ hiểu.
+• NFR-06 (Khả năng mở rộng (Scalability)): Kiến trúc phân tầng rõ ràng (Frontend - Backend API - AI Service - Database); API tài liệu hóa đầy đủ qua Swagger/OpenAPI.
+3. Sơ đồ phân cấp chức năng của ứng dụng
+Sơ đồ phân cấp chức năng (FDD) thể hiện cấu trúc phân rã các phân hệ và chức năng chi tiết của hệ thống:
+3.1. Sơ đồ cấu trúc cây phân cấp chức năng (FDD Tree Diagram)
+[HỆ THỐNG QUẢN LÝ THUÊ CĂN HỘ CÓ TÍCH HỢP AI]├── 1.0. PHÂN HỆ QUẢN LÝ TÀI KHOẢN & XÁC THỰC│   ├── 1.1. Đăng nhập & Xác thực người dùng (Quản lý, Nhân viên, Kế toán, Khách thuê)│   ├── 1.2. Quản lý tài khoản & Gán vai trò người dùng (RBAC)│   └── 1.3. Quản lý thông tin cá nhân & Đổi mật khẩu│├── 2.0. PHÂN HỆ QUẢN LÝ TÒA NHÀ, CĂN HỘ & TIỆN ÍCH│   ├── 2.1. Quản lý danh mục Tòa nhà (Mã, tên, địa chỉ, số tầng)│   ├── 2.2. Quản lý danh mục Căn hộ (Mã căn, diện tích, phòng, giá thuê)│   ├── 2.3. Quản lý danh mục Tiện ích căn hộ (Nội thất, thiết bị)│   └── 2.4. Quản lý & Đồng bộ trạng thái căn hộ (AVAILABLE, RESERVED, OCCUPIED, MAINTENANCE)│├── 3.0. PHÂN HỆ QUẢN LÝ KHÁCH THUÊ & NGƯỜI LIÊN HỆ│   ├── 3.1. Quản lý hồ sơ Khách thuê đại diện (CCCD, SĐT, Email, Địa chỉ)│   ├── 3.2. Quản lý danh sách Người liên hệ / Ở cùng│   └── 3.3. Tra cứu lịch sử thuê phòng, thanh toán & bảo trì của khách│├── 4.0. PHÂN HỆ QUẢN LÝ HỢP ĐỒNG THUÊ & TIỀN CỌC│   ├── 4.1. Lập & Quản lý Hợp đồng thuê (startDate, endDate, đơn giá, chu kỳ)│   ├── 4.2. Kiểm soát ràng buộc hợp đồng (chống trùng lấn thời gian trên cùng căn hộ)│   ├── 4.3. Quản lý vòng đời hợp đồng (DRAFT → ACTIVE → EXPIRED / TERMINATED)│   ├── 4.4. Quản lý & Đối soát Tiền cọc (HELD, REFUNDED, PARTIALLY_REFUNDED, DEDUCTED)│   └── 4.5. Xử lý Gia hạn & Kết thúc hợp đồng (Bàn giao phòng, chuyển trạng thái căn)│├── 5.0. PHÂN HỆ QUẢN LÝ KHOẢN THU, THANH TOÁN & CÔNG NỢ│   ├── 5.1. Tự động sinh Khoản phải thu định kỳ theo hợp đồng (Billing Engine)│   ├── 5.2. Theo dõi trạng thái Khoản phải thu (UNPAID, PARTIALLY_PAID, PAID, OVERDUE)│   ├── 5.3. Ghi nhận giao dịch Thanh toán & Thanh toán từng phần (Partial Payment)│   └── 5.4. Tính toán Công nợ tự động & Xác định nợ quá hạn (currentDate > dueDate)│├── 6.0. PHÂN HỆ QUẢN LÝ YÊU CẦU BẢO TRÌ│   ├── 6.1. Tiếp nhận & Tạo phiếu yêu cầu bảo trì sự cố từ khách thuê│   ├── 6.2. Quản lý luồng xử lý bảo trì (OPEN → IN_PROGRESS → COMPLETED / CANCELLED)│   └── 6.3. Cập nhật chi phí, nghiệm thu & Đồng bộ trạng thái căn hộ (MAINTENANCE)│├── 7.0. PHÂN HỆ CẢNH BÁO TỰ ĐỘNG (RULE ENGINE)│   ├── 7.1. Cảnh báo Hợp đồng sắp hết hạn theo ngưỡng ngày cấu hình│   ├── 7.2. Cảnh báo Khoản thanh toán quá hạn (số ngày trễ & số tiền nợ)│   └── 7.3. Lưu trữ & Quản lý lịch sử cảnh báo│├── 8.0. PHÂN HỆ THỐNG KÊ, BÁO CÁO & DASHBOARD│   ├── 8.1. Thống kê Công suất thuê căn hộ (%) = OCCUPIED / Tổng căn khai thác│   ├── 8.2. Thống kê Doanh thu thực thu từ các giao dịch thanh toán hợp lệ theo kỳ│   ├── 8.3. Thống kê Tổng công nợ & Danh sách nợ quá hạn│   └── 8.4. Thống kê Vận hành (Hợp đồng sắp hết hạn, Bảo trì tồn đọng, Phân bố trạng thái)│├── 9.0. PHÂN HỆ TRÍ TUỆ NHÂN TẠO (AI ENGINE)│   ├── 9.1. AI Tóm tắt Hợp đồng thuê thành 5 điều khoản chính (Contract Summarizer)│   ├── 9.2. AI Sinh Thông báo/Email nhắc nợ & nhắc gia hạn (Notification Generator)│   └── 9.3. Chatbot RAG hỏi đáp quy định thuê căn hộ từ tài liệu nội bộ (Knowledge Bot)│└── 10.0. PHÂN HỆ CỔNG THÔNG TIN KHÁCH HÀNG & ĐẶT PHÒNG (CUSTOMER / TENANT PORTAL)    ├── 10.1. Tra cứu, lọc & xem chi tiết căn hộ trống (kèm hình ảnh, giá, tiện ích)    ├── 10.2. Gửi yêu cầu Đặt phòng / Giữ chỗ trực tuyến (Booking Request)    ├── 10.3. Xem thông tin Hợp đồng thuê & Bản tóm tắt điều khoản AI    ├── 10.4. Tra cứu Hóa đơn định kỳ & Thanh toán qua mã VietQR    ├── 10.5. Tạo phiếu phản ánh sự cố bảo trì & Đính kèm hình ảnh    └── 10.6. Trợ lý AI tư vấn tìm phòng & Hỏi đáp nội quy tòa nhà (Chatbot)
+3.2. Bảng phân rã chi tiết danh mục chức năng hệ thống
+Bảng phân rã chi tiết danh mục chức năng hệ thống:
+Mã CN
+Nhóm chức năng (Cấp 1)
+Chức năng (Cấp 2)
+Chức năng chi tiết (Cấp 3)
+Vai trò thực hiện
+Phân loại
+F-01
+1.0. Quản lý Tài khoản & Xác thực
+1.1. Đăng nhập & Xác thực
+Đăng nhập hệ thống bằng tài khoản/mật khẩu, xác thực JWT, kiểm soát phiên làm việc
+Quản lý, NV, Kế toán
+Nghiệp vụ
+F-02
+1.0. Quản lý Tài khoản & Xác thực
+1.2. Quản lý Tài khoản & Phân vai trò
+Tạo mới, khóa/mở khóa tài khoản nội bộ và gán vai trò người dùng (Quyền hạn xem Mục 4)
+Quản lý
+Nghiệp vụ
+F-03
+1.0. Quản lý Tài khoản & Xác thực
+1.3. Thông tin cá nhân & Đổi mật khẩu
+Xem thông tin tài khoản cá nhân, cập nhật mật khẩu định kỳ
+Quản lý, NV, Kế toán
+Nghiệp vụ
+F-04
+2.0. Tòa nhà & Căn hộ
+2.1. Quản lý Tòa nhà
+Thêm, sửa, xóa, tìm kiếm danh mục tòa nhà, địa chỉ, số tầng và mô tả quy mô
+Quản lý, Nhân viên
+Nghiệp vụ
+F-05
+2.0. Tòa nhà & Căn hộ
+2.2. Quản lý Căn hộ
+Thêm, sửa, xem chi tiết căn hộ, diện tích, số phòng ngủ, đơn giá thuê cơ bản
+Quản lý, Nhân viên
+Nghiệp vụ
+F-06
+2.0. Tòa nhà & Căn hộ
+2.3. Quản lý Tiện ích
+Thiết lập và cập nhật danh mục tiện ích/nội thất gắn liền với từng căn hộ
+Nhân viên
+Nghiệp vụ
+F-07
+2.0. Tòa nhà & Căn hộ
+2.4. Trạng thái căn hộ
+Quản lý 4 trạng thái: AVAILABLE (trống), RESERVED (đang giữ chỗ), OCCUPIED (đang thuê), MAINTENANCE (bảo trì)
+Hệ thống / Quản lý
+Nghiệp vụ
+F-08
+3.0. Khách thuê & Liên hệ
+3.1. Quản lý Khách thuê
+Tạo mới, chỉnh sửa, lưu trữ thông tin khách thuê đại diện (CCCD, SĐT, Email, Địa chỉ)
+Quản lý, Nhân viên
+Nghiệp vụ
+F-09
+3.0. Khách thuê & Liên hệ
+3.2. Quản lý Người liên hệ
+Thêm, cập nhật danh sách người ở cùng hoặc người liên hệ khẩn cấp của khách thuê
+Nhân viên
+Nghiệp vụ
+F-10
+3.0. Khách thuê & Liên hệ
+3.3. Tra cứu lịch sử khách
+Xem toàn bộ lịch sử các hợp đồng thuê, thanh toán và sự cố bảo trì của từng khách
+Quản lý, NV, Kế toán
+Nghiệp vụ
+F-11
+4.0. Hợp đồng & Tiền cọc
+4.1. Lập Hợp đồng thuê
+Tạo hợp đồng thuê mới (DRAFT), nhập căn hộ, khách thuê, startDate, endDate, đơn giá, chu kỳ
+Nhân viên
+Nghiệp vụ
+F-12
+4.0. Hợp đồng & Tiền cọc
+4.2. Kiểm soát hợp đồng
+Kiểm tra ràng buộc startDate < endDate, căn hộ AVAILABLE, chống trùng lấn thời gian thuê
+Hệ thống / Backend
+Nghiệp vụ
+F-13
+4.0. Hợp đồng & Tiền cọc
+4.3. Phê duyệt & Kích hoạt
+Phê duyệt hợp đồng DRAFT sang ACTIVE, tự động đổi trạng thái căn hộ sang OCCUPIED
+Quản lý
+Nghiệp vụ
+F-14
+4.0. Hợp đồng & Tiền cọc
+4.4. Quản lý Tiền cọc
+Ghi nhận cọc (HELD), xử lý hoàn cọc (REFUNDED) hoặc khấu trừ cọc (DEDUCTED) có lưu vết
+Kế toán, Quản lý
+Nghiệp vụ
+F-15
+4.0. Hợp đồng & Tiền cọc
+4.5. Gia hạn & Kết thúc HĐ
+Gia hạn tạo hợp đồng mới; kết thúc chuyển EXPIRED/TERMINATED, bàn giao và trả trạng thái căn
+Quản lý, Nhân viên
+Nghiệp vụ
+F-16
+5.0. Khoản thu & Công nợ
+5.1. Billing Engine
+Tự động sinh khoản phải thu định kỳ từ hợp đồng ACTIVE (tiền thuê + phí dịch vụ + dueDate)
+Hệ thống / Kế toán
+Nghiệp vụ
+F-17
+5.0. Khoản thu & Công nợ
+5.2. Quản lý Khoản phải thu
+Theo dõi danh sách và trạng thái khoản thu: UNPAID, PARTIALLY_PAID, PAID, OVERDUE
+Kế toán
+Nghiệp vụ
+F-18
+5.0. Khoản thu & Công nợ
+5.3. Ghi nhận Thanh toán
+Ghi nhận giao dịch trả tiền, hỗ trợ thanh toán từng phần (Partial Payment), tự giảm remainingAmount
+Kế toán
+Nghiệp vụ
+F-19
+5.0. Khoản thu & Công nợ
+5.4. Theo dõi Công nợ
+Tính toán tự động: Công nợ = Phải thu - Đã thanh toán; tự động đánh dấu OVERDUE khi qua hạn
+Hệ thống / Kế toán
+Nghiệp vụ
+F-20
+6.0. Quản lý Bảo trì
+6.1. Tiếp nhận sự cố
+Tạo phiếu yêu cầu bảo trì gắn căn hộ: tiêu đề, mô tả sự cố, hình ảnh, mức độ ưu tiên
+Nhân viên, Khách thuê
+Nghiệp vụ
+F-21
+6.0. Quản lý Bảo trì
+6.2. Phân công & Xử lý
+Chuyển OPEN → IN_PROGRESS (phân công kỹ thuật) → COMPLETED (nghiệm thu, ghi chi phí) / CANCELLED
+Quản lý, Nhân viên
+Nghiệp vụ
+F-22
+6.0. Quản lý Bảo trì
+6.3. Cập nhật căn bảo trì
+Chuyển căn sang MAINTENANCE nếu sự cố nghiêm trọng; chuyển AVAILABLE khi hoàn thành
+Quản lý, Nhân viên
+Nghiệp vụ
+F-23
+7.0. Cảnh báo Tự động
+7.1. Cảnh báo hết hạn HĐ
+Quét hợp đồng ACTIVE thỏa ngưỡng daysToEnd cấu hình, hiển thị danh sách cảnh báo
+Hệ thống / Rule
+Hệ thống
+F-24
+7.0. Cảnh báo Tự động
+7.2. Cảnh báo Nợ quá hạn
+Quét khoản thu currentDate > dueDate và còn nợ, hiển thị số ngày trễ và số tiền nợ
+Hệ thống / Rule
+Hệ thống
+F-25
+7.0. Cảnh báo Tự động
+7.3. Lịch sử cảnh báo
+Lưu trữ và tra cứu lịch sử phát sinh các cảnh báo vận hành và tài chính
+Quản lý, NV, Kế toán
+Hệ thống
+F-26
+8.0. Thống kê & Dashboard
+8.1. Công suất thuê
+Tính toán tỷ lệ lấp đầy: (Căn OCCUPIED / Tổng căn khai thác) * 100% hiển thị biểu đồ
+Quản lý
+Nghiệp vụ
+F-27
+8.0. Thống kê & Dashboard
+8.2. Doanh thu thực thu
+Tổng hợp số tiền thực thu từ các giao dịch thanh toán hợp lệ đã xác nhận trong kỳ
+Quản lý, Kế toán
+Nghiệp vụ
+F-28
+8.0. Thống kê & Dashboard
+8.3. Báo cáo Công nợ
+Tổng hợp tổng công nợ, phân loại nợ quá hạn và tình trạng tiền cọc đang nắm giữ
+Quản lý, Kế toán
+Nghiệp vụ
+F-29
+8.0. Thống kê & Dashboard
+8.4. Thống kê Vận hành
+Hiển thị số HĐ sắp hết hạn, số yêu cầu bảo trì tồn đọng và phân bố trạng thái toàn bộ căn hộ
+Quản lý, NV, Kế toán
+Nghiệp vụ
+AI-01
+9.0. Trí tuệ Nhân tạo (AI)
+9.1. AI Tóm tắt Hợp đồng
+Tóm tắt hợp đồng thành 5 điều khoản: thời hạn, tiền thuê, tiền cọc, nghĩa vụ thanh toán, điều kiện chấm dứt
+Nhân viên, Quản lý
+Tích hợp AI
+AI-02
+9.0. Trí tuệ Nhân tạo (AI)
+9.2. AI Sinh Thông báo
+Tiếp nhận dữ liệu nợ/hạn từ Rule Engine; sinh email/tin nhắn nhắc nhở tự nhiên; duyệt trước khi gửi
+Nhân viên, Kế toán
+Tích hợp AI
+AI-03
+9.0. Trí tuệ Nhân tạo (AI)
+9.3. RAG Chatbot Quy định
+Hỏi đáp quy định từ tài liệu nội bộ kèm trích dẫn nguồn; tuân thủ 'NO CONTEXT -> NO ANSWER'
+Tất cả người dùng
+Tích hợp AI
+F-30
+10.0. Cổng thông tin Khách hàng
+10.1. Tra cứu căn hộ trống
+Tìm kiếm, lọc danh mục căn hộ trống theo tòa nhà, khoảng giá, diện tích, tiện ích kèm hình ảnh
+Khách hàng
+Nghiệp vụ
+F-31
+10.0. Cổng thông tin Khách hàng
+10.2. Đặt phòng trực tuyến
+Chọn phòng, gửi thông tin giữ chỗ trực tuyến, tự động chuyển phòng sang RESERVED và cấp mã Booking
+Khách hàng
+Nghiệp vụ
+F-32
+10.0. Cổng thông tin Khách hàng
+10.3. Xem Hợp đồng & Tóm tắt AI
+Đăng nhập xem hợp đồng cá nhân, bản tóm tắt 5 điều khoản do AI trích xuất và trạng thái tiền cọc
+Khách thuê
+Nghiệp vụ
+F-33
+10.0. Cổng thông tin Khách hàng
+10.4. Tra cứu Hóa đơn & QR
+Xem chi tiết các khoản thu định kỳ, số dư nợ và quét mã VietQR động để chuyển khoản
+Khách thuê
+Nghiệp vụ
+F-34
+10.0. Cổng thông tin Khách hàng
+10.5. Gửi Yêu cầu Bảo trì
+Tạo phiếu báo hỏng thiết bị, tải ảnh chụp hiện trường, theo dõi tiến độ xử lý và nghiệm thu
+Khách thuê
+Nghiệp vụ
+F-35
+10.0. Cổng thông tin Khách hàng
+10.6. Trợ lý AI Cư dân & Đặt phòng
+Tương tác Chatbot AI tư vấn tìm phòng phù hợp và giải đáp nội quy tòa nhà 24/7
+Khách hàng, Khách thuê
+Tích hợp AI
+4. Phân quyền người dùng & Phạm vi vị trí AI
+Ma trận phân quyền người dùng (RBAC) và đặc tả ranh giới an toàn của các chức năng AI:
+4.1. Ma trận phân quyền người dùng (RBAC Matrix)
+Kiểm soát phân quyền theo vai trò (RBAC) tại tầng Backend API cho 4 nhóm tác nhân: Quản lý, Nhân viên, Kế toán và Khách hàng / Khách thuê (Tenant / Customer). Khách hàng có tài khoản đăng nhập Cổng thông tin (Tenant Portal), chịu cơ chế phân quyền và cô lập dữ liệu cá nhân nghiêm ngặt (chỉ xem và thao tác trên dữ liệu liên quan đến chính mình):
+STT
+Nhóm nghiệp vụ
+Quản lý (Manager)
+Nhân viên (Staff)
+Kế toán (Accountant)
+Khách hàng / Khách thuê
+Ghi chú ranh giới nghiệp vụ
+1
+Tài khoản & Phân quyền
+Toàn quyền (CRUD tài khoản, gán vai trò)
+Đổi mật khẩu cá nhân
+Đổi mật khẩu cá nhân
+Đăng ký, Đăng nhập, Đổi mật khẩu cá nhân
+Khách thuê có tài khoản Portal riêng biệt
+2
+Tòa nhà, Căn hộ & Tiện ích
+Toàn quyền (CRUD danh mục tài sản)
+Tạo mới, Sửa, Xem theo phân công
+Chỉ xem thông tin
+Xem danh sách phòng trống & tiện ích
+Khách vãng lai xem thông tin phòng niêm yết
+3
+Khách thuê & Người liên hệ
+Toàn quyền quản lý và tra cứu
+Tạo mới, Sửa hồ sơ khách thuê
+Tra cứu lịch sử thanh toán
+Xem & cập nhật thông tin cá nhân, người ở cùng
+Chỉ xem và sửa hồ sơ của chính mình
+4
+Hợp đồng thuê căn hộ
+Phê duyệt, Kích hoạt, Thanh lý HĐ
+Lập dự thảo (DRAFT), Xem HĐ
+Chỉ xem HĐ để lập khoản thu
+Xem HĐ cá nhân & bản tóm tắt AI
+Nhân viên lập, Quản lý duyệt, Khách xác nhận
+5
+Tiền cọc (Security Deposit)
+Phê duyệt hoàn / khấu trừ cọc
+Xem trạng thái tiền cọc
+Thu cọc, Xử lý hoàn/trừ cọc
+Xem số tiền cọc & trạng thái cọc
+Tiền cọc hạch toán riêng
+6
+Khoản phải thu & Thanh toán
+Xem tổng hợp, Duyệt điều chỉnh
+Xem danh sách theo phân công
+Lập khoản thu, Ghi nhận thu tiền
+Xem hóa đơn, quét VietQR thanh toán
+Kế toán quản lý chứng từ thu
+7
+Công nợ & Quá hạn
+Xem Dashboard, Báo cáo nợ
+Xem danh sách nợ để đôn đốc
+Theo dõi chi tiết nợ, Đối soát
+Xem số dư nợ của phòng mình
+Hệ thống tự động tính nợ
+8
+Yêu cầu Bảo trì sự cố
+Phân công thợ, Nghiệm thu chi phí
+Tiếp nhận sự cố, Báo tiến độ
+Ghi nhận chi phí sửa chữa
+Tạo phiếu báo hỏng, gửi ảnh, nghiệm thu
+Khách thuê chủ động gửi ticket trực tuyến
+9
+Cảnh báo & Dashboard
+Xem toàn bộ Dashboard, Cảnh báo
+Xem cảnh báo HĐ sắp hết hạn
+Xem cảnh báo Nợ quá hạn
+Nhận thông báo nhắc nợ/hạn cá nhân
+Thông báo gửi trực tiếp đến Portal/Email khách
+10
+Chức năng AI
+Giám sát, Sử dụng toàn bộ AI
+Duyệt tóm tắt HĐ, nhắc gia hạn
+Duyệt nội dung thông báo nhắc nợ
+Hỏi Chatbot nội quy, tư vấn tìm phòng
+Người dùng duyệt trước khi gửi nội bộ
+11
+Đặt phòng & Giữ chỗ (Booking)
+Phê duyệt yêu cầu đặt phòng đặc biệt
+Tiếp nhận, xác nhận & chuyển thành HĐ
+Ghi nhận tiền cọc giữ chỗ
+Tạo yêu cầu đặt phòng, theo dõi mã booking
+Tự động chuyển phòng sang RESERVED
+4.2. Đặc tả phạm vi và ranh giới an toàn của AI (AI Scope & Safety Boundaries)
+AI đóng vai trò trợ lý xử lý ngôn ngữ tự nhiên (NLP Assistant), không thay thế logic nghiệp vụ của phần mềm:
+STT
+Vị trí chức năng AI
+Dữ liệu đầu vào (Input)
+Kết quả AI sinh ra (Output)
+Vai trò kiểm duyệt (Human-in-the-loop)
+Giới hạn an toàn & Ranh giới cấm
+1
+AI Tóm tắt Hợp đồng thuê
+File hợp đồng (PDF/DOCX)
+Tóm tắt 5 điều khoản: Thời hạn, Tiền thuê, Tiền cọc, Nghĩa vụ thanh toán, Điều kiện chấm dứt
+Nhân viên, Quản lý
+Không tư vấn pháp lý, không tự lưu CSDL
+2
+AI Soạn Thông báo nhắc hạn
+Số nợ, ngày hết hạn thực tế
+Bản thảo email/tin nhắn nhắc nhở
+Kế toán (nhắc nợ), NV (nhắc HĐ)
+Không tự tính nợ, duyệt trước khi gửi
+3
+Chatbot Tra cứu Quy định
+Câu hỏi của Cư dân / Khách thuê / Nhân viên + Tài liệu nội quy tòa nhà
+Câu trả lời kèm trích dẫn nguồn
+Khách thuê (tự đánh giá), Ban quản lý (kiểm duyệt nguồn)
+Tuân thủ NO CONTEXT -> NO ANSWER; Không tiết lộ bí mật kinh doanh/dữ liệu tài chính nội bộ
+4
+AI Tư vấn Đặt phòng & Tìm kiếm căn hộ
+Nhu cầu khách (ngân sách, số phòng, tiện ích) + Dữ liệu căn hộ trống AVAILABLE
+Gợi ý danh sách căn hộ phù hợp nhất kèm thông số và liên kết đặt phòng
+Khách hàng chủ động lựa chọn, Nhân viên xác nhận thông tin booking
+Không tự ý chốt cọc hoặc cam kết giá sai lệch so với bảng giá niêm yết của hệ thống
+Các nguyên tắc an toàn AI cốt lõi (Vùng cấm của AI):
+• AI không tự ý thay đổi dữ liệu trong CSDL hoặc tự duyệt hợp đồng.
+• AI không tự tính toán tài chính hoặc số dư công nợ (hệ thống tính 100%).
+• AI không đưa ra tư vấn pháp lý ngoài tài liệu nội bộ được cung cấp.

@@ -1,0 +1,62 @@
+KẾ HOẠCH THỰC HIỆN – PHÁT TRIỂN ỨNG DỤNG CHUYÊN SÂU
+Nhóm 12 - Thành viên nhóm:
+Nguyễn Thị Trang (Trưởng nhóm)
+Lê Quang Khánh
+Tên ứng dụng: ﻿Hệ thống quản lý thuê căn hộ có tích hợp AI
+Thời gian thực hiện: Từ 27/07/2026 đến 27/09/2026 (9 tuần)
+Kế hoạch chi tiết
+Công việc
+Thành viên thực hiện
+Ghi chú
+Tuần 01
+(Từ:  27/07/2026
+Đến:  02/08/2026)
+Khảo sát bài toán Hệ thống quản lý thuê căn hộ có tích hợp AI
+Nguyễn Thị Trang
+Khởi tạo tài liệu dự án
+Lê Quang Khánh
+Tuần 02 
+(Từ:  03/08/2026
+Đến:  09/08/2026)
+Phân tích nghiệp vụ thuê căn hộ
+Nguyễn Thị Trang
+Thiết kế use case
+Lê Quang Khánh
+Tuần 03 
+(Từ:  10/08/2026
+Đến:  16/08/2026)
+Phân quyền và vị trí AI.
+Nguyễn Thị Trang
+Phát triển lược đồ ERD
+Lê Quang Khánh
+Tuần 04 
+(Từ:  17/08/2026
+Đến:  23/08/2026)
+Tinh chỉnh lại tài liệu: sửa phần danh sách câu hỏi thu thập
+Nguyễn Thị Trang
+Phát triển lược đồ ERD
+Lê Quang Khánh
+Tuần 05 
+(Từ:  24/08/2026
+Đến:  30/08/2026)
+Tinh chỉnh lại tài liệu: sửa phần phân quyền và chuẩn hóa lại các yêu cầu chức năng  
+ 
+Nguyễn Thị Trang
+Chỉnh sửa sơ đồ usecase theo chức năng mới chuẩn hóa 
+Lê Quang Khánh
+Tuần 06 
+(Từ:  31/08/2026
+Đến:  06/09/2026)
+Tinh chỉnh lại tài liệu: sửa phần phân quyền và chuẩn hóa lại các yêu cầu chức năng  
+Nguyễn Thị Trang
+Hoàn thiện lược đồ ERD,UML
+Lê Quang Khánh
+Tuần 07 
+(Từ:  07/09/2026
+Đến:  13/09/2026)
+Tuần 08 
+(Từ:  14/09/2026
+Đến:  20/09/2026)
+Tuần 09 
+(Từ:  21/09/2026
+Đến:  27/09/2026)

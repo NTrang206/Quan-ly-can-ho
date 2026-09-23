@@ -1,0 +1,254 @@
+import React, { useState } from 'react';
+import {
+  Search,
+  Zap,
+  Sparkles,
+  Bell,
+  HelpCircle,
+  Menu,
+  LogOut,
+  Building2,
+  ChevronDown,
+  Shield,
+  UserCheck,
+  Calculator,
+  Home,
+  User,
+} from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
+import { toggleSidebar, setActiveBuildingId } from '../../stores/globalSlice';
+import { useGetBuildingsQuery } from '../../modules/buildings/services/buildingApi';
+import { useTriggerSystemScanMutation } from '../../modules/alerts_ai/services/alertApi';
+import { useToast } from '../../hooks/useToast';
+import { Link } from 'react-router-dom';
+import { UserRole } from '../../types';
+
+export const AdminHeader: React.FC = () => {
+  const { user, logout, switchRole } = useAuth();
+  const dispatch = useAppDispatch();
+  const toast = useToast();
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const { notifications, activeBuildingId } = useAppSelector((state) => state.global);
+  const { data: buildings = [] } = useGetBuildingsQuery();
+  const [triggerScan, { isLoading: isScanning }] = useTriggerSystemScanMutation();
+
+  const handleQuickScan = async () => {
+    try {
+      const res = await triggerScan().unwrap();
+      toast.success(
+        'Đã quét toàn diện hệ thống',
+        `Hoàn tất quét ${res.scannedItemsCount} hồ sơ. Phát hiện ${res.newAlertsCount} cảnh báo cần xử lý!`
+      );
+    } catch {
+      toast.error('Lỗi', 'Không thể kích hoạt quét tự động');
+    }
+  };
+
+  return (
+    <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      {/* Left: Mobile Sidebar toggle & Search */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => dispatch(toggleSidebar())}
+          className="lg:hidden p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          aria-label="Mở menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        {/* Building Filter Dropdown */}
+        <div className="hidden xl:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700">
+          <Building2 className="w-3.5 h-3.5 text-brand-600" />
+          <select
+            value={activeBuildingId || ''}
+            onChange={(e) => dispatch(setActiveBuildingId(e.target.value ? Number(e.target.value) : null))}
+            className="bg-transparent font-medium outline-none cursor-pointer text-slate-800"
+          >
+            <option value="">Tất cả tòa nhà (5 Tòa)</option>
+            {buildings.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name} ({b.occupiedCount}/{b.totalApartments} căn)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Global Search Input */}
+        <div className="relative hidden sm:flex items-center w-64 md:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm căn hộ, mã HĐ, khách..."
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-12 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
+          />
+          <kbd className="absolute right-2.5 px-1.5 py-0.5 text-[10px] font-mono bg-slate-200/80 text-slate-600 rounded">
+            ⌘K
+          </kbd>
+        </div>
+      </div>
+
+      {/* Right: Actions, Notifications & Profile */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Quick Scan Button */}
+        <button
+          onClick={handleQuickScan}
+          disabled={isScanning}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors disabled:opacity-50"
+          title="Quét tự động nợ quá hạn và HĐ sắp hết hạn"
+        >
+          <Zap className={`w-3.5 h-3.5 text-amber-500 ${isScanning ? 'animate-spin' : ''}`} />
+          <span>{isScanning ? 'Đang quét...' : 'Quét rủi ro'}</span>
+        </button>
+
+        {/* AI Copilot Button */}
+        <Link
+          to="/admin/rag-chatbot"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-xs transition-all"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">AI Copilot</span>
+        </Link>
+
+        {/* Notification Bell */}
+        <div className="relative">
+          <button
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative transition-colors"
+            aria-label="Thông báo"
+          >
+            <Bell className="w-4 h-4" />
+            {notifications.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+            )}
+          </button>
+
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">Thông báo hệ thống</span>
+                <span className="text-[10px] bg-rose-50 text-rose-600 font-bold px-1.5 py-0.5 rounded">
+                  {notifications.length} mới
+                </span>
+              </div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                {notifications.map((n) => (
+                  <div key={n.id} className="p-3 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900">{n.title}</span>
+                      <span className="text-[10px] text-slate-400">{n.timestamp}</span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-0.5">{n.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Profile dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <img
+              src={user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80';
+              }}
+              alt={user?.fullName}
+              className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-xs"
+            />
+            <div className="hidden xl:block text-left">
+              <div className="text-xs font-semibold text-slate-900 line-clamp-1">{user?.fullName}</div>
+              <div className="text-[10px] text-slate-400 uppercase font-medium">{user?.roleCode}</div>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
+              <div className="px-4 py-2 border-b border-slate-100">
+                <div className="text-xs font-bold text-slate-900">{user?.fullName}</div>
+                <div className="text-[11px] text-slate-500">{user?.email}</div>
+              </div>
+
+              {/* Portal navigation links */}
+              <div className="p-1">
+                <Link
+                  to="/tenant-portal"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl"
+                >
+                  <Building2 className="w-4 h-4 text-brand-600" />
+                  <span>Cổng Cư Dân (Resident Hub)</span>
+                </Link>
+
+                <Link
+                  to="/explore"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl"
+                >
+                  <Search className="w-4 h-4 text-emerald-600" />
+                  <span>Khám Phá Căn Hộ (Guest)</span>
+                </Link>
+              </div>
+
+              {/* Demo Account Switcher inside dropdown menu (compact & out of the main header) */}
+              <div className="border-t border-slate-100 p-2">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2 mb-1">
+                  Đổi vai trò tài khoản
+                </div>
+                <div className="grid grid-cols-2 gap-1 text-[11px]">
+                  {[
+                    { code: 'ADMIN' as UserRole, label: 'Quản trị' },
+                    { code: 'STAFF' as UserRole, label: 'Nhân viên' },
+                    { code: 'ACCOUNTANT' as UserRole, label: 'Kế toán' },
+                    { code: 'TENANT' as UserRole, label: 'Cư dân' },
+                  ].map((r) => (
+                    <button
+                      key={r.code}
+                      onClick={() => {
+                        switchRole(r.code);
+                        setShowUserMenu(false);
+                        toast.info('Chuyển vai trò', `Đã chuyển sang tài khoản ${r.label}`);
+                        if (r.code === 'TENANT') {
+                          window.location.href = '/tenant-portal';
+                        }
+                      }}
+                      className={`text-left px-2 py-1 rounded-lg transition-colors ${
+                        user?.roleCode === r.code
+                          ? 'bg-brand-50 text-brand-700 font-bold'
+                          : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 p-1">
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Đăng Xuất</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
