@@ -102,16 +102,10 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Header Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-50 border border-sky-100 rounded-full text-[11px] font-semibold text-sky-800">
-              <span className="w-2 h-2 rounded-full bg-sky-500" />
-              <span>HỆ THỐNG QUẢN TRỊ & DỊCH VỤ CƯ DÂN</span>
-            </div>
-
             <div>
               <h2 className="text-2xl sm:text-[26px] font-extrabold text-slate-900 tracking-tight leading-snug">
                 Chào mừng bạn đến với <br />
-                <span className="text-[#1d4ed8]">Dwell Living</span>
+                <span className="text-[#1d4ed8]">Dwell</span>
               </h2>
               <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                 Nền tảng quản lý vận hành căn hộ cho thuê thông minh, bàn giao phòng tức thì và bảo mật toàn diện.
