@@ -149,16 +149,6 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-snug">
-                Chào mừng bạn đến với <br />
-                <span className="text-[#1d4ed8]">Dwell</span>
-              </h2>
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                Nền tảng quản lý vận hành căn hộ cho thuê thông minh, bàn giao phòng tức thì và bảo mật toàn diện.
-              </p>
-            </div>
-
             {/* Feature Cards (No Icons) */}
             <div className="space-y-3 pt-1">
               <div className="bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
