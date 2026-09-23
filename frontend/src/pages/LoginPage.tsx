@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Phone,
   ShieldCheck,
   Bot,
   QrCode,
@@ -57,21 +56,8 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f0f4f8] flex flex-col justify-between py-6 px-4 sm:px-6">
-      {/* Top Bar Navigation */}
-      <div className="max-w-5xl w-full mx-auto flex items-center justify-end">
-        <div className="flex items-center gap-4 text-xs">
-          <div className="hidden sm:flex items-center gap-1.5 text-slate-600 font-semibold">
-            <Phone className="w-3.5 h-3.5 text-[#1d4ed8]" />
-            <span>Hotline: <strong className="text-slate-900">1900 8899</strong></span>
-          </div>
-          <div className="px-2.5 py-1 bg-white rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs flex items-center gap-1 shadow-xs">
-            <span>🌐 Tiếng Việt</span>
-          </div>
-        </div>
-      </div>
-
       {/* Main Login Card Container */}
-      <div className="max-w-5xl w-full mx-auto my-6 bg-white rounded-[26px] shadow-sm border border-slate-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+      <div className="max-w-5xl w-full mx-auto my-auto bg-white rounded-[26px] shadow-sm border border-slate-200/90 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
         {/* Left Side: Brand Promo & Features (Clean Light Tone) */}
         <div className="lg:col-span-5 bg-slate-50/70 border-r border-slate-100 p-8 text-slate-800 flex flex-col justify-between relative overflow-hidden">
           <div className="space-y-5">
