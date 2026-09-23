@@ -1,25 +1,16 @@
 import React, { useState } from 'react';
 import {
   Search,
-  Zap,
-  Sparkles,
   Bell,
-  HelpCircle,
   Menu,
   LogOut,
   Building2,
   ChevronDown,
-  Shield,
-  UserCheck,
-  Calculator,
-  Home,
-  User,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { toggleSidebar, setActiveBuildingId } from '../../stores/globalSlice';
 import { useGetBuildingsQuery } from '../../modules/buildings/services/buildingApi';
-import { useTriggerSystemScanMutation } from '../../modules/alerts_ai/services/alertApi';
 import { useToast } from '../../hooks/useToast';
 import { Link } from 'react-router-dom';
 import { UserRole } from '../../types';
@@ -34,19 +25,6 @@ export const AdminHeader: React.FC = () => {
 
   const { notifications, activeBuildingId } = useAppSelector((state) => state.global);
   const { data: buildings = [] } = useGetBuildingsQuery();
-  const [triggerScan, { isLoading: isScanning }] = useTriggerSystemScanMutation();
-
-  const handleQuickScan = async () => {
-    try {
-      const res = await triggerScan().unwrap();
-      toast.success(
-        'Đã quét toàn diện hệ thống',
-        `Hoàn tất quét ${res.scannedItemsCount} hồ sơ. Phát hiện ${res.newAlertsCount} cảnh báo cần xử lý!`
-      );
-    } catch {
-      toast.error('Lỗi', 'Không thể kích hoạt quét tự động');
-    }
-  };
 
   return (
     <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
@@ -90,26 +68,6 @@ export const AdminHeader: React.FC = () => {
 
       {/* Right: Actions, Notifications & Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Quick Scan Button */}
-        <button
-          onClick={handleQuickScan}
-          disabled={isScanning}
-          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors disabled:opacity-50"
-          title="Quét tự động nợ quá hạn và HĐ sắp hết hạn"
-        >
-          <Zap className={`w-3.5 h-3.5 text-amber-500 ${isScanning ? 'animate-spin' : ''}`} />
-          <span>{isScanning ? 'Đang quét...' : 'Quét rủi ro'}</span>
-        </button>
-
-        {/* AI Copilot Button */}
-        <Link
-          to="/admin/rag-chatbot"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-xs transition-all"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">AI Copilot</span>
-        </Link>
-
         {/* Notification Bell */}
         <div className="relative">
           <button
