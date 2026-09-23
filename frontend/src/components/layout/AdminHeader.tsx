@@ -83,11 +83,8 @@ export const AdminHeader: React.FC = () => {
           <input
             type="text"
             placeholder="Tìm kiếm căn hộ, mã HĐ, khách..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-12 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
           />
-          <kbd className="absolute right-2.5 px-1.5 py-0.5 text-[10px] font-mono bg-slate-200/80 text-slate-600 rounded">
-            ⌘K
-          </kbd>
         </div>
       </div>
 
