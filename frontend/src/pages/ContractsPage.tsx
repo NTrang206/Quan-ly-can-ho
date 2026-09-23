@@ -180,9 +180,6 @@ export const ContractsPage: React.FC = () => {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <div className="text-xs font-semibold text-brand-600 mb-0.5">
-            Quản lý hợp đồng & pháp lý
-          </div>
           <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
             Quản Lý Hợp Đồng Cho Thuê
           </h1>
