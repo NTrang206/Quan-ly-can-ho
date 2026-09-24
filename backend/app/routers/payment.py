@@ -1,0 +1,272 @@
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException
+)
+
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models.tenant import Tenant
+from app.models.payment import Payment
+from app.models.receivable import Receivable
+from app.models.user import User
+from datetime import datetime
+from uuid import uuid4
+
+from app.models.contract import Contract
+from app.services.debt_service import recalculate_debt
+from app.schemas.payment import (
+    PaymentCreate,
+    PaymentResponse
+)
+def generate_cash_transaction_code():
+    today = datetime.now().strftime("%Y%m%d")
+    random_code = uuid4().hex[:6].upper()
+    return f"PT-{today}-{random_code}"
+from app.dependencies.auth import require_roles
+
+
+router = APIRouter(
+    prefix="/payments",
+    tags=["Payments"]
+)
+
+
+VALID_PAYMENT_METHODS = [
+    "CASH",
+    "BANK_TRANSFER"
+]
+
+
+# =========================================================
+# GHI NHẬN THANH TOÁN
+# =========================================================
+@router.post(
+    "",
+    response_model=PaymentResponse
+)
+def create_payment(
+    data: PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            "ADMIN",
+            "ACCOUNTANT"
+        )
+    )
+):
+
+    # 1. Tìm khoản phải thu
+    receivable = db.query(Receivable).filter(
+        Receivable.id == data.receivable_id
+    ).first()
+
+    if receivable is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy khoản phải thu"
+        )
+
+    # 2. Không thanh toán lại khoản đã PAID
+    if receivable.status == "PAID":
+        raise HTTPException(
+            status_code=400,
+            detail="Khoản phải thu đã được thanh toán đầy đủ"
+        )
+
+    # 3. Kiểm tra số tiền > 0
+    if data.amount <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Số tiền thanh toán phải lớn hơn 0"
+        )
+
+    # 4. Kiểm tra phương thức
+    if data.payment_method not in [
+        "CASH",
+        "BANK_TRANSFER"
+    ]:
+        raise HTTPException(
+            status_code=400,
+            detail="Phương thức thanh toán không hợp lệ"
+        )
+
+    # 5. Tính tiền còn nợ
+    remaining_before_payment = (
+        receivable.total_amount
+        - receivable.paid_amount
+    )
+
+    # 6. Không cho thanh toán dư
+    if data.amount > remaining_before_payment:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Số tiền thanh toán lớn hơn số tiền còn nợ "
+                f"({remaining_before_payment})"
+            )
+        )
+
+    # 7. Xử lý mã giao dịch
+    transaction_code = data.transaction_code
+
+    if data.payment_method == "BANK_TRANSFER":
+
+        if not transaction_code:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Thanh toán chuyển khoản "
+                    "phải có mã giao dịch"
+                )
+            )
+
+    else:
+        # Tiền mặt: Backend tự sinh mã phiếu thu
+        if not transaction_code:
+            transaction_code = (
+                generate_cash_transaction_code()
+            )
+
+    # 8. Chống mã giao dịch trùng
+    existing_transaction = db.query(Payment).filter(
+        Payment.transaction_code == transaction_code
+    ).first()
+
+    if existing_transaction:
+        raise HTTPException(
+            status_code=400,
+            detail="Mã giao dịch đã tồn tại"
+        )
+
+    # 9. Tạo Payment
+    payment = Payment(
+        receivable_id=data.receivable_id,
+        amount=data.amount,
+        payment_method=data.payment_method,
+        transaction_code=transaction_code,
+        note=data.note,
+        handled_by=current_user.id
+    )
+
+    db.add(payment)
+
+    # 10. Cộng số đã trả
+    receivable.paid_amount = (
+        receivable.paid_amount
+        + data.amount
+    )
+
+    remaining = (
+        receivable.total_amount
+        - receivable.paid_amount
+    )
+
+    # 11. Cập nhật trạng thái
+    if remaining == 0:
+        receivable.status = "PAID"
+    else:
+        receivable.status = "PARTIAL"
+
+    db.commit()
+    db.refresh(payment)
+
+    # 12. Tìm Tenant qua Contract
+    contract = db.query(Contract).filter(
+        Contract.id == receivable.contract_id
+    ).first()
+
+    # 13. Đồng bộ sổ công nợ
+    if contract:
+        recalculate_debt(
+            contract.tenant_id,
+            db
+        )
+
+    return payment
+
+
+# =========================================================
+# XUẤT THÔNG TIN BIÊN LAI
+# =========================================================
+@router.get(
+    "/my",
+    response_model=list[PaymentResponse]
+)
+def get_my_payments(
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(
+        require_roles("TENANT")
+    )
+):
+
+    tenant = db.query(Tenant).filter(
+        Tenant.user_id == current_user.id
+    ).first()
+
+    if tenant is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy hồ sơ khách thuê"
+        )
+
+    payments = (
+        db.query(Payment)
+        .join(
+            Receivable,
+            Payment.receivable_id == Receivable.id
+        )
+        .join(
+            Contract,
+            Receivable.contract_id == Contract.id
+        )
+        .filter(
+            Contract.tenant_id == tenant.id
+        )
+        .all()
+    )
+
+    return payments
+@router.get("/{payment_id}/receipt")
+def export_receipt(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            "ADMIN",
+            "STAFF",
+            "ACCOUNTANT"
+        )
+    )
+):
+
+    payment = db.query(Payment).filter(
+        Payment.id == payment_id
+    ).first()
+
+    if payment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy giao dịch thanh toán"
+        )
+
+    receivable = db.query(Receivable).filter(
+        Receivable.id == payment.receivable_id
+    ).first()
+
+    receipt = (
+        f"PHIẾU THU #{payment.id}\n"
+        f"Khoản thu: {payment.receivable_id}\n"
+        f"Số tiền: {payment.amount}\n"
+        f"Phương thức: {payment.payment_method}\n"
+        f"Mã giao dịch: {payment.transaction_code or 'Không có'}\n"
+        f"Ngày thanh toán: {payment.payment_date}\n"
+        f"Kỳ thu: {receivable.billing_month}/{receivable.billing_year}\n"
+        f"Ghi chú: {payment.note or 'Không có'}"
+    )
+
+    return {
+        "receipt": receipt
+    }
