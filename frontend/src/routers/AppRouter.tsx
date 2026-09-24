@@ -35,6 +35,14 @@ const RootRedirect: React.FC = () => {
     return <Navigate to="/resident-portal" replace />;
   }
 
+  if (user.roleCode === 'GUEST') {
+    return <Navigate to="/explore" replace />;
+  }
+
+  if (user.roleCode === 'ACCOUNTANT') {
+    return <Navigate to="/admin/finance" replace />;
+  }
+
   return <Navigate to="/admin/dashboard" replace />;
 };
 

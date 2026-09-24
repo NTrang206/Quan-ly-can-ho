@@ -2,7 +2,8 @@ import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { TenantHeader } from './TenantHeader';
 import { FloatingAIChatbot } from '../ai/FloatingAIChatbot';
-import { Building2, PhoneCall, ShieldCheck, HelpCircle } from 'lucide-react';
+import { PhoneCall, ShieldCheck, HelpCircle } from 'lucide-react';
+import { DwellLogo } from '../common/DwellLogo';
 
 interface TenantLayoutProps {
   children?: React.ReactNode;
@@ -27,9 +28,8 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({ children }) => {
       <footer className="bg-white border-t border-slate-200 mt-12 py-8 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-2 font-bold text-slate-900 text-sm mb-2">
-              <Building2 className="w-4 h-4 text-brand-600" />
-              <span>Sunshine Homes</span>
+            <div className="mb-2">
+              <DwellLogo size="sm" showSubtitles={false} />
             </div>
             <p className="text-slate-500 leading-relaxed">
               Hệ thống quản lý dịch vụ căn hộ, hỗ trợ cư dân và quản lý hợp đồng thuê chuẩn Nhật Bản & Singapore.
@@ -69,7 +69,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({ children }) => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-400 text-[11px]">
           <div>
-            © 2026 Sunshine Homes Resident Portal. Đề tài 12 - Quản lý chung cư thông minh.
+            © 2026 Dwell Living Resident Portal. Đề tài 12 - Hệ thống căn hộ cho thuê toàn quốc.
           </div>
           <div className="flex items-center gap-4">
             <Link to="/admin/dashboard" className="hover:text-brand-600 transition-colors">

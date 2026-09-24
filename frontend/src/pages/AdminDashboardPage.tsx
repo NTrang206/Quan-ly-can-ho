@@ -26,11 +26,15 @@ import { useGetDashboardStatsQuery } from '../modules/dashboard/services/dashboa
 import { useGetBuildingsQuery } from '../modules/buildings/services/buildingApi';
 import { formatCurrency, formatCompactCurrency } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
+import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 export const AdminDashboardPage: React.FC = () => {
   const [reportPeriod, setReportPeriod] = useState('2026-11');
   const [selectedView, setSelectedView] = useState<'month' | 'quarter' | 'year'>('month');
 
+  const { isAccountant } = useAuth();
+  const navigate = useNavigate();
   const { data: stats, refetch, isFetching } = useGetDashboardStatsQuery({});
   const { data: buildings = [] } = useGetBuildingsQuery();
   const toast = useToast();
@@ -63,22 +67,40 @@ export const AdminDashboardPage: React.FC = () => {
       {/* Top Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-            Tổng Quan
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+              {isAccountant ? 'Bảng Điều Khiển Kế Toán & Dòng Tiền' : 'Tổng Quan Vận Hành & Quản Trị'}
+            </h1>
+            {isAccountant && (
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md">
+                Phân hệ Kế toán
+              </span>
+            )}
+          </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Báo cáo số liệu thời gian thực về dòng tiền, tỷ lệ lấp đầy và dự báo AI.
+            {isAccountant
+              ? 'Theo dõi số liệu thực thu, đối soát thanh toán VietQR tự động, quản lý công nợ và dự báo tài chính.'
+              : 'Báo cáo số liệu thời gian thực về dòng tiền, tỷ lệ lấp đầy, an ninh tòa nhà và dự báo AI.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {isAccountant && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/admin/finance')}
+            >
+              Thu Phí & Đối Soát
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
             leftIcon={<Download className="w-3.5 h-3.5" />}
             onClick={() => handleExportReport('EXCEL')}
           >
-            Xuất Báo Cáo
+            {isAccountant ? 'Xuất Sổ Kế Toán (Excel)' : 'Xuất Báo Cáo'}
           </Button>
         </div>
       </div>

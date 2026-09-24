@@ -21,22 +21,7 @@ const initialState: GlobalState = {
   activeBuildingId: null,
   activeQuickSearchModal: false,
   activeAICopilotModal: false,
-  notifications: [
-    {
-      id: '1',
-      type: 'warning',
-      title: 'Quá hạn nợ',
-      message: 'Căn P.402 quá hạn 5 ngày tiền phòng T11/2026.',
-      timestamp: '10:00',
-    },
-    {
-      id: '2',
-      type: 'info',
-      title: 'Hợp đồng sắp hết hạn',
-      message: 'HĐ-2024-003 (P.105) sắp hết hạn sau 12 ngày.',
-      timestamp: '08:30',
-    }
-  ],
+  notifications: [],
 };
 
 export const globalSlice = createSlice({

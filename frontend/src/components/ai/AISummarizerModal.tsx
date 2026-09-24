@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
+import { AIBotLogo } from '../common/AIBotLogo';
 import { IContract } from '../../types';
 import { useToast } from '../../hooks/useToast';
 
@@ -91,9 +92,7 @@ export const AISummarizerModal: React.FC<AISummarizerModalProps> = ({
       size="xl"
       title={
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-soft">
-            <Sparkles className="w-4 h-4" />
-          </div>
+          <AIBotLogo size="lg" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-slate-900">AI Contract Summarizer Studio v2.4</span>

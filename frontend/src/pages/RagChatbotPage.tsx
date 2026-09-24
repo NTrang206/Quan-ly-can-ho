@@ -23,6 +23,7 @@ import {
   useAskRAGChatbotMutation,
   useAddDocumentChunkMutation,
 } from '../modules/rag_chatbot/services/ragApi';
+import { AIBotLogo } from '../components/common/AIBotLogo';
 import { IDocumentChunk } from '../types';
 import { useToast } from '../hooks/useToast';
 
@@ -192,17 +193,15 @@ export const RagChatbotPage: React.FC = () => {
         {/* Left: Chat Console */}
         <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-soft flex flex-col h-[650px] overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-3.5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+          <div className="px-6 py-3.5 bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white flex items-center justify-between border-b border-sky-500/30">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white shadow-soft">
-                <Bot className="w-4 h-4" />
-              </div>
+              <AIBotLogo size="lg" badge />
               <div>
                 <h3 className="text-xs font-bold text-white">Dwell Policy RAG Copilot</h3>
-                <div className="text-[10px] text-slate-400">Môi trường: Cư dân P.402 – Lê Hoàng Nam</div>
+                <div className="text-[10px] text-sky-100">Môi trường: Cư dân P.402 – Lê Hoàng Nam</div>
               </div>
             </div>
-            <span className="text-[10px] font-mono text-brand-300 bg-brand-500/20 px-2 py-0.5 rounded border border-brand-500/30">
+            <span className="text-[10px] font-mono text-white bg-white/20 px-2 py-0.5 rounded border border-white/30">
               Claude-3.5 + Dense Embeddings
             </span>
           </div>
@@ -215,8 +214,8 @@ export const RagChatbotPage: React.FC = () => {
                 className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'ai' && (
-                  <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-1">
-                    <Bot className="w-4 h-4" />
+                  <div className="shrink-0 mt-1">
+                    <AIBotLogo size="sm" badge />
                   </div>
                 )}
 
@@ -250,8 +249,8 @@ export const RagChatbotPage: React.FC = () => {
 
             {isAsking && (
               <div className="flex gap-3 items-center text-xs text-slate-500">
-                <div className="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 animate-pulse">
-                  <Bot className="w-4 h-4" />
+                <div className="shrink-0 animate-pulse">
+                  <AIBotLogo size="sm" badge />
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 rounded-bl-none flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-brand-500 animate-bounce" />

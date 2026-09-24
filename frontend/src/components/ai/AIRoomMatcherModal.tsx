@@ -3,6 +3,7 @@ import { Sparkles, Check, Home, DollarSign, Compass, ArrowRight } from 'lucide-r
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
+import { AIBotLogo } from '../common/AIBotLogo';
 import { IApartment } from '../../types';
 import { matchApartmentsWithAI } from '../../utils/aiEngines';
 import { formatCurrency } from '../../utils/formatters';
@@ -37,9 +38,7 @@ export const AIRoomMatcherModal: React.FC<AIRoomMatcherModalProps> = ({
       size="xl"
       title={
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-sky-600 flex items-center justify-center text-white shadow-soft">
-            <Sparkles className="w-4 h-4" />
-          </div>
+          <AIBotLogo size="lg" />
           <div>
             <h3 className="text-base font-bold text-slate-900">Trợ Lý AI Room Matcher</h3>
             <p className="text-xs text-slate-500">

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { INITIAL_USERS } from '../stores/mockDatabase';
 import { UserRole } from '../types';
 import { useToast } from '../hooks/useToast';
+import { DwellLogo } from '../components/common/DwellLogo';
+import { AIBotLogo } from '../components/common/AIBotLogo';
 
 export const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('admin@dwell.vn');
   const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -31,30 +34,58 @@ export const LoginPage: React.FC = () => {
         (cleanUser === 'guest' && u.roleCode === 'GUEST')
     );
 
-    const role: UserRole = found
-      ? found.roleCode
-      : cleanUser.includes('tenant')
-      ? 'TENANT'
-      : 'ADMIN';
+    let role: UserRole;
+    if (found) {
+      role = found.roleCode;
+    } else if (
+      cleanUser.includes('tenant') ||
+      cleanUser.includes('cudan') ||
+      cleanUser.includes('cu_dan') ||
+      cleanUser.includes('khachhang') ||
+      cleanUser.includes('khach_hang') ||
+      cleanUser.includes('khachthue')
+    ) {
+      // Customer / Resident portal
+      role = 'TENANT';
+    } else if (cleanUser.includes('guest') || cleanUser.includes('khachxem') || cleanUser.includes('xemphong')) {
+      // Guest exploration portal
+      role = 'GUEST';
+    } else if (cleanUser.includes('acc') || cleanUser.includes('ketoan') || cleanUser.includes('taichinh')) {
+      // Accountant portal
+      role = 'ACCOUNTANT';
+    } else if (cleanUser.includes('staff') || cleanUser.includes('nhanvien') || cleanUser.includes('kythuat')) {
+      // Building Staff portal
+      role = 'STAFF';
+    } else if (cleanUser.includes('admin') || cleanUser.includes('quantri')) {
+      // Admin portal
+      role = 'ADMIN';
+    } else {
+      toast.error(
+        'Đăng nhập thất bại',
+        'Tài khoản không chính xác. Vui lòng bấm vào các nút vai trò mẫu bên dưới (Admin, Kế toán, Khách hàng)!'
+      );
+      return;
+    }
 
     switchRole(role);
 
     if (role === 'TENANT') {
       toast.success(
         'Đăng nhập thành công',
-        `Chào mừng Cư dân ${found?.fullName || 'Nguyễn Văn An'}!`
+        `Chào mừng Cư dân / Khách thuê ${found?.fullName || 'Nguyễn Văn An'}!`
       );
-      navigate('/tenant-portal');
+      navigate('/resident-portal');
     } else if (role === 'GUEST') {
-      toast.success('Đăng nhập thành công', 'Chào mừng Khách xem phòng!');
+      toast.success('Đăng nhập thành công', 'Chào mừng Khách xem phòng trực tuyến!');
       navigate('/explore');
+    } else if (role === 'ACCOUNTANT') {
+      toast.success(
+        'Đăng nhập thành công',
+        `Chào mừng Kế toán trưởng ${found?.fullName || 'Hoàng Khánh Ly'}!`
+      );
+      navigate('/admin/finance');
     } else {
-      const roleLabel =
-        role === 'ADMIN'
-          ? 'Quản trị viên'
-          : role === 'ACCOUNTANT'
-          ? 'Kế toán'
-          : 'Nhân viên';
+      const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
       toast.success(
         'Đăng nhập thành công',
         `Chào mừng ${roleLabel} ${found?.fullName || ''}!`
@@ -66,36 +97,44 @@ export const LoginPage: React.FC = () => {
   const handleQuickDemoLogin = (role: UserRole) => {
     switch (role) {
       case 'ADMIN':
-        setUsername('admin');
+        setUsername('admin@dwell.vn');
         setPassword('admin123');
         break;
-      case 'STAFF':
-        setUsername('staff');
-        setPassword('staff123');
-        break;
       case 'ACCOUNTANT':
-        setUsername('accountant');
+        setUsername('accountant@dwell.vn');
         setPassword('acc123');
         break;
+      case 'STAFF':
+        setUsername('staff@dwell.vn');
+        setPassword('staff123');
+        break;
       case 'TENANT':
-        setUsername('tenant');
+        setUsername('tenant@dwell.vn');
         setPassword('tenant123');
+        break;
+      case 'GUEST':
+        setUsername('guest@dwell.vn');
+        setPassword('guest123');
         break;
     }
     switchRole(role);
     const roleLabel =
       role === 'ADMIN'
-        ? 'Quản trị'
+        ? 'Quản trị viên'
+        : role === 'ACCOUNTANT'
+        ? 'Kế toán trưởng'
         : role === 'STAFF'
         ? 'Nhân viên'
-        : role === 'ACCOUNTANT'
-        ? 'Kế toán'
-        : 'Cư dân';
+        : role === 'TENANT'
+        ? 'Khách hàng / Cư dân'
+        : 'Khách tìm thuê';
     toast.success('Đăng nhập nhanh', `Đã chuyển vào tài khoản: ${roleLabel}`);
     if (role === 'TENANT') {
-      navigate('/tenant-portal');
+      navigate('/resident-portal');
     } else if (role === 'GUEST') {
       navigate('/explore');
+    } else if (role === 'ACCOUNTANT') {
+      navigate('/admin/finance');
     } else {
       navigate('/admin/dashboard');
     }
@@ -109,50 +148,17 @@ export const LoginPage: React.FC = () => {
         <div className="lg:col-span-5 bg-slate-50/70 border-r border-slate-100 p-8 text-slate-800 flex flex-col justify-between relative overflow-hidden">
           <div className="space-y-6">
             {/* Dwell Logo & Brand Header */}
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-200/80">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100/90 flex items-center justify-center p-2 shadow-xs shrink-0">
-                <svg
-                  viewBox="0 0 48 48"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-8 h-8"
-                >
-                  <rect x="13" y="8" width="18" height="34" rx="2" fill="#0284c7" />
-                  <rect x="25" y="16" width="13" height="26" rx="1.5" fill="#38bdf8" />
-                  <rect x="16" y="12" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="21" y="12" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="16" y="18" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="21" y="18" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="16" y="24" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="21" y="24" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="16" y="30" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="21" y="30" width="3" height="3" rx="0.5" fill="white" />
-                  <rect x="28" y="20" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <rect x="32" y="20" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <rect x="28" y="26" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <rect x="32" y="26" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <rect x="28" y="32" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <rect x="32" y="32" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
-                  <path d="M9 42H39" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-[22px] font-extrabold text-[#1d4ed8] tracking-tight leading-none">
-                  Dwell
-                </div>
-                <div className="text-[8px] font-bold text-slate-500 uppercase tracking-tight leading-tight mt-1">
-                  HỆ THỐNG CĂN HỘ CHO THUÊ TOÀN QUỐC
-                </div>
-                <div className="text-[7.5px] font-medium text-slate-400 uppercase tracking-tight leading-tight mt-0.5">
-                  BÀN GIAO NHẬN PHÒNG TỨC THÌ
-                </div>
-              </div>
+            <div className="pb-4 border-b border-slate-200/80">
+              <DwellLogo size="lg" />
             </div>
 
             {/* Feature Cards (No Icons) */}
             <div className="space-y-3 pt-1">
               <div className="bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
-                <div className="text-xs font-bold text-slate-900">Trợ lý AI RAG 24/7</div>
+                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <AIBotLogo size="xs" />
+                  <span>Trợ lý AI RAG 24/7</span>
+                </div>
                 <div className="text-[11px] text-slate-500 leading-normal mt-1">
                   Hỏi đáp nội quy tòa nhà, tóm tắt hợp đồng và ghi nhận sự cố tức thì.
                 </div>
@@ -226,14 +232,20 @@ export const LoginPage: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Nhập mật khẩu..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 pr-14 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#1d4ed8] focus:bg-white transition-all"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 pr-10 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#1d4ed8] focus:bg-white transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 text-xs font-medium text-slate-500 hover:text-slate-800"
+                    className="absolute right-3 p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                    title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
-                    {showPassword ? 'Ẩn' : 'Hiện'}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -261,39 +273,46 @@ export const LoginPage: React.FC = () => {
               </button>
             </form>
 
-            {/* Quick Demo Login Chips (No Emojis / Icons) */}
+            {/* Quick Demo Login Chips */}
             <div className="mt-6 pt-5 border-t border-slate-100">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-                Đăng nhập mẫu theo vai trò
+                Đăng nhập mẫu theo vai trò (1-Click Switch)
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('ADMIN')}
-                  className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-medium transition-colors text-center"
+                  className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 text-xs font-bold transition-colors text-center"
                 >
                   Admin
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleQuickDemoLogin('STAFF')}
-                  className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-medium transition-colors text-center"
-                >
-                  Nhân viên
-                </button>
-                <button
-                  type="button"
                   onClick={() => handleQuickDemoLogin('ACCOUNTANT')}
-                  className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-medium transition-colors text-center"
+                  className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 text-xs font-bold transition-colors text-center"
                 >
                   Kế toán
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleQuickDemoLogin('TENANT')}
-                  className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-medium transition-colors text-center"
+                  onClick={() => handleQuickDemoLogin('STAFF')}
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-semibold transition-colors text-center"
                 >
-                  Cư dân
+                  Nhân viên
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemoLogin('TENANT')}
+                  className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200/80 text-xs font-bold transition-colors text-center"
+                >
+                  Khách hàng / Cư dân
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickDemoLogin('GUEST')}
+                  className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 text-xs font-semibold transition-colors text-center"
+                >
+                  Khách tìm thuê
                 </button>
               </div>
             </div>

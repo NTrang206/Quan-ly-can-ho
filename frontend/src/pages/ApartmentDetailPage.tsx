@@ -341,23 +341,41 @@ export const ApartmentDetailPage: React.FC = () => {
 
           {/* Sidebar Support & Maintenance Info */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-slate-900 to-sky-950 text-white rounded-2xl p-6 shadow-md">
-              <h3 className="text-base font-bold mb-2 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-sky-400" />
-                <span>Hỗ Trợ Xem Phòng 24/7</span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed mb-4">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-100/90 flex items-center justify-center text-[#1d4ed8] shadow-xs shrink-0">
+                  <Phone className="w-5 h-5 text-[#1d4ed8]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 leading-tight">
+                    Hỗ Trợ Xem Phòng 24/7
+                  </h3>
+                  <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Quản lý tòa nhà trực tuyến
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
                 Quản lý tòa nhà luôn sẵn sàng hỗ trợ bạn tham quan căn hộ trực tiếp hoặc xem qua video 360 độ.
               </p>
-              <div className="p-3 bg-white/10 backdrop-blur rounded-xl border border-white/10 text-xs mb-4">
-                <span className="text-sky-300 block">Hotline Quản Lý Tòa Nhà:</span>
-                <strong className="text-white text-base">0912.888.999</strong>
+
+              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
+                <span className="text-[11px] text-slate-500 font-medium block">
+                  Hotline Quản Lý Tòa Nhà:
+                </span>
+                <strong className="text-[#1d4ed8] text-lg font-extrabold tracking-tight">
+                  0912.888.999
+                </strong>
               </div>
+
               <button
                 onClick={() => setIsBookingModalOpen(true)}
-                className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold rounded-xl transition-all"
+                className="w-full py-2.5 bg-[#1d4ed8] hover:bg-[#1e40af] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
               >
-                Gửi Yêu Cầu Hẹn Giờ
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Gửi Yêu Cầu Hẹn Giờ</span>
               </button>
             </div>
 

@@ -68,6 +68,24 @@ export const AdminHeader: React.FC = () => {
 
       {/* Right: Actions, Notifications & Profile */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Active Role Tag */}
+        {user?.roleCode === 'ACCOUNTANT' ? (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200/90 rounded-full text-xs font-bold text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Phân Hệ Kế Toán & Thu Phí</span>
+          </div>
+        ) : user?.roleCode === 'STAFF' ? (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-300 rounded-full text-xs font-bold text-slate-800">
+            <span className="w-2 h-2 rounded-full bg-slate-500" />
+            <span>Ban Quản Lý Tòa Nhà</span>
+          </div>
+        ) : (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-200/90 rounded-full text-xs font-bold text-blue-800">
+            <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            <span>Cổng Quản Trị Hệ Thống</span>
+          </div>
+        )}
+
         {/* Notification Bell */}
         <div className="relative">
           <button
@@ -121,7 +139,15 @@ export const AdminHeader: React.FC = () => {
             />
             <div className="hidden xl:block text-left">
               <div className="text-xs font-semibold text-slate-900 line-clamp-1">{user?.fullName}</div>
-              <div className="text-[10px] text-slate-400 uppercase font-medium">{user?.roleCode}</div>
+              <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                {user?.roleCode === 'ACCOUNTANT'
+                  ? 'Kế toán trưởng'
+                  : user?.roleCode === 'ADMIN'
+                  ? 'Quản trị viên'
+                  : user?.roleCode === 'STAFF'
+                  ? 'Ban quản lý'
+                  : user?.roleCode}
+              </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </button>
@@ -162,8 +188,8 @@ export const AdminHeader: React.FC = () => {
                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                   {[
                     { code: 'ADMIN' as UserRole, label: 'Quản trị' },
-                    { code: 'STAFF' as UserRole, label: 'Nhân viên' },
                     { code: 'ACCOUNTANT' as UserRole, label: 'Kế toán' },
+                    { code: 'STAFF' as UserRole, label: 'Nhân viên' },
                     { code: 'TENANT' as UserRole, label: 'Cư dân' },
                   ].map((r) => (
                     <button
@@ -174,6 +200,10 @@ export const AdminHeader: React.FC = () => {
                         toast.info('Chuyển vai trò', `Đã chuyển sang tài khoản ${r.label}`);
                         if (r.code === 'TENANT') {
                           window.location.href = '/tenant-portal';
+                        } else if (r.code === 'ACCOUNTANT') {
+                          window.location.href = '/admin/finance';
+                        } else {
+                          window.location.href = '/admin/dashboard';
                         }
                       }}
                       className={`text-left px-2 py-1 rounded-lg transition-colors ${

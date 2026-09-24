@@ -43,6 +43,7 @@ import { useGetTenantsQuery, useAddRoommateMutation } from '../modules/tenants/s
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { generateVietQRUrl, DEFAULT_BUILDING_BANK_ACCOUNT } from '../utils/vietqr';
 import { useToast } from '../hooks/useToast';
+import { AIBotLogo } from '../components/common/AIBotLogo';
 import { IApartment } from '../types';
 
 export const ResidentPortalPage: React.FC = () => {
@@ -202,12 +203,6 @@ export const ResidentPortalPage: React.FC = () => {
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-semibold text-sky-200 border border-white/20">
-                ● Cổng Thông Tin Thường Trú Kỹ Thuật Số • Sunshine Tower A
-              </span>
-            </div>
-
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
               Xin chào cư dân {currentTenant.fullName}! 👋
             </h1>
@@ -230,36 +225,6 @@ export const ResidentPortalPage: React.FC = () => {
                 <span>Cảnh báo: Hóa đơn Tháng {activeBill.billingMonth} chưa thanh toán (Hạn {formatDate(activeBill.dueDate)})</span>
               </div>
             )}
-          </div>
-
-          {/* Quick Stat Widgets */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3.5 rounded-2xl text-center">
-              <div className="text-[10px] uppercase font-bold text-sky-200">Cọc An Toàn (HELD)</div>
-              <div className="text-base sm:text-lg font-black mt-0.5">17.000.000 ₫</div>
-              <div className="text-[10px] text-emerald-300 font-semibold mt-0.5 flex items-center justify-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> Lưu ký an toàn
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3.5 rounded-2xl text-center">
-              <div className="text-[10px] uppercase font-bold text-sky-200">Kỹ Thuật Xử Lý</div>
-              <div className="text-base sm:text-lg font-black mt-0.5">
-                {activeTicket?.status === 'IN_PROGRESS' ? '01' : '00'}{' '}
-                <span className="text-xs font-normal">phiếu</span>
-              </div>
-              <div className="text-[10px] text-amber-300 font-semibold mt-0.5 flex items-center justify-center gap-1">
-                <Clock className="w-3 h-3" /> Đang sửa trực tiếp
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3.5 rounded-2xl text-center">
-              <div className="text-[10px] uppercase font-bold text-sky-200">Thành Viên</div>
-              <div className="text-base sm:text-lg font-black mt-0.5">03 <span className="text-xs font-normal">người</span></div>
-              <div className="text-[10px] text-emerald-300 font-semibold mt-0.5 flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Đã duyệt VNeID
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -585,7 +550,7 @@ export const ResidentPortalPage: React.FC = () => {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <AIBotLogo size="xs" />
                   <span>Trợ Lý AI Tóm Tắt 05 Điều Khoản Cốt Lõi Hợp Đồng</span>
                 </span>
                 <span className="text-[10px] text-slate-400 font-semibold">Trích xuất tự động</span>

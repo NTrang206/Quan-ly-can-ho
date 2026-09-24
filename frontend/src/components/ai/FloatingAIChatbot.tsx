@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAskRAGChatbotMutation } from '../../modules/rag_chatbot/services/ragApi';
 import { IDocumentChunk } from '../../types';
+import { AIBotLogo } from '../common/AIBotLogo';
 
 interface ChatMessage {
   id: string;
@@ -98,12 +99,11 @@ export const FloatingAIChatbot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2.5 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl border border-white/20 active:scale-95"
+          className="group relative flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white px-3.5 py-2.5 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl border border-white/20 active:scale-95"
           title="Trợ Lý AI 24/7 (Hỏi đáp nội quy)"
         >
           <div className="relative">
-            <Bot className="w-4 h-4" />
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full border border-white" />
+            <AIBotLogo size="sm" badge showStatusDot statusColor="bg-emerald-400" />
           </div>
           <span className="text-xs font-semibold">Trợ Lý AI</span>
         </button>
@@ -112,19 +112,17 @@ export const FloatingAIChatbot: React.FC = () => {
       {isOpen && (
         <div className="w-[360px] sm:w-[400px] h-[540px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
-          <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
+          <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white px-4 py-3 flex items-center justify-between border-b border-sky-500/30 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-white shadow-soft">
-                <Sparkles className="w-5 h-5" />
-              </div>
+              <AIBotLogo size="lg" badge />
               <div>
                 <h4 className="text-sm font-bold flex items-center gap-1.5">
-                  <span>Trợ Lý AI Sunshine Homes</span>
-                  <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full">
+                  <span>Trợ Lý AI Dwell Copilot</span>
+                  <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-white/20 text-white border border-white/30 rounded-full">
                     RAG v2.4
                   </span>
                 </h4>
-                <p className="text-[11px] text-slate-300">Truy xuất 100% tài liệu nội quy chuẩn</p>
+                <p className="text-[11px] text-sky-100">Truy xuất 100% tài liệu nội quy chuẩn</p>
               </div>
             </div>
 
@@ -140,16 +138,16 @@ export const FloatingAIChatbot: React.FC = () => {
                     },
                   ])
                 }
-                className="text-slate-400 hover:text-white p-1.5 rounded-lg transition-colors"
+                className="text-sky-200 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
                 title="Làm mới hội thoại"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white p-1.5 rounded-lg transition-colors"
+                className="text-sky-200 hover:text-white hover:bg-white/10 p-1.5 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -162,8 +160,8 @@ export const FloatingAIChatbot: React.FC = () => {
                 className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.sender === 'ai' && (
-                  <div className="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                    <Bot className="w-4 h-4" />
+                  <div className="shrink-0 mt-0.5">
+                    <AIBotLogo size="sm" badge />
                   </div>
                 )}
 
@@ -222,8 +220,8 @@ export const FloatingAIChatbot: React.FC = () => {
 
             {isLoading && (
               <div className="flex gap-2.5 items-center text-xs text-slate-500">
-                <div className="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0 animate-pulse">
-                  <Bot className="w-4 h-4" />
+                <div className="w-7 h-7 rounded-lg bg-sky-50 border border-sky-100 p-0.5 flex items-center justify-center shrink-0 animate-pulse">
+                  <AIBotLogo size="sm" />
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl px-4 py-2.5 rounded-bl-none flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-brand-500 animate-bounce" />
