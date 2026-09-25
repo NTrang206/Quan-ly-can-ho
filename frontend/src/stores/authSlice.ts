@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { IUser, UserRole } from '../types';
-import { INITIAL_USERS } from './mockDatabase';
 
 interface AuthState {
   user: IUser | null;
@@ -9,7 +8,7 @@ interface AuthState {
   activeRole: UserRole;
 }
 
-const getInitialUser = (): IUser => {
+const getInitialUser = (): IUser | null => {
   const saved = localStorage.getItem('currentUser');
   if (saved) {
     try {
@@ -18,17 +17,16 @@ const getInitialUser = (): IUser => {
       // fallback
     }
   }
-  // Default to Admin or Tenant
-  return INITIAL_USERS[0];
+  return null;
 };
 
 const initialUser = getInitialUser();
 
 const initialState: AuthState = {
   user: initialUser,
-  token: localStorage.getItem('token') || 'demo-jwt-token-sunshine-homes',
-  isAuthenticated: true,
-  activeRole: initialUser.roleCode,
+  token: localStorage.getItem('token'),
+  isAuthenticated: Boolean(localStorage.getItem('token')),
+  activeRole: initialUser?.roleCode || 'GUEST',
 };
 
 export const authSlice = createSlice({
@@ -48,7 +46,7 @@ export const authSlice = createSlice({
     },
     switchRole: (state, action: PayloadAction<UserRole>) => {
       const targetRole = action.payload;
-      const foundUser = INITIAL_USERS.find(u => u.roleCode === targetRole) || {
+      const foundUser = {
         id: 99,
         roleId: 99,
         roleCode: targetRole,

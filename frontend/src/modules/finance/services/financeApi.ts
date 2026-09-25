@@ -1,18 +1,19 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IReceivable, IPayment, IDebtLedger, PaymentMethod } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
+import { mapDebtLedger, mapPayment, mapReceivable } from '../../../utils/apiMappers';
 
 export const financeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getReceivables: builder.query<IReceivable[], { month?: number; year?: number; status?: string; tenantId?: number }>({
-      queryFn: async (params) => {
-        let list = mockDb.getReceivables();
-        if (params?.month) list = list.filter(r => r.billingMonth === Number(params.month));
-        if (params?.year) list = list.filter(r => r.billingYear === Number(params.year));
-        if (params?.status) list = list.filter(r => r.status === params.status);
-        if (params?.tenantId) list = list.filter(r => r.tenantId === Number(params.tenantId));
-        return { data: list };
-      },
+      query: (params) => ({
+        url: params?.tenantId ? '/receivables/my' : '/receivables',
+        params: {
+          billing_month: params?.month,
+          billing_year: params?.year,
+          status: params?.status,
+        },
+      }),
+      transformResponse: (response: any[]) => response.map(mapReceivable),
       providesTags: (result) =>
         result
           ? [
@@ -23,12 +24,11 @@ export const financeApi = baseApi.injectEndpoints({
     }),
 
     getPayments: builder.query<IPayment[], { receivableId?: number; contractId?: number }>({
-      queryFn: async (params) => {
-        let list = mockDb.getPayments();
-        if (params?.receivableId) list = list.filter(p => p.receivableId === Number(params.receivableId));
-        if (params?.contractId) list = list.filter(p => p.contractId === Number(params.contractId));
-        return { data: list };
-      },
+      query: (params) => ({
+        url: '/payments',
+        params: params?.receivableId ? { receivable_id: params.receivableId } : undefined,
+      }),
+      transformResponse: (response: any[]) => response.map(mapPayment),
       providesTags: (result) =>
         result
           ? [
@@ -39,10 +39,8 @@ export const financeApi = baseApi.injectEndpoints({
     }),
 
     getDebtLedgers: builder.query<IDebtLedger[], void>({
-      queryFn: async () => {
-        const list = mockDb.getDebtLedgers();
-        return { data: list };
-      },
+      query: () => '/debt-ledgers',
+      transformResponse: (response: any[]) => response.map(mapDebtLedger),
       providesTags: (result) =>
         result
           ? [
@@ -61,63 +59,20 @@ export const financeApi = baseApi.injectEndpoints({
         note?: string;
       }
     >({
-      queryFn: async ({ receivableId, amount, paymentMethod, note }) => {
-        const receivables = mockDb.getReceivables();
-        const payments = mockDb.getPayments();
-        const debtLedgers = mockDb.getDebtLedgers();
-
-        const rIndex = receivables.findIndex(r => r.id === receivableId);
-        if (rIndex === -1) return { error: { status: 404, data: 'Không tìm thấy khoản thu' } };
-
-        const target = receivables[rIndex];
-        const newPaidAmount = target.paidAmount + amount;
-        const remaining = Math.max(0, target.totalAmount - newPaidAmount);
-        const newStatus = remaining <= 0 ? 'PAID' : 'PARTIAL';
-
-        receivables[rIndex] = {
-          ...target,
-          paidAmount: newPaidAmount,
-          remainingDebt: remaining,
-          status: newStatus,
-        };
-        mockDb.setReceivables(receivables);
-
-        // Create Payment Record
-        const receiptNo = `PT-2026-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const txCode = paymentMethod === 'BANK_TRANSFER' ? `MB${Date.now().toString().slice(-8)}` : `CASH-${receiptNo}`;
-        const newPayment: IPayment = {
-          id: Date.now(),
-          receivableId: target.id,
-          contractId: target.contractId,
-          receiptNumber: receiptNo,
+      query: ({ receivableId, amount, paymentMethod, note }) => ({
+        url: '/payments',
+        method: 'POST',
+        body: {
+          receivable_id: receivableId,
           amount,
-          paymentMethod,
-          transactionCode: txCode,
-          paymentDate: new Date().toLocaleString('vi-VN'),
-          note: note || `Thanh toán cước phí căn ${target.roomNumber}`,
-          handledBy: 3,
-          handledByName: 'Hoàng Khánh Ly',
-          payerName: target.tenantName,
-          roomNumber: target.roomNumber,
-        };
-        payments.unshift(newPayment);
-        mockDb.setPayments(payments);
-
-        // Update DebtLedger
-        const dIndex = debtLedgers.findIndex(d => d.tenantId === target.tenantId);
-        if (dIndex !== -1) {
-          debtLedgers[dIndex] = {
-            ...debtLedgers[dIndex],
-            totalPaid: debtLedgers[dIndex].totalPaid + amount,
-            currentDebt: Math.max(0, debtLedgers[dIndex].currentDebt - amount),
-            lastUpdated: new Date().toISOString().split('T')[0],
-            isOverdue: debtLedgers[dIndex].currentDebt - amount > 0,
-          };
-          mockDb.setDebtLedgers(debtLedgers);
-        }
-
-        return { data: { payment: newPayment, receivable: receivables[rIndex] } };
-      },
+          payment_method: paymentMethod,
+          note,
+        },
+      }),
+      transformResponse: (response: any) => ({
+        payment: mapPayment(response),
+        receivable: {} as IReceivable,
+      }),
       invalidatesTags: [
         { type: 'Receivable', id: 'LIST' },
         { type: 'Payment', id: 'LIST' },
@@ -131,6 +86,16 @@ export const financeApi = baseApi.injectEndpoints({
       { count: number; totalAmount: number },
       { month: number; year: number }
     >({
+      query: ({ month, year }) => ({
+        url: '/receivables/generate-monthly',
+        method: 'POST',
+        body: { billing_month: month, billing_year: year },
+      }),
+      transformResponse: (response: any) => ({
+        count: Number(response.count ?? 0),
+        totalAmount: Number(response.total_amount ?? response.totalAmount ?? 0),
+      }),
+      /*
       queryFn: async ({ month, year }) => {
         const contracts = mockDb.getContracts().filter(c => c.status === 'ACTIVE');
         const receivables = mockDb.getReceivables();
@@ -187,6 +152,7 @@ export const financeApi = baseApi.injectEndpoints({
         mockDb.setReceivables(receivables);
         return { data: { count: addedCount, totalAmount: sumAmount } };
       },
+      */
       invalidatesTags: [
         { type: 'Receivable', id: 'LIST' },
         { type: 'DebtLedger', id: 'LIST' },

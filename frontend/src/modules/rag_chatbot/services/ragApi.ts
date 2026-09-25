@@ -1,7 +1,7 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IDocumentChunk } from '../../../types';
 import { mockDb } from '../../../stores/mockDatabase';
-import { queryKnowledgeBaseRAG, IRAGAnswerResult } from '../../../utils/aiEngines';
+import { IRAGAnswerResult } from '../../../utils/aiEngines';
 
 export const ragApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -21,11 +21,11 @@ export const ragApi = baseApi.injectEndpoints({
     }),
 
     askRAGChatbot: builder.mutation<IRAGAnswerResult, { question: string }>({
-      queryFn: async ({ question }) => {
-        const chunks = mockDb.getRAGChunks();
-        const result = queryKnowledgeBaseRAG(question, chunks);
-        return { data: result };
-      },
+      query: ({ question }) => ({
+        url: '/ai/chat',
+        method: 'POST',
+        body: { question, top_k: 3 },
+      }),
     }),
 
     addDocumentChunk: builder.mutation<IDocumentChunk, Partial<IDocumentChunk>>({

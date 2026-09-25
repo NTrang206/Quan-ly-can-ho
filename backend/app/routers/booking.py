@@ -1,7 +1,8 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException
+    HTTPException,
+    Query
 )
 
 from sqlalchemy.orm import Session
@@ -66,7 +67,7 @@ def create_booking(
 
     apartment = db.query(Apartment).filter(
         Apartment.id == data.apartment_id
-    ).first()
+    ).with_for_update().first()
 
     if apartment is None:
         raise HTTPException(
@@ -94,13 +95,17 @@ def create_booking(
         notes=data.notes
     )
 
-    db.add(booking)
+    try:
+        db.add(booking)
 
-    # Căn hộ chuyển sang giữ chỗ
-    apartment.status = "RESERVED"
+        # Căn hộ chuyển sang giữ chỗ
+        apartment.status = "RESERVED"
 
-    db.commit()
-    db.refresh(booking)
+        db.commit()
+        db.refresh(booking)
+    except Exception:
+        db.rollback()
+        raise
 
     return booking
 @router.get(
@@ -117,6 +122,29 @@ def get_bookings(
     bookings = db.query(Booking).all()
 
     return bookings
+
+
+@router.get(
+    "/lookup",
+    response_model=BookingResponse
+)
+def lookup_booking(
+    booking_code: str = Query(..., min_length=5),
+    customer_phone: str = Query(..., min_length=8),
+    db: Session = Depends(get_db)
+):
+    booking = db.query(Booking).filter(
+        Booking.booking_code == booking_code.strip(),
+        Booking.customer_phone == customer_phone.strip()
+    ).first()
+
+    if booking is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy Booking phù hợp"
+        )
+
+    return booking
 @router.get(
     "/{booking_id}",
     response_model=BookingResponse
@@ -168,10 +196,13 @@ def confirm_booking(
             detail="Booking không ở trạng thái chờ xác nhận"
         )
 
-    booking.status = "CONFIRMED"
-
-    db.commit()
-    db.refresh(booking)
+    try:
+        booking.status = "CONFIRMED"
+        db.commit()
+        db.refresh(booking)
+    except Exception:
+        db.rollback()
+        raise
 
     return booking
 @router.patch(
@@ -212,12 +243,16 @@ def cancel_booking(
         Apartment.id == booking.apartment_id
     ).first()
 
-    booking.status = "CANCELLED"
+    try:
+        booking.status = "CANCELLED"
 
-    if apartment:
-        apartment.status = "AVAILABLE"
+        if apartment:
+            apartment.status = "AVAILABLE"
 
-    db.commit()
-    db.refresh(booking)
+        db.commit()
+        db.refresh(booking)
+    except Exception:
+        db.rollback()
+        raise
 
     return booking

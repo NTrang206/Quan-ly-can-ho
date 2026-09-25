@@ -1,0 +1,255 @@
+import {
+  IApartment,
+  IBuilding,
+  IUser,
+  IBooking,
+  IContract,
+  IDeposit,
+  IReceivable,
+  IPayment,
+  IDebtLedger,
+  ISystemAlert,
+  IMaintenanceRequest,
+  ITenant,
+} from '../types';
+
+const numberValue = (value: unknown, fallback = 0): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+export const mapUser = (raw: any): IUser => ({
+  id: numberValue(raw.id),
+  roleId: numberValue(raw.role_id ?? raw.roleId),
+  roleCode: raw.role_code ?? raw.roleCode,
+  username: raw.username ?? '',
+  fullName: raw.full_name ?? raw.fullName ?? '',
+  email: raw.email ?? '',
+  phone: raw.phone ?? '',
+  isActive: Boolean(raw.is_active ?? raw.isActive),
+  createdAt: raw.created_at ?? raw.createdAt ?? new Date().toISOString(),
+  tenantId: raw.tenant_id ?? raw.tenantId,
+});
+
+export const mapBuilding = (raw: any): IBuilding => ({
+  id: numberValue(raw.id),
+  name: raw.name ?? '',
+  address: raw.address ?? '',
+  totalFloors: numberValue(raw.total_floors ?? raw.totalFloors),
+  totalApartments: numberValue(raw.total_apartments ?? raw.totalApartments),
+  occupiedCount: numberValue(raw.occupied_count ?? raw.occupiedCount),
+  availableCount: numberValue(raw.available_count ?? raw.availableCount),
+  maintenanceCount: numberValue(raw.maintenance_count ?? raw.maintenanceCount),
+  reservedCount: numberValue(raw.reserved_count ?? raw.reservedCount),
+  status: raw.status ?? 'ACTIVE',
+  createdAt: raw.created_at ?? raw.createdAt,
+  managerName: raw.manager_name ?? raw.managerName ?? '',
+  contactPhone: raw.contact_phone ?? raw.contactPhone ?? '',
+  monthlyRevenueEstimate: numberValue(raw.monthly_revenue_estimate ?? raw.monthlyRevenueEstimate),
+});
+
+export const mapApartment = (raw: any): IApartment => ({
+  id: numberValue(raw.id),
+  buildingId: numberValue(raw.building_id ?? raw.buildingId),
+  buildingName: raw.building_name ?? raw.buildingName ?? '',
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+  floor: numberValue(raw.floor),
+  areaSqm: numberValue(raw.area_sqm ?? raw.areaSqm),
+  price: numberValue(raw.price),
+  depositDefault: numberValue(raw.deposit_default ?? raw.depositDefault ?? raw.price) * 2,
+  maxOccupants: numberValue(raw.max_occupants ?? raw.maxOccupants),
+  currentOccupants: numberValue(raw.current_occupants ?? raw.currentOccupants),
+  bedrooms: numberValue(raw.bedrooms ?? raw.bedroom_count),
+  bathrooms: numberValue(raw.bathrooms ?? raw.bathroom_count),
+  viewDirection: raw.view_direction ?? raw.viewDirection ?? '',
+  status: raw.status ?? 'AVAILABLE',
+  description: raw.description ?? '',
+  imageUrl: raw.image_url ?? raw.imageUrl ?? '',
+  amenities: Array.isArray(raw.amenities)
+    ? raw.amenities.map((amenity: any) => typeof amenity === 'string' ? { id: 0, apartmentId: numberValue(raw.id), name: amenity, brand: '', conditionStatus: 'GOOD', category: 'FURNITURE' } : amenity)
+    : [],
+  createdAt: raw.created_at ?? raw.createdAt,
+});
+
+export const mapContract = (raw: any): IContract => ({
+  id: numberValue(raw.id),
+  contractCode: raw.contract_code ?? raw.contractCode ?? '',
+  apartmentId: numberValue(raw.apartment_id ?? raw.apartmentId),
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+  buildingName: raw.building_name ?? raw.buildingName ?? '',
+  tenantId: numberValue(raw.tenant_id ?? raw.tenantId),
+  tenantName: raw.tenant_name ?? raw.tenantName ?? '',
+  tenantCitizenId: raw.tenant_citizen_id ?? raw.tenantCitizenId ?? '',
+  tenantPhone: raw.tenant_phone ?? raw.tenantPhone ?? '',
+  tenantEmail: raw.tenant_email ?? raw.tenantEmail ?? '',
+  startDate: raw.start_date ?? raw.startDate ?? '',
+  endDate: raw.end_date ?? raw.endDate ?? '',
+  rentalPrice: numberValue(raw.rental_price ?? raw.rentalPrice),
+  depositAmount: numberValue(raw.deposit_amount ?? raw.depositAmount),
+  paymentCycleMonths: numberValue(raw.payment_cycle_months ?? raw.paymentCycleMonths, 1),
+  paymentDueDay: numberValue(raw.payment_due_day ?? raw.paymentDueDay, 10),
+  status: raw.status ?? 'DRAFT',
+  createdBy: numberValue(raw.created_by ?? raw.createdBy),
+  approvedBy: raw.approved_by ?? raw.approvedBy,
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+  bookingId: raw.booking_id ?? raw.bookingId,
+  aiSummary: raw.ai_summary ?? raw.aiSummary ?? {
+    term1_duration: '', term2_rentalPrice: '', term3_paymentObligation: '',
+    term4_penalties: '', term5_termination: '', confidenceScore: 0,
+    extractedAt: '',
+  },
+});
+
+export const mapDeposit = (raw: any): IDeposit => ({
+  id: numberValue(raw.id),
+  contractId: numberValue(raw.contract_id ?? raw.contractId),
+  contractCode: raw.contract_code ?? raw.contractCode ?? '',
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+  tenantName: raw.tenant_name ?? raw.tenantName ?? '',
+  amount: numberValue(raw.amount),
+  paidDate: raw.paid_date ?? raw.paidDate,
+  status: raw.status ?? 'PENDING',
+  refundAmount: numberValue(raw.refund_amount ?? raw.refundAmount),
+  deductionAmount: numberValue(raw.deduction_amount ?? raw.deductionAmount),
+  deductionReason: raw.deduction_reason ?? raw.deductionReason,
+  handledBy: raw.handled_by ?? raw.handledBy,
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+});
+
+export const mapReceivable = (raw: any): IReceivable => {
+  const totalAmount = numberValue(raw.total_amount ?? raw.totalAmount);
+  const paidAmount = numberValue(raw.paid_amount ?? raw.paidAmount);
+  return {
+    id: numberValue(raw.id),
+    contractId: numberValue(raw.contract_id ?? raw.contractId),
+    apartmentId: numberValue(raw.apartment_id ?? raw.apartmentId),
+    roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+    buildingName: raw.building_name ?? raw.buildingName ?? '',
+    tenantId: numberValue(raw.tenant_id ?? raw.tenantId),
+    tenantName: raw.tenant_name ?? raw.tenantName ?? '',
+    tenantPhone: raw.tenant_phone ?? raw.tenantPhone ?? '',
+    billingMonth: numberValue(raw.billing_month ?? raw.billingMonth),
+    billingYear: numberValue(raw.billing_year ?? raw.billingYear),
+    roomAmount: numberValue(raw.room_amount ?? raw.roomAmount),
+    serviceAmount: numberValue(raw.service_amount ?? raw.serviceAmount),
+    electricityCost: numberValue(raw.electricity_cost),
+    electricityUsageKwh: numberValue(raw.electricity_usage_kwh),
+    waterCost: numberValue(raw.water_cost),
+    waterUsageM3: numberValue(raw.water_usage_m3),
+    managementCost: numberValue(raw.management_cost),
+    parkingCost: numberValue(raw.parking_cost),
+    internetCost: numberValue(raw.internet_cost),
+    totalAmount,
+    paidAmount,
+    remainingDebt: Math.max(0, totalAmount - paidAmount),
+    status: raw.status ?? 'UNPAID',
+    dueDate: raw.due_date ?? raw.dueDate ?? '',
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+    qrPayload: raw.qr_payload ?? raw.qrPayload,
+  };
+};
+
+export const mapPayment = (raw: any): IPayment => ({
+  id: numberValue(raw.id),
+  receivableId: numberValue(raw.receivable_id ?? raw.receivableId),
+  contractId: numberValue(raw.contract_id ?? raw.contractId),
+  receiptNumber: raw.receipt_number ?? `PT-${raw.id ?? ''}`,
+  amount: numberValue(raw.amount),
+  paymentMethod: raw.payment_method ?? raw.paymentMethod ?? 'CASH',
+  transactionCode: raw.transaction_code ?? raw.transactionCode ?? '',
+  paymentDate: raw.payment_date ?? raw.paymentDate ?? '',
+  note: raw.note ?? '',
+  handledBy: numberValue(raw.handled_by ?? raw.handledBy),
+  handledByName: raw.handled_by_name ?? raw.handledByName ?? '',
+  payerName: raw.payer_name ?? raw.payerName ?? '',
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+});
+
+export const mapDebtLedger = (raw: any): IDebtLedger => ({
+  id: numberValue(raw.id),
+  tenantId: numberValue(raw.tenant_id ?? raw.tenantId),
+  tenantName: raw.tenant_name ?? raw.tenantName ?? '',
+  tenantPhone: raw.tenant_phone ?? raw.tenantPhone ?? '',
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+  buildingName: raw.building_name ?? raw.buildingName ?? '',
+  totalReceivable: numberValue(raw.total_receivable ?? raw.totalReceivable),
+  totalPaid: numberValue(raw.total_paid ?? raw.totalPaid),
+  currentDebt: numberValue(raw.current_debt ?? raw.currentDebt),
+  lastUpdated: raw.last_updated ?? raw.lastUpdated ?? '',
+  isOverdue: numberValue(raw.current_debt ?? raw.currentDebt) > 0,
+});
+
+export const mapBooking = (raw: any): IBooking => ({
+  id: numberValue(raw.id),
+  bookingCode: raw.booking_code ?? raw.bookingCode ?? '',
+  customerName: raw.customer_name ?? raw.customerName ?? '',
+  customerPhone: raw.customer_phone ?? raw.customerPhone ?? '',
+  customerEmail: raw.customer_email ?? raw.customerEmail ?? '',
+  apartmentId: numberValue(raw.apartment_id ?? raw.apartmentId),
+  roomNumber: raw.room_number ?? raw.roomNumber ?? '',
+  buildingName: raw.building_name ?? raw.buildingName ?? '',
+  monthlyPrice: numberValue(raw.monthly_price ?? raw.monthlyPrice),
+  checkInDate: raw.check_in_date ?? raw.checkInDate ?? '',
+  depositAmount: numberValue(raw.deposit_amount ?? raw.depositAmount),
+  status: raw.status ?? 'PENDING',
+  notes: raw.notes,
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+});
+
+export const mapAlert = (raw: any): ISystemAlert => ({
+  id: numberValue(raw.id),
+  alertCode: raw.alert_code ?? `ALT-${raw.id ?? ''}`,
+  alertType: raw.alert_type ?? raw.alertType,
+  referenceId: numberValue(raw.reference_id ?? raw.referenceId),
+  referenceCode: raw.reference_code ?? '',
+  targetName: raw.target_name ?? '',
+  targetPhone: raw.target_phone ?? '',
+  roomNumber: raw.room_number ?? '',
+  buildingName: raw.building_name ?? '',
+  amountDue: raw.amount_due,
+  daysOverdue: raw.days_overdue,
+  priority: raw.priority ?? 'MEDIUM',
+  isSent: Boolean(raw.is_sent ?? raw.isSent),
+  sentChannels: raw.sent_channels ?? [],
+  aiDraftContent: raw.ai_draft_content ?? { scenario: 'FRIENDLY_REMINDER', tone: 'CONCISE_SMS', subject: '', body: '', generatedAt: '' },
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+});
+
+export const mapMaintenance = (raw: any): IMaintenanceRequest => ({
+  id: numberValue(raw.id),
+  ticketCode: raw.ticket_code ?? raw.ticketCode ?? '',
+  apartmentId: numberValue(raw.apartment_id ?? raw.apartmentId),
+  roomNumber: raw.room_number ?? '',
+  buildingName: raw.building_name ?? '',
+  reporterName: raw.reporter_name ?? '',
+  phone: raw.phone ?? '',
+  issueDescription: raw.issue_description ?? '',
+  category: raw.category ?? 'OTHER',
+  priority: raw.priority ?? 'MEDIUM',
+  status: raw.status ?? 'PENDING',
+  repairCost: numberValue(raw.repair_cost ?? raw.repairCost),
+  assignedStaffId: raw.assigned_staff_id ?? raw.assignedStaffId,
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+  resolvedAt: raw.resolved_at ?? raw.resolvedAt,
+  imageUrl: raw.image_url ?? raw.imageUrl,
+  tenantId: raw.tenant_id ?? raw.tenantId,
+  slaMinutes: numberValue(raw.sla_minutes ?? raw.slaMinutes),
+  rating: raw.rating,
+  feedback: raw.feedback,
+});
+
+export const mapTenant = (raw: any): ITenant => ({
+  id: numberValue(raw.id),
+  fullName: raw.full_name ?? raw.fullName ?? '',
+  citizenId: raw.citizen_id ?? raw.citizenId ?? '',
+  phone: raw.phone ?? '',
+  email: raw.email ?? '',
+  hometown: raw.hometown ?? '',
+  isBadDebt: Boolean(raw.is_bad_debt ?? raw.isBadDebt),
+  createdAt: raw.created_at ?? raw.createdAt ?? '',
+  userId: raw.user_id ?? raw.userId,
+  emergencyContacts: raw.emergency_contacts ?? raw.emergencyContacts ?? [],
+  roommates: raw.roommates ?? [],
+  totalHeldDeposit: numberValue(raw.total_held_deposit),
+  creditScore: numberValue(raw.credit_score, 0),
+});

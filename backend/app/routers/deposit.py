@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 from datetime import date
 
 from app.database import get_db
-from app.services.debt_service import recalculate_debt
+from app.services.debt_service import (
+    apply_deposit_offset,
+    recalculate_debt
+)
 from app.models.deposit import Deposit
 from app.models.contract import Contract
 from app.models.tenant import Tenant
@@ -273,23 +276,7 @@ def settle_deposit(
             detail="Tiền cọc không ở trạng thái HELD"
         )
 
-    # 3. Kiểm tra công nợ
-    ledger = recalculate_debt(
-        contract.tenant_id,
-        db
-    )
-
-    if ledger.current_debt > 0:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Khách thuê còn nợ "
-                f"{ledger.current_debt}. "
-                f"Cần chốt công nợ trước khi hoàn cọc."
-            )
-        )
-
-    # 4. Kiểm tra khấu trừ
+    # 3. Kiểm tra khấu trừ
     if data.deduction_amount < 0:
         raise HTTPException(
             status_code=400,
@@ -311,32 +298,49 @@ def settle_deposit(
             detail="Phải nhập lý do khấu trừ"
         )
 
-    # 5. Tính tiền hoàn
-    refund = (
-        deposit.amount
-        - data.deduction_amount
-    )
+    try:
+        ledger = recalculate_debt(
+            contract.tenant_id,
+            db,
+            commit=False
+        )
+        available_for_debt = (
+            deposit.amount - data.deduction_amount
+        )
+        debt_to_offset = max(
+            0,
+            min(ledger.current_debt, available_for_debt)
+        )
+        debt_offset = apply_deposit_offset(
+            contract.tenant_id,
+            debt_to_offset,
+            current_user.id,
+            deposit.id,
+            db
+        )
 
-    deposit.deduction_amount = (
-        data.deduction_amount
-    )
+        refund = (
+            deposit.amount
+            - data.deduction_amount
+            - debt_offset
+        )
 
-    deposit.deduction_reason = (
-        data.deduction_reason
-    )
+        deposit.deduction_amount = data.deduction_amount
+        deposit.deduction_reason = data.deduction_reason
+        deposit.refund_amount = refund
+        deposit.handled_by = current_user.id
+        deposit.status = "REFUNDED" if refund > 0 else "DEDUCTED"
 
-    deposit.refund_amount = refund
-
-    deposit.handled_by = current_user.id
-
-    # Theo class design hiện tại
-    if refund > 0:
-        deposit.status = "REFUNDED"
-    else:
-        deposit.status = "DEDUCTED"
-
-    db.commit()
-    db.refresh(deposit)
+        recalculate_debt(
+            contract.tenant_id,
+            db,
+            commit=False
+        )
+        db.commit()
+        db.refresh(deposit)
+    except Exception:
+        db.rollback()
+        raise
 
     return deposit
 # =========================================================

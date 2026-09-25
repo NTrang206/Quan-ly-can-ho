@@ -10,6 +10,7 @@ from sqlalchemy import (
 )
 
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -69,4 +70,9 @@ class Deposit(Base):
     created_at = Column(
         DateTime,
         default=datetime.now
+    )
+
+    contract = relationship(
+        "Contract",
+        back_populates="deposit"
     )

@@ -3,6 +3,7 @@ from sqlalchemy import func
 
 from datetime import datetime
 from decimal import Decimal
+from uuid import uuid4
 
 from fastapi import HTTPException
 
@@ -15,7 +16,8 @@ from app.models.payment import Payment
 
 def recalculate_debt(
     tenant_id: int,
-    db: Session
+    db: Session,
+    commit: bool = True
 ):
 
     # Kiểm tra Tenant
@@ -119,7 +121,68 @@ def recalculate_debt(
             datetime.now()
         )
 
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
+
     db.refresh(ledger)
 
     return ledger
+
+
+def apply_deposit_offset(
+    tenant_id: int,
+    amount: Decimal,
+    handled_by: int,
+    deposit_id: int,
+    db: Session
+):
+    """Apply deposit money to the tenant's oldest unpaid receivables."""
+    remaining_offset = Decimal(str(amount))
+
+    receivables = (
+        db.query(Receivable)
+        .join(Contract, Receivable.contract_id == Contract.id)
+        .filter(
+            Contract.tenant_id == tenant_id,
+            Receivable.total_amount > Receivable.paid_amount
+        )
+        .order_by(Receivable.due_date.asc(), Receivable.id.asc())
+        .all()
+    )
+
+    for receivable in receivables:
+        if remaining_offset <= 0:
+            break
+
+        receivable_remaining = (
+            Decimal(str(receivable.total_amount))
+            - Decimal(str(receivable.paid_amount))
+        )
+        applied_amount = min(remaining_offset, receivable_remaining)
+
+        receivable.paid_amount += applied_amount
+        receivable.status = (
+            "PAID"
+            if receivable.paid_amount == receivable.total_amount
+            else "PARTIAL"
+        )
+
+        db.add(
+            Payment(
+                receivable_id=receivable.id,
+                amount=applied_amount,
+                payment_method="DEPOSIT_OFFSET",
+                transaction_code=(
+                    f"DEP-{deposit_id}-{receivable.id}-"
+                    f"{uuid4().hex[:6].upper()}"
+                ),
+                note="Cấn trừ công nợ từ tiền cọc khi thanh lý",
+                handled_by=handled_by
+            )
+        )
+
+        remaining_offset -= applied_amount
+
+    return Decimal(str(amount)) - remaining_offset

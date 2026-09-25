@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { INITIAL_USERS } from '../stores/mockDatabase';
 import { UserRole } from '../types';
+import { useLoginMutation } from '../modules/auth/services/authApi';
+import { useAppDispatch } from '../hooks/useRedux';
+import { setCredentials } from '../stores/authSlice';
 import { useToast } from '../hooks/useToast';
 import { DwellLogo } from '../components/common/DwellLogo';
 import { AIBotLogo } from '../components/common/AIBotLogo';
@@ -15,64 +17,26 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
 
   const { switchRole } = useAuth();
+  const dispatch = useAppDispatch();
+  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanUser = username.trim().toLowerCase();
+    try {
+      const response = await login({
+        username: username.trim(),
+        password,
+      }).unwrap();
+      dispatch(setCredentials({ user: response.user, token: response.access_token }));
 
-    // Auto-detect role by matching username, email or keyword in INITIAL_USERS
-    const found = INITIAL_USERS.find(
-      (u) =>
-        u.username.toLowerCase() === cleanUser ||
-        u.email.toLowerCase() === cleanUser ||
-        (cleanUser === 'admin' && u.roleCode === 'ADMIN') ||
-        (cleanUser === 'staff' && u.roleCode === 'STAFF') ||
-        (cleanUser === 'accountant' && u.roleCode === 'ACCOUNTANT') ||
-        (cleanUser === 'tenant' && u.roleCode === 'TENANT') ||
-        (cleanUser === 'guest' && u.roleCode === 'GUEST')
-    );
-
-    let role: UserRole;
-    if (found) {
-      role = found.roleCode;
-    } else if (
-      cleanUser.includes('tenant') ||
-      cleanUser.includes('cudan') ||
-      cleanUser.includes('cu_dan') ||
-      cleanUser.includes('khachhang') ||
-      cleanUser.includes('khach_hang') ||
-      cleanUser.includes('khachthue')
-    ) {
-      // Customer / Resident portal
-      role = 'TENANT';
-    } else if (cleanUser.includes('guest') || cleanUser.includes('khachxem') || cleanUser.includes('xemphong')) {
-      // Guest exploration portal
-      role = 'GUEST';
-    } else if (cleanUser.includes('acc') || cleanUser.includes('ketoan') || cleanUser.includes('taichinh')) {
-      // Accountant portal
-      role = 'ACCOUNTANT';
-    } else if (cleanUser.includes('staff') || cleanUser.includes('nhanvien') || cleanUser.includes('kythuat')) {
-      // Building Staff portal
-      role = 'STAFF';
-    } else if (cleanUser.includes('admin') || cleanUser.includes('quantri')) {
-      // Admin portal
-      role = 'ADMIN';
-    } else {
-      toast.error(
-        'Đăng nhập thất bại',
-        'Tài khoản không chính xác. Vui lòng bấm vào các nút vai trò mẫu bên dưới (Admin, Kế toán, Khách hàng)!'
-      );
-      return;
-    }
-
-    switchRole(role);
+      const role = response.user.roleCode;
 
     if (role === 'TENANT') {
       toast.success(
         'Đăng nhập thành công',
-        `Chào mừng Cư dân / Khách thuê ${found?.fullName || 'Nguyễn Văn An'}!`
+        `Chào mừng Cư dân / Khách thuê ${response.user.fullName}!`
       );
       navigate('/resident-portal');
     } else if (role === 'GUEST') {
@@ -81,16 +45,19 @@ export const LoginPage: React.FC = () => {
     } else if (role === 'ACCOUNTANT') {
       toast.success(
         'Đăng nhập thành công',
-        `Chào mừng Kế toán trưởng ${found?.fullName || 'Hoàng Khánh Ly'}!`
+        `Chào mừng Kế toán trưởng ${response.user.fullName}!`
       );
       navigate('/admin/finance');
     } else {
       const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
       toast.success(
         'Đăng nhập thành công',
-        `Chào mừng ${roleLabel} ${found?.fullName || ''}!`
+        `Chào mừng ${roleLabel} ${response.user.fullName}!`
       );
       navigate('/admin/dashboard');
+      }
+    } catch {
+      toast.error('Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng.');
     }
   };
 

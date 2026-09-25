@@ -8,6 +8,7 @@ from sqlalchemy import (
 )
 
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -62,4 +63,9 @@ class Tenant(Base):
         ForeignKey("users.id"),
         nullable=True,
         unique=True
+    )
+
+    contracts = relationship(
+        "Contract",
+        back_populates="tenant"
     )

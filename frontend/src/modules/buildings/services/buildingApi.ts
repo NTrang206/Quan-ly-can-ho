@@ -1,14 +1,12 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IBuilding, IApartment, ApartmentStatus } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
+import { mapApartment, mapBuilding } from '../../../utils/apiMappers';
 
 export const buildingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getBuildings: builder.query<IBuilding[], void>({
-      queryFn: async () => {
-        const data = mockDb.getBuildings();
-        return { data };
-      },
+      query: () => '/buildings',
+      transformResponse: (response: any[]) => response.map(mapBuilding),
       providesTags: (result) =>
         result
           ? [
@@ -19,19 +17,15 @@ export const buildingApi = baseApi.injectEndpoints({
     }),
 
     getApartments: builder.query<IApartment[], { buildingId?: number; status?: ApartmentStatus; floor?: number }>({
-      queryFn: async (params) => {
-        let apts = mockDb.getApartments();
-        if (params?.buildingId) {
-          apts = apts.filter(a => a.buildingId === Number(params.buildingId));
-        }
-        if (params?.status) {
-          apts = apts.filter(a => a.status === params.status);
-        }
-        if (params?.floor) {
-          apts = apts.filter(a => a.floor === Number(params.floor));
-        }
-        return { data: apts };
-      },
+      query: (params) => ({
+        url: '/apartments',
+        params: {
+          building_id: params?.buildingId,
+          status: params?.status,
+          floor: params?.floor,
+        },
+      }),
+      transformResponse: (response: any[]) => response.map(mapApartment),
       providesTags: (result) =>
         result
           ? [
@@ -42,24 +36,18 @@ export const buildingApi = baseApi.injectEndpoints({
     }),
 
     getApartmentById: builder.query<IApartment, number>({
-      queryFn: async (id) => {
-        const apt = mockDb.getApartments().find(a => a.id === Number(id));
-        if (!apt) return { error: { status: 404, data: 'Không tìm thấy căn hộ' } };
-        return { data: apt };
-      },
+      query: (id) => `/apartments/${id}`,
+      transformResponse: (response: any) => mapApartment(response),
       providesTags: (_result, _error, id) => [{ type: 'Apartment', id }],
     }),
 
     updateApartmentStatus: builder.mutation<IApartment, { id: number; status: ApartmentStatus }>({
-      queryFn: async ({ id, status }) => {
-        const apts = mockDb.getApartments();
-        const index = apts.findIndex(a => a.id === Number(id));
-        if (index === -1) return { error: { status: 404, data: 'Không tìm thấy căn hộ' } };
-
-        apts[index] = { ...apts[index], status };
-        mockDb.setApartments(apts);
-        return { data: apts[index] };
-      },
+      query: ({ id, status }) => ({
+        url: `/apartments/${id}/status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      transformResponse: (response: any) => mapApartment(response),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Apartment', id },
         { type: 'Apartment', id: 'LIST' },
@@ -69,32 +57,20 @@ export const buildingApi = baseApi.injectEndpoints({
     }),
 
     createApartment: builder.mutation<IApartment, Partial<IApartment>>({
-      queryFn: async (payload) => {
-        const apts = mockDb.getApartments();
-        const newApt: IApartment = {
-          id: Date.now(),
-          buildingId: payload.buildingId || 1,
-          buildingName: payload.buildingName || 'Sunshine Tower A',
-          roomNumber: payload.roomNumber || `P.${Math.floor(Math.random() * 900 + 100)}`,
-          floor: payload.floor || 1,
-          areaSqm: payload.areaSqm || 60,
-          price: payload.price || 8000000,
-          depositDefault: (payload.price || 8000000) * 2,
-          maxOccupants: payload.maxOccupants || 3,
-          currentOccupants: 0,
-          bedrooms: payload.bedrooms || 2,
-          bathrooms: payload.bathrooms || 1,
-          viewDirection: payload.viewDirection || 'Đông Nam',
-          status: payload.status || 'AVAILABLE',
-          description: payload.description || 'Căn hộ mới đưa vào khai thác.',
-          imageUrl: payload.imageUrl || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&auto=format&fit=crop&q=80',
-          amenities: payload.amenities || [],
-          createdAt: new Date().toISOString(),
-        };
-        apts.unshift(newApt);
-        mockDb.setApartments(apts);
-        return { data: newApt };
-      },
+      query: (payload) => ({
+        url: '/apartments',
+        method: 'POST',
+        body: {
+          building_id: payload.buildingId,
+          room_number: payload.roomNumber,
+          floor: payload.floor,
+          area_sqm: payload.areaSqm,
+          price: payload.price,
+          max_occupants: payload.maxOccupants,
+          status: payload.status ?? 'AVAILABLE',
+        },
+      }),
+      transformResponse: (response: any) => mapApartment(response),
       invalidatesTags: [
         { type: 'Apartment', id: 'LIST' },
         { type: 'Building', id: 'LIST' },

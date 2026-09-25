@@ -8,6 +8,7 @@ from sqlalchemy import (
 )
 
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -60,4 +61,13 @@ class Apartment(Base):
     created_at = Column(
         DateTime,
         default=datetime.now
+    )
+
+    contracts = relationship(
+        "Contract",
+        back_populates="apartment"
+    )
+    bookings = relationship(
+        "Booking",
+        back_populates="apartment"
     )

@@ -1,27 +1,13 @@
 import { baseApi } from '../../../stores/baseApi';
 import { ITenant, IRoommate, IEmergencyContact } from '../../../types';
 import { mockDb } from '../../../stores/mockDatabase';
+import { mapTenant } from '../../../utils/apiMappers';
 
 export const tenantApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTenants: builder.query<ITenant[], { search?: string; isBadDebt?: boolean }>({
-      queryFn: async (params) => {
-        let list = mockDb.getTenants();
-        if (params?.search) {
-          const s = params.search.toLowerCase();
-          list = list.filter(
-            t =>
-              t.fullName.toLowerCase().includes(s) ||
-              t.citizenId.includes(s) ||
-              t.phone.includes(s) ||
-              t.currentRoomNumber?.toLowerCase().includes(s)
-          );
-        }
-        if (params?.isBadDebt !== undefined) {
-          list = list.filter(t => t.isBadDebt === params.isBadDebt);
-        }
-        return { data: list };
-      },
+      query: () => '/tenants',
+      transformResponse: (response: any[]) => response.map(mapTenant),
       providesTags: (result) =>
         result
           ? [
@@ -32,35 +18,24 @@ export const tenantApi = baseApi.injectEndpoints({
     }),
 
     getTenantById: builder.query<ITenant, number>({
-      queryFn: async (id) => {
-        const tenant = mockDb.getTenants().find(t => t.id === Number(id));
-        if (!tenant) return { error: { status: 404, data: 'Không tìm thấy hồ sơ khách thuê' } };
-        return { data: tenant };
-      },
+      query: (id) => `/tenants/${id}`,
+      transformResponse: (response: any) => mapTenant(response),
       providesTags: (_result, _error, id) => [{ type: 'Tenant', id }],
     }),
 
     createTenant: builder.mutation<ITenant, Partial<ITenant>>({
-      queryFn: async (payload) => {
-        const tenants = mockDb.getTenants();
-        const newTenant: ITenant = {
-          id: Date.now(),
-          fullName: payload.fullName || 'Khách Thuê Mới',
-          citizenId: payload.citizenId || '001201009999',
-          phone: payload.phone || '0900.000.000',
-          email: payload.email || 'customer@sunshine.vn',
-          hometown: payload.hometown || 'Hà Nội',
-          isBadDebt: false,
-          createdAt: new Date().toISOString().split('T')[0],
-          emergencyContacts: payload.emergencyContacts || [],
-          roommates: payload.roommates || [],
-          totalHeldDeposit: payload.totalHeldDeposit || 0,
-          creditScore: 95,
-        };
-        tenants.unshift(newTenant);
-        mockDb.setTenants(tenants);
-        return { data: newTenant };
-      },
+      query: (payload) => ({
+        url: '/tenants',
+        method: 'POST',
+        body: {
+          full_name: payload.fullName,
+          citizen_id: payload.citizenId,
+          phone: payload.phone,
+          email: payload.email,
+          hometown: payload.hometown,
+        },
+      }),
+      transformResponse: (response: any) => mapTenant(response),
       invalidatesTags: [{ type: 'Tenant', id: 'LIST' }],
     }),
 

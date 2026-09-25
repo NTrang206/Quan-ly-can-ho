@@ -1,13 +1,24 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import date, datetime
 from decimal import Decimal
-
+from pydantic import BaseModel
 
 class ReceivableCreate(BaseModel):
     contract_id: int
     billing_month: int
     billing_year: int
     service_amount: Decimal = Decimal("0")
+
+
+class MonthlyReceivableGenerateRequest(BaseModel):
+    billing_month: int
+    billing_year: int
+    service_amount: Decimal = Decimal("0")
+
+
+class MonthlyReceivableGenerateResponse(BaseModel):
+    count: int
+    total_amount: Decimal
 
 
 class ReceivableResponse(BaseModel):
@@ -32,3 +43,14 @@ class ReceivableResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True
     )
+class VietQRResponse(BaseModel):
+    receivable_id: int
+    contract_id: int
+    amount: int
+
+    bank_id: str
+    account_no: str
+    account_name: str
+
+    transfer_content: str
+    qr_url: str

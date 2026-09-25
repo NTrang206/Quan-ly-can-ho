@@ -6,7 +6,7 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from uuid import uuid4
 
 from app.database import get_db
@@ -16,6 +16,7 @@ from app.models.booking import Booking
 from app.models.apartment import Apartment
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.role import Role
 from app.models.deposit import Deposit
 
 from app.schemas.contract import (
@@ -23,6 +24,7 @@ from app.schemas.contract import (
     BookingToContractRequest,
     ContractRenewRequest,
     TerminateContractRequest,
+    RejectContractRequest,
     ContractResponse
 )
 from app.services.debt_service import recalculate_debt
@@ -127,7 +129,7 @@ def create_contract_and_deposit(
     deposit = Deposit(
         contract_id=contract.id,
 
-        amount=0,
+        amount=deposit_amount,
         paid_date=None,
 
         status="PENDING",
@@ -302,7 +304,8 @@ def create_contract_from_booking(
 
     # Booking chỉ được chuyển một lần
     existing_contract = db.query(Contract).filter(
-        Contract.booking_id == booking_id
+        Contract.booking_id == booking_id,
+        Contract.status != "REJECTED"
     ).first()
 
     if existing_contract:
@@ -460,6 +463,48 @@ def get_contracts(
     return db.query(Contract).all()
 
 
+@router.get(
+    "/{contract_id}",
+    response_model=ContractResponse
+)
+def get_contract(
+    contract_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(
+            "ADMIN",
+            "STAFF",
+            "ACCOUNTANT",
+            "TENANT"
+        )
+    )
+):
+    contract = db.query(Contract).filter(
+        Contract.id == contract_id
+    ).first()
+
+    if contract is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy hợp đồng"
+        )
+
+    role = db.query(Role).filter(
+        Role.id == current_user.role_id
+    ).first()
+    if role and role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(
+            Tenant.user_id == current_user.id
+        ).first()
+        if tenant is None or contract.tenant_id != tenant.id:
+            raise HTTPException(
+                status_code=404,
+                detail="Không tìm thấy hợp đồng"
+            )
+
+    return contract
+
+
 # =========================================================
 # KÍCH HOẠT HỢP ĐỒNG
 # Chỉ ADMIN
@@ -583,6 +628,66 @@ def activate_contract(
     return contract
 
 
+@router.patch(
+    "/{contract_id}/reject",
+    response_model=ContractResponse
+)
+def reject_contract(
+    contract_id: int,
+    data: RejectContractRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN")
+    )
+):
+    contract = db.query(Contract).filter(
+        Contract.id == contract_id
+    ).first()
+
+    if contract is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy hợp đồng"
+        )
+
+    if contract.status != "DRAFT":
+        raise HTTPException(
+            status_code=400,
+            detail="Chỉ hợp đồng DRAFT mới có thể bị từ chối"
+        )
+
+    reason = data.reason.strip()
+
+    if not reason:
+        raise HTTPException(
+            status_code=400,
+            detail="Lý do từ chối không được để trống"
+        )
+
+    contract.status = "REJECTED"
+    contract.rejection_reason = reason
+
+    if contract.booking_id is not None:
+        booking = db.query(Booking).filter(
+            Booking.id == contract.booking_id
+        ).first()
+
+        if booking is not None:
+            booking.status = "CONFIRMED"
+
+        apartment = db.query(Apartment).filter(
+            Apartment.id == contract.apartment_id
+        ).first()
+
+        if apartment is not None and apartment.status == "RESERVED":
+            apartment.status = "AVAILABLE"
+
+    db.commit()
+    db.refresh(contract)
+
+    return contract
+
+
 # =========================================================
 # XEM CHI TIẾT HỢP ĐỒNG
 # =========================================================
@@ -634,14 +739,18 @@ def renew_contract(
         )
 
     # 3. Kiểm tra ngày
-    if data.new_end_date <= data.new_start_date:
+    renewal_start_date = data.new_start_date or (
+        old_contract.end_date + timedelta(days=1)
+    )
+
+    if data.new_end_date <= renewal_start_date:
         raise HTTPException(
             status_code=400,
             detail="Ngày kết thúc mới phải lớn hơn ngày bắt đầu"
         )
 
     # Hợp đồng mới phải bắt đầu sau hợp đồng cũ
-    if data.new_start_date <= old_contract.end_date:
+    if renewal_start_date <= old_contract.end_date:
         raise HTTPException(
             status_code=400,
             detail=(
@@ -682,7 +791,7 @@ def renew_contract(
         apartment_id=old_contract.apartment_id,
         tenant_id=old_contract.tenant_id,
 
-        start_date=data.new_start_date,
+        start_date=renewal_start_date,
         end_date=data.new_end_date,
 
         rental_price=data.rental_price,
@@ -697,35 +806,6 @@ def renew_contract(
     db.refresh(new_contract)
 
     return new_contract
-@router.get(
-    "/{contract_id}",
-    response_model=ContractResponse
-)
-def get_contract(
-    contract_id: int,
-
-    db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        require_roles(
-            "ADMIN",
-            "STAFF",
-            "ACCOUNTANT"
-        )
-    )
-):
-
-    contract = db.query(Contract).filter(
-        Contract.id == contract_id
-    ).first()
-
-    if contract is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Không tìm thấy hợp đồng"
-        )
-
-    return contract
 # =========================================================
 # ĐÁNH DẤU HỢP ĐỒNG HẾT HẠN
 # ACTIVE -> EXPIRED

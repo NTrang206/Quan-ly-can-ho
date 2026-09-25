@@ -1,7 +1,8 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException
+    HTTPException,
+    Query
 )
 
 from sqlalchemy.orm import Session
@@ -16,11 +17,26 @@ from app.models.user import User
 
 from app.schemas.receivable import (
     ReceivableCreate,
-    ReceivableResponse
+    ReceivableResponse,
+    MonthlyReceivableGenerateRequest,
+    MonthlyReceivableGenerateResponse
 )
+from app.services.debt_service import recalculate_debt
 
 from app.dependencies.auth import require_roles
+from urllib.parse import (
+    quote,
+    urlencode
+)
 
+from app.models.role import Role
+from app.models.tenant import Tenant
+from app.models.contract import Contract
+
+from app.schemas.receivable import (
+    VietQRResponse
+)
+from app.core.config import settings
 
 router = APIRouter(
     prefix="/receivables",
@@ -128,11 +144,48 @@ def create_receivable(
         due_date=due_date
     )
 
-    db.add(receivable)
-    db.commit()
-    db.refresh(receivable)
+    try:
+        db.add(receivable)
+        recalculate_debt(
+            contract.tenant_id,
+            db,
+            commit=False
+        )
+        db.commit()
+        db.refresh(receivable)
+    except Exception:
+        db.rollback()
+        raise
 
     return receivable
+
+
+@router.post(
+    "/generate-monthly",
+    response_model=MonthlyReceivableGenerateResponse
+)
+def generate_monthly_receivables(
+    data: MonthlyReceivableGenerateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN", "ACCOUNTANT")
+    )
+):
+    from app.services.billing_service import generate_monthly_receivables
+
+    try:
+        result = generate_monthly_receivables(
+            data.billing_month,
+            data.billing_year,
+            data.service_amount,
+            db
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return result
 
 
 # =========================================================
@@ -188,6 +241,9 @@ def check_overdue_receivables(
 )
 def get_receivables(
     db: Session = Depends(get_db),
+    billing_month: int | None = Query(default=None, ge=1, le=12),
+    billing_year: int | None = Query(default=None, ge=2000),
+    status: str | None = None,
     current_user: User = Depends(
         require_roles(
             "ADMIN",
@@ -197,7 +253,49 @@ def get_receivables(
     )
 ):
 
-    return db.query(Receivable).all()
+    query = db.query(Receivable)
+
+    if billing_month is not None:
+        query = query.filter(
+            Receivable.billing_month == billing_month
+        )
+    if billing_year is not None:
+        query = query.filter(
+            Receivable.billing_year == billing_year
+        )
+    if status:
+        query = query.filter(Receivable.status == status)
+
+    return query.order_by(Receivable.due_date.asc()).all()
+
+
+@router.get(
+    "/my",
+    response_model=list[ReceivableResponse]
+)
+def get_my_receivables(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("TENANT")
+    )
+):
+    tenant = db.query(Tenant).filter(
+        Tenant.user_id == current_user.id
+    ).first()
+
+    if tenant is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy hồ sơ khách thuê"
+        )
+
+    return (
+        db.query(Receivable)
+        .join(Contract, Receivable.contract_id == Contract.id)
+        .filter(Contract.tenant_id == tenant.id)
+        .order_by(Receivable.due_date.desc())
+        .all()
+    )
 
 
 # =========================================================
@@ -234,46 +332,179 @@ def get_receivables_by_contract(
     ).all()
 
     return receivables
+@router.get(
+    "/{receivable_id}/vietqr",
+    response_model=VietQRResponse
+)
+def get_receivable_vietqr(
+    receivable_id: int,
+
+    db: Session = Depends(get_db),
+
+    current_user: User = Depends(
+        require_roles(
+            "ADMIN",
+            "ACCOUNTANT",
+            "TENANT"
+        )
+    )
+):
+
+    # ==========================================
+    # 1. Kiểm tra cấu hình VietQR
+    # ==========================================
+    if (
+        not settings.vietqr_bank_id
+        or not settings.vietqr_account_no
+        or not settings.vietqr_account_name
+    ):
+        raise HTTPException(
+            status_code=500,
+            detail="Hệ thống chưa cấu hình VietQR"
+        )
+
+    # ==========================================
+    # 2. Tìm khoản phải thu
+    # ==========================================
+    receivable = db.query(
+        Receivable
+    ).filter(
+        Receivable.id == receivable_id
+    ).first()
+
+    if receivable is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Không tìm thấy khoản phải thu"
+        )
+
+    # ==========================================
+    # 3. Kiểm tra quyền Tenant
+    # ==========================================
+    role = db.query(
+        Role
+    ).filter(
+        Role.id == current_user.role_id
+    ).first()
+
+    if (
+        role is not None
+        and role.role_code == "TENANT"
+    ):
+
+        tenant = db.query(
+            Tenant
+        ).filter(
+            Tenant.user_id == current_user.id
+        ).first()
+
+        if tenant is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Không tìm thấy hồ sơ khách thuê"
+            )
+
+        contract = db.query(
+            Contract
+        ).filter(
+            Contract.id == receivable.contract_id,
+            Contract.tenant_id == tenant.id
+        ).first()
+
+        # Chống IDOR:
+        # Tenant không được xem khoản thu người khác
+        if contract is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Không tìm thấy khoản phải thu"
+            )
+
+    # ==========================================
+    # 4. Tính số tiền còn phải trả
+    # ==========================================
+    remaining = (
+        receivable.total_amount
+        - receivable.paid_amount
+    )
+
+    if remaining <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Khoản thu đã được thanh toán đầy đủ"
+        )
+
+    amount = int(remaining)
+
+    # Nội dung chuyển khoản:
+    # ngắn, không ký tự đặc biệt
+    transfer_content = (
+        f"THUE CAN HO HD{receivable.contract_id} "
+        f"PT{receivable.id}"
+    )
+
+    # ==========================================
+    # 5. Sinh VietQR Quick Link
+    # ==========================================
+    bank_id = quote(
+        settings.vietqr_bank_id.strip()
+    )
+
+    account_no = quote(
+        settings.vietqr_account_no.strip()
+    )
+
+    base_url = (
+        "https://img.vietqr.io/image/"
+        f"{bank_id}-"
+        f"{account_no}-"
+        "compact2.png"
+    )
+
+    query_string = urlencode({
+        "amount":
+            amount,
+
+        "addInfo":
+            transfer_content,
+
+        "accountName":
+            settings.vietqr_account_name
+    })
+
+    qr_url = (
+        f"{base_url}?{query_string}"
+    )
+
+    return {
+        "receivable_id":
+            receivable.id,
+
+        "contract_id":
+            receivable.contract_id,
+
+        "amount":
+            amount,
+
+        "bank_id":
+            settings.vietqr_bank_id,
+
+        "account_no":
+            settings.vietqr_account_no,
+
+        "account_name":
+            settings.vietqr_account_name,
+
+        "transfer_content":
+            transfer_content,
+
+        "qr_url":
+            qr_url
+    }
 
 
 # =========================================================
 # XEM CHI TIẾT MỘT KHOẢN THU
 # =========================================================
-@router.get(
-    "/my",
-    response_model=list[ReceivableResponse]
-)
-def get_my_receivables(
-    db: Session = Depends(get_db),
-
-    current_user: User = Depends(
-        require_roles("TENANT")
-    )
-):
-
-    tenant = db.query(Tenant).filter(
-        Tenant.user_id == current_user.id
-    ).first()
-
-    if tenant is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Không tìm thấy hồ sơ khách thuê"
-        )
-
-    receivables = (
-        db.query(Receivable)
-        .join(
-            Contract,
-            Receivable.contract_id == Contract.id
-        )
-        .filter(
-            Contract.tenant_id == tenant.id
-        )
-        .all()
-    )
-
-    return receivables
 @router.get(
     "/{receivable_id}",
     response_model=ReceivableResponse

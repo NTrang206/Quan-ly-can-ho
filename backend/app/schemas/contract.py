@@ -32,6 +32,10 @@ class BookingToContractRequest(BaseModel):
     deposit_amount: Decimal
 
 
+class RejectContractRequest(BaseModel):
+    reason: str
+
+
 # ==========================================
 # RESPONSE
 # ==========================================
@@ -49,6 +53,7 @@ class ContractResponse(BaseModel):
     deposit_amount: Decimal
 
     status: str
+    rejection_reason: str | None
 
     created_by: int
     approved_by: int | None
@@ -61,7 +66,7 @@ class ContractResponse(BaseModel):
         from_attributes=True
     )
 class ContractRenewRequest(BaseModel):
-    new_start_date: date
+    new_start_date: date | None = None
     new_end_date: date
 
     rental_price: Decimal

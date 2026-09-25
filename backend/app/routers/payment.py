@@ -1,7 +1,8 @@
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException
+    HTTPException,
+    Query
 )
 
 from sqlalchemy.orm import Session
@@ -31,6 +32,23 @@ router = APIRouter(
     prefix="/payments",
     tags=["Payments"]
 )
+
+
+@router.get(
+    "",
+    response_model=list[PaymentResponse]
+)
+def get_payments(
+    receivable_id: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN", "STAFF", "ACCOUNTANT")
+    )
+):
+    query = db.query(Payment)
+    if receivable_id is not None:
+        query = query.filter(Payment.receivable_id == receivable_id)
+    return query.order_by(Payment.payment_date.desc()).all()
 
 
 VALID_PAYMENT_METHODS = [
@@ -150,39 +168,40 @@ def create_payment(
         handled_by=current_user.id
     )
 
-    db.add(payment)
+    try:
+        db.add(payment)
 
-    # 10. Cộng số đã trả
-    receivable.paid_amount = (
-        receivable.paid_amount
-        + data.amount
-    )
-
-    remaining = (
-        receivable.total_amount
-        - receivable.paid_amount
-    )
-
-    # 11. Cập nhật trạng thái
-    if remaining == 0:
-        receivable.status = "PAID"
-    else:
-        receivable.status = "PARTIAL"
-
-    db.commit()
-    db.refresh(payment)
-
-    # 12. Tìm Tenant qua Contract
-    contract = db.query(Contract).filter(
-        Contract.id == receivable.contract_id
-    ).first()
-
-    # 13. Đồng bộ sổ công nợ
-    if contract:
-        recalculate_debt(
-            contract.tenant_id,
-            db
+        # 10. Cộng số đã trả
+        receivable.paid_amount = (
+            receivable.paid_amount
+            + data.amount
         )
+
+        remaining = (
+            receivable.total_amount
+            - receivable.paid_amount
+        )
+
+        # 11. Cập nhật trạng thái
+        receivable.status = "PAID" if remaining == 0 else "PARTIAL"
+
+        # 12. Đồng bộ sổ công nợ trong cùng transaction
+        contract = db.query(Contract).filter(
+            Contract.id == receivable.contract_id
+        ).first()
+
+        if contract:
+            recalculate_debt(
+                contract.tenant_id,
+                db,
+                commit=False
+            )
+
+        db.commit()
+        db.refresh(payment)
+    except Exception:
+        db.rollback()
+        raise
 
     return payment
 

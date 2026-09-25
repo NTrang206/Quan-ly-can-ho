@@ -28,6 +28,7 @@ from app.utils.security import (
 from app.dependencies.auth import (
     get_current_user
 )
+from app.services.audit_service import record_audit
 
 
 router = APIRouter(
@@ -46,8 +47,10 @@ def login(
 ):
 
     # 1. Tìm tài khoản
+    login_value = data.username.strip()
     user = db.query(User).filter(
-        User.username == data.username
+        (User.username == login_value)
+        | (User.email == login_value)
     ).first()
 
     if user is None:
@@ -89,6 +92,15 @@ def login(
         user.id,
         user.role_id
     )
+
+    record_audit(
+        db,
+        action="LOGIN",
+        entity_type="User",
+        user_id=user.id,
+        entity_id=user.id
+    )
+    db.commit()
 
     # 6. Trả về cho Frontend
     return {
@@ -198,6 +210,13 @@ def change_password(
         )
     )
 
+    record_audit(
+        db,
+        action="CHANGE_PASSWORD",
+        entity_type="User",
+        user_id=current_user.id,
+        entity_id=current_user.id
+    )
     db.commit()
 
     return {

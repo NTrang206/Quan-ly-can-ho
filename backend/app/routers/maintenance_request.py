@@ -58,6 +58,40 @@ VALID_STATUSES = [
 ]
 
 
+def restore_apartment_status(
+    db: Session,
+    apartment_id: int
+):
+    apartment = db.query(Apartment).filter(
+        Apartment.id == apartment_id
+    ).first()
+
+    if apartment is None or apartment.status != "MAINTENANCE":
+        return
+
+    active_request = db.query(MaintenanceRequest).filter(
+        MaintenanceRequest.apartment_id == apartment_id,
+        MaintenanceRequest.status.in_([
+            "PENDING",
+            "IN_PROGRESS"
+        ])
+    ).first()
+
+    if active_request is not None:
+        return
+
+    active_contract = db.query(Contract).filter(
+        Contract.apartment_id == apartment_id,
+        Contract.status == "ACTIVE"
+    ).first()
+
+    apartment.status = (
+        "OCCUPIED"
+        if active_contract is not None
+        else "AVAILABLE"
+    )
+
+
 # =========================================================
 # ADMIN / STAFF TẠO PHIẾU
 # =========================================================
@@ -161,6 +195,9 @@ def create_maintenance_request(
     )
 
     db.add(maintenance)
+
+    if data.priority == "URGENT":
+        apartment.status = "MAINTENANCE"
 
     db.commit()
     db.refresh(maintenance)
@@ -272,6 +309,9 @@ def tenant_create_maintenance(
 
     db.add(maintenance)
 
+    if data.priority == "URGENT":
+        apartment.status = "MAINTENANCE"
+
     db.commit()
     db.refresh(maintenance)
 
@@ -369,6 +409,7 @@ def tenant_cancel_maintenance(
         )
 
     maintenance.status = "CANCELLED"
+    restore_apartment_status(db, maintenance.apartment_id)
 
     db.commit()
     db.refresh(maintenance)
@@ -759,6 +800,7 @@ def cancel_maintenance(
         )
 
     maintenance.status = "CANCELLED"
+    restore_apartment_status(db, maintenance.apartment_id)
 
     db.commit()
     db.refresh(maintenance)

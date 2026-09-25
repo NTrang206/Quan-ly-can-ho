@@ -9,6 +9,7 @@ from sqlalchemy import (
 )
 
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 from app.database import Base
 
@@ -65,6 +66,11 @@ class Contract(Base):
         default="DRAFT"
     )
 
+    rejection_reason = Column(
+        String(500),
+        nullable=True
+    )
+
     created_by = Column(
         Integer,
         ForeignKey("users.id"),
@@ -86,4 +92,31 @@ class Contract(Base):
         Integer,
         ForeignKey("bookings.id"),
         nullable=True
+    )
+
+    apartment = relationship(
+        "Apartment",
+        back_populates="contracts"
+    )
+    tenant = relationship(
+        "Tenant",
+        back_populates="contracts"
+    )
+    deposit = relationship(
+        "Deposit",
+        back_populates="contract",
+        uselist=False
+    )
+    booking = relationship(
+        "Booking",
+        back_populates="contract",
+        uselist=False
+    )
+    creator = relationship(
+        "User",
+        foreign_keys=[created_by]
+    )
+    approver = relationship(
+        "User",
+        foreign_keys=[approved_by]
     )

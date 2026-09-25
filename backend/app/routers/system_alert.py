@@ -6,13 +6,9 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
-from datetime import date, timedelta
-
 from app.database import get_db
 
 from app.models.system_alert import SystemAlert
-from app.models.contract import Contract
-from app.models.receivable import Receivable
 from app.models.user import User
 
 from app.schemas.system_alert import (
@@ -22,27 +18,13 @@ from app.schemas.system_alert import (
 )
 
 from app.dependencies.auth import require_roles
+from app.services.alert_service import scan_alerts as run_alert_scan
 
 
 router = APIRouter(
     prefix="/alerts",
     tags=["System Alerts"]
 )
-
-
-# =========================================================
-# HÀM KIỂM TRA ALERT ĐÃ TỒN TẠI
-# =========================================================
-def alert_exists(
-    db: Session,
-    alert_type: str,
-    reference_id: int
-):
-
-    return db.query(SystemAlert).filter(
-        SystemAlert.alert_type == alert_type,
-        SystemAlert.reference_id == reference_id
-    ).first() is not None
 
 
 # =========================================================
@@ -64,112 +46,21 @@ def scan_alerts(
     )
 ):
 
-    today = date.today()
-
-    end_limit = (
-        today
-        + timedelta(days=data.days_to_end)
-    )
-
-    contract_alert_count = 0
-    debt_alert_count = 0
-
-    # =====================================================
-    # 1. QUÉT HỢP ĐỒNG SẮP HẾT HẠN
-    # =====================================================
-    contracts = db.query(Contract).filter(
-        Contract.status == "ACTIVE",
-        Contract.end_date >= today,
-        Contract.end_date <= end_limit
-    ).all()
-
-    for contract in contracts:
-
-        days_left = (
-            contract.end_date - today
-        ).days
-
-        if not alert_exists(
-            db,
-            "EXPIRED_CONTRACT",
-            contract.id
-        ):
-
-            alert = SystemAlert(
-                alert_type="EXPIRED_CONTRACT",
-                reference_id=contract.id,
-
-                message=(
-                    f"Hợp đồng {contract.contract_code} "
-                    f"sẽ hết hạn sau {days_left} ngày "
-                    f"({contract.end_date})."
-                ),
-
-                is_sent=False
-            )
-
-            db.add(alert)
-
-            contract_alert_count += 1
-
-    # =====================================================
-    # 2. QUÉT KHOẢN THU QUÁ HẠN
-    # =====================================================
-    receivables = db.query(Receivable).filter(
-        Receivable.due_date < today,
-        Receivable.status != "PAID"
-    ).all()
-
-    for receivable in receivables:
-
-        remaining = (
-            receivable.total_amount
-            - receivable.paid_amount
-        )
-
-        if remaining <= 0:
-            continue
-
-        # Đồng bộ trạng thái
-        receivable.status = "OVERDUE"
-
-        days_overdue = (
-            today - receivable.due_date
-        ).days
-
-        if not alert_exists(
-            db,
-            "OVERDUE_DEBT",
-            receivable.id
-        ):
-
-            alert = SystemAlert(
-                alert_type="OVERDUE_DEBT",
-                reference_id=receivable.id,
-
-                message=(
-                    f"Khoản thu #{receivable.id} "
-                    f"đã quá hạn {days_overdue} ngày. "
-                    f"Số tiền còn nợ: {remaining} VNĐ."
-                ),
-
-                is_sent=False
-            )
-
-            db.add(alert)
-
-            debt_alert_count += 1
-
-    db.commit()
+    try:
+        result = run_alert_scan(data.days_to_end, db)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     return {
         "message": "Quét cảnh báo hoàn tất",
 
         "contract_alerts_created":
-            contract_alert_count,
+            result["contract_alerts_created"],
 
         "debt_alerts_created":
-            debt_alert_count
+            result["debt_alerts_created"]
     }
 
 
