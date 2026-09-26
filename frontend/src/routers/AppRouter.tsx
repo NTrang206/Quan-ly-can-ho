@@ -59,6 +59,7 @@ export const AppRouter: React.FC = () => {
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* Resident / Tenant Portal Route */}
+      <Route path="/tenant-portal" element={<Navigate to="/resident-portal" replace />} />
       <Route
         path="/resident-portal"
         element={

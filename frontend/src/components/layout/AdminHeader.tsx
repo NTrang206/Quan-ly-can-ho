@@ -138,7 +138,7 @@ export const AdminHeader: React.FC = () => {
               className="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-xs"
             />
             <div className="hidden xl:block text-left">
-              <div className="text-xs font-semibold text-slate-900 line-clamp-1">{user?.fullName}</div>
+              <div className="text-xs font-semibold text-slate-900 line-clamp-1">{user?.username || user?.fullName}</div>
               <div className="text-[10px] text-slate-400 uppercase font-semibold">
                 {user?.roleCode === 'ACCOUNTANT'
                   ? 'Kế toán trưởng'
@@ -155,7 +155,7 @@ export const AdminHeader: React.FC = () => {
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
               <div className="px-4 py-2 border-b border-slate-100">
-                <div className="text-xs font-bold text-slate-900">{user?.fullName}</div>
+                <div className="text-xs font-bold text-slate-900">{user?.username || user?.fullName}</div>
                 <div className="text-[11px] text-slate-500">{user?.email}</div>
               </div>
 

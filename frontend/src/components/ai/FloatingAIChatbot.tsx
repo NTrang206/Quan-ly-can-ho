@@ -31,7 +31,7 @@ export const FloatingAIChatbot: React.FC = () => {
     {
       id: '1',
       sender: 'ai',
-      text: 'Chào Quý cư dân! Tôi là Trợ Lý AI Sunshine Homes (RAG 24/7). Tôi có thể giúp bạn giải đáp quy định tòa nhà, giờ giấc chuyển đồ, đăng ký nuôi thú cưng, biểu phí gửi xe và thủ tục tạm trú.',
+      text: 'Chào Quý cư dân! Tôi là Trợ Lý AI Dwell. Tôi có thể giúp bạn giải đáp quy định tòa nhà, giờ giấc chuyển đồ, đăng ký nuôi thú cưng, biểu phí gửi xe và thủ tục tạm trú.',
       timestamp: 'Vừa xong',
     },
   ]);

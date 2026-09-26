@@ -20,7 +20,15 @@ import { FooterInfoModal, FooterModalKey } from '../components/common/FooterInfo
 import { BuildingLookupModal } from '../components/common/BuildingLookupModal';
 import { ResidentPortalModal } from '../components/common/ResidentPortalModal';
 
-export const PublicExplorePage: React.FC = () => {
+export interface PublicExplorePageProps {
+  embedded?: boolean;
+  onSwitchToResident?: () => void;
+}
+
+export const PublicExplorePage: React.FC<PublicExplorePageProps> = ({
+  embedded = false,
+  onSwitchToResident,
+}) => {
   const navigate = useNavigate();
   const { showSuccessToast, showErrorToast } = useToast();
   const { isAuthenticated, isTenant, isAdmin, isStaff, switchRole } = useAuth();
@@ -166,9 +174,10 @@ export const PublicExplorePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8f9] text-slate-800 font-sans">
-      {/* 1. Top Header (Mogi style nav bar) */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
+    <div className={embedded ? "text-slate-800 font-sans" : "min-h-screen bg-[#f7f8f9] text-slate-800 font-sans"}>
+      {/* 1. Top Header (Mogi style nav bar) - Chỉ hiện khi xem độc lập */}
+      {!embedded && (
+        <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <div className="cursor-pointer" onClick={() => navigate('/')}>
@@ -248,10 +257,17 @@ export const PublicExplorePage: React.FC = () => {
           </div>
         </div>
       </header>
+      )}
 
-      {/* 2. Top Filter Ribbon (Floating Search Strip matching Mogi screenshot) */}
-      <section className="bg-white border-b border-slate-200 shadow-xs py-3 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 2. Top Filter Ribbon (Floating Search Strip) */}
+      <section
+        className={
+          embedded
+            ? "bg-white border border-slate-200/90 rounded-2xl shadow-xs py-3.5 px-4 mb-6 sticky top-20 z-20"
+            : "bg-white border-b border-slate-200 shadow-xs py-3 sticky top-16 z-30"
+        }
+      >
+        <div className={embedded ? "w-full" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"}>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-2.5 items-center">
             {/* Search Input with Clear Button */}
             <div className="md:col-span-4 relative">
@@ -342,7 +358,7 @@ export const PublicExplorePage: React.FC = () => {
       </section>
 
       {/* 3. Main Body Content (2-Column Grid matching Mogi layout) */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className={embedded ? "w-full py-2" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"}>
         {/* Breadcrumb Navigation */}
         <div className="text-xs text-slate-500 mb-2 flex items-center space-x-1.5 flex-wrap">
           <span className="hover:text-slate-800 cursor-pointer" onClick={() => navigate('/')}>Dwell</span>
@@ -620,8 +636,9 @@ export const PublicExplorePage: React.FC = () => {
         </div>
       </main>
 
-      {/* 4. Comprehensive Real-Estate Footer (Batdongsan.com.vn style tailored to Dwell Living) */}
-      <footer className="bg-white border-t border-slate-200 mt-16 text-slate-700">
+      {/* 4. Comprehensive Real-Estate Footer - Chỉ hiện khi xem độc lập */}
+      {!embedded && (
+        <footer className="bg-white border-t border-slate-200 mt-16 text-slate-700">
         {/* Top Contact Strip */}
         <div className="border-b border-slate-200/80 bg-slate-50/70">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
@@ -813,6 +830,7 @@ export const PublicExplorePage: React.FC = () => {
           </div>
         </div>
       </footer>
+      )}
 
       {/* 4. Booking Appointment Modal (UC011) */}
       {bookingModalApartment && (
@@ -978,9 +996,14 @@ export const PublicExplorePage: React.FC = () => {
         isOpen={isResidentPortalModalOpen}
         onClose={() => setIsResidentPortalModalOpen(false)}
         onEnterPortalAsTenant={() => {
-          switchRole('TENANT');
-          showSuccessToast('Đã kích hoạt chế độ Cư Dân Dwell Living.');
-          navigate('/resident-portal');
+          if (onSwitchToResident) {
+            onSwitchToResident();
+          } else {
+            switchRole('TENANT');
+            showSuccessToast('Đã kích hoạt chế độ Cư Dân Dwell Living.');
+            navigate('/resident-portal');
+          }
+          setIsResidentPortalModalOpen(false);
         }}
         onGoToLogin={() => navigate('/login')}
       />

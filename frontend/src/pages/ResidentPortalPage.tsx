@@ -24,7 +24,10 @@ import {
   UserPlus,
   Phone,
   Image as ImageIcon,
+  Search,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { PublicExplorePage } from './PublicExplorePage';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
@@ -48,6 +51,13 @@ import { IApartment } from '../types';
 
 export const ResidentPortalPage: React.FC = () => {
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = tabParam === 'explore' ? 'EXPLORE' : 'RESIDENT';
+
+  const setActiveTab = (tab: 'RESIDENT' | 'EXPLORE') => {
+    setSearchParams({ tab: tab.toLowerCase() });
+  };
 
   // Queries
   const { data: apartments = [] } = useGetApartmentsQuery({});
@@ -196,8 +206,57 @@ export const ResidentPortalPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* 1. TOP WELCOME HERO BANNER */}
-      <div className="bg-gradient-to-r from-brand-700 via-blue-700 to-indigo-800 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-white/10 relative overflow-hidden">
+      {/* 0. TAB SWITCHER: GỘP GIAO DIỆN CƯ DÂN & KHÁCH VÀO XEM (DẠNG ẤN CLICK) */}
+      <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab('RESIDENT')}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'RESIDENT'
+                ? 'bg-white text-blue-700 shadow-xs border border-slate-200/80'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <Home className="w-4 h-4 text-blue-600" />
+            <span>Cổng Cư Dân (P.302 & Hợp Đồng)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('EXPLORE')}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'EXPLORE'
+                ? 'bg-[#00c5a0] text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            <span>Khách Vào Xem & Tìm Thuê</span>
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${
+                activeTab === 'EXPLORE' ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              Full
+            </span>
+          </button>
+        </div>
+
+        <div className="text-xs text-slate-500 hidden md:flex items-center gap-2 px-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>
+            {activeTab === 'RESIDENT'
+              ? 'Đang xem: Thông tin căn hộ P.302, hợp đồng, hóa đơn điện nước & bảo trì'
+              : 'Đang xem: Toàn bộ danh sách căn hộ trống, lọc theo khu vực/giá & đặt lịch xem phòng'}
+          </span>
+        </div>
+      </div>
+
+      {activeTab === 'RESIDENT' ? (
+        <div className="space-y-6">
+          {/* 1. TOP WELCOME HERO BANNER */}
+          <div className="bg-gradient-to-r from-brand-700 via-blue-700 to-indigo-800 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-white/10 relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-400/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -882,6 +941,10 @@ export const ResidentPortalPage: React.FC = () => {
           ))}
         </div>
       </div>
+      </div>
+      ) : (
+        <PublicExplorePage embedded onSwitchToResident={() => setActiveTab('RESIDENT')} />
+      )}
 
       {/* Dynamic VietQR Modal */}
       {activeBill && (

@@ -11,8 +11,7 @@ export const RoleSwitcher: React.FC = () => {
     { code: 'ADMIN', label: 'Quản trị (Admin)', icon: <Shield className="w-3.5 h-3.5" />, color: 'hover:text-purple-600' },
     { code: 'STAFF', label: 'Nhân viên (Staff)', icon: <UserCheck className="w-3.5 h-3.5" />, color: 'hover:text-blue-600' },
     { code: 'ACCOUNTANT', label: 'Kế toán (Accountant)', icon: <Calculator className="w-3.5 h-3.5" />, color: 'hover:text-emerald-600' },
-    { code: 'TENANT', label: 'Cư dân (Tenant)', icon: <Home className="w-3.5 h-3.5" />, color: 'hover:text-amber-600' },
-    { code: 'GUEST', label: 'Khách (Guest)', icon: <User className="w-3.5 h-3.5" />, color: 'hover:text-slate-600' },
+    { code: 'TENANT', label: 'Cư dân / Khách hàng', icon: <Home className="w-3.5 h-3.5" />, color: 'hover:text-amber-600' },
   ];
 
   return (

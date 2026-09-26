@@ -33,28 +33,28 @@ export const LoginPage: React.FC = () => {
 
       const role = response.user.roleCode;
 
-    if (role === 'TENANT') {
-      toast.success(
-        'Đăng nhập thành công',
-        `Chào mừng Cư dân / Khách thuê ${response.user.fullName}!`
-      );
-      navigate('/resident-portal');
-    } else if (role === 'GUEST') {
-      toast.success('Đăng nhập thành công', 'Chào mừng Khách xem phòng trực tuyến!');
-      navigate('/explore');
-    } else if (role === 'ACCOUNTANT') {
-      toast.success(
-        'Đăng nhập thành công',
-        `Chào mừng Kế toán trưởng ${response.user.fullName}!`
-      );
-      navigate('/admin/finance');
-    } else {
-      const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
-      toast.success(
-        'Đăng nhập thành công',
-        `Chào mừng ${roleLabel} ${response.user.fullName}!`
-      );
-      navigate('/admin/dashboard');
+      if (role === 'TENANT') {
+        toast.success(
+          'Đăng nhập thành công',
+          `Chào mừng Cư dân / Khách thuê ${response.user.fullName}!`
+        );
+        navigate('/resident-portal');
+      } else if (role === 'GUEST') {
+        toast.success('Đăng nhập thành công', 'Chào mừng Khách xem phòng trực tuyến!');
+        navigate('/explore');
+      } else if (role === 'ACCOUNTANT') {
+        toast.success(
+          'Đăng nhập thành công',
+          `Chào mừng Kế toán trưởng ${response.user.fullName}!`
+        );
+        navigate('/admin/finance');
+      } else {
+        const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
+        toast.success(
+          'Đăng nhập thành công',
+          `Chào mừng ${roleLabel} ${response.user.fullName}!`
+        );
+        navigate('/admin/dashboard');
       }
     } catch {
       toast.error('Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng.');
@@ -124,7 +124,7 @@ export const LoginPage: React.FC = () => {
               <div className="bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
                 <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <AIBotLogo size="xs" />
-                  <span>Trợ lý AI RAG 24/7</span>
+                  <span>Trợ lý AI</span>
                 </div>
                 <div className="text-[11px] text-slate-500 leading-normal mt-1">
                   Hỏi đáp nội quy tòa nhà, tóm tắt hợp đồng và ghi nhận sự cố tức thì.
@@ -234,9 +234,10 @@ export const LoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full bg-[#1d4ed8] hover:bg-[#1e40af] text-white font-semibold text-xs py-3 px-4 rounded-xl shadow-xs transition-all text-center"
+                disabled={isLoggingIn}
+                className="w-full bg-[#1d4ed8] hover:bg-[#1e40af] disabled:opacity-60 text-white font-semibold text-xs py-3 px-4 rounded-xl shadow-xs transition-all text-center cursor-pointer disabled:cursor-not-allowed"
               >
-                Đăng Nhập Vào Hệ Thống
+                {isLoggingIn ? 'Đang xác thực...' : 'Đăng Nhập Vào Hệ Thống'}
               </button>
             </form>
 
@@ -245,7 +246,7 @@ export const LoginPage: React.FC = () => {
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
                 Đăng nhập mẫu theo vai trò (1-Click Switch)
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickDemoLogin('ADMIN')}
@@ -273,13 +274,6 @@ export const LoginPage: React.FC = () => {
                   className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200/80 text-xs font-bold transition-colors text-center"
                 >
                   Khách hàng / Cư dân
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDemoLogin('GUEST')}
-                  className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 text-xs font-semibold transition-colors text-center"
-                >
-                  Khách tìm thuê
                 </button>
               </div>
             </div>
