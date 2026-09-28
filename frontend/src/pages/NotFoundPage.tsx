@@ -14,7 +14,7 @@ export const NotFoundPage: React.FC = () => {
         <h1 className="text-4xl font-extrabold text-slate-900 mb-2">404</h1>
         <h2 className="text-lg font-bold text-slate-800 mb-3">Không Tìm Thấy Trang</h2>
         <p className="text-xs text-slate-500 leading-relaxed mb-8">
-          Đường dẫn bạn yêu cầu không tồn tại hoặc đã được chuyển sang địa chỉ mới trong hệ thống Sunshine Homes.
+          Đường dẫn bạn yêu cầu không tồn tại hoặc đã được chuyển sang địa chỉ mới trong hệ thống Dwell Living.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3">
@@ -27,7 +27,7 @@ export const NotFoundPage: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/')}
-            className="flex-1 py-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/30 transition-all"
+            className="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition-all"
           >
             <Home className="w-4 h-4" />
             <span>Trang Chủ</span>

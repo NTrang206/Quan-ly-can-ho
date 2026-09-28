@@ -1,12 +1,12 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IBuilding, IApartment, ApartmentStatus } from '../../../types';
-import { mapApartment, mapBuilding } from '../../../utils/apiMappers';
+import { adaptBuilding, adaptApartment } from '../../../utils/adapters';
 
 export const buildingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getBuildings: builder.query<IBuilding[], void>({
       query: () => '/buildings',
-      transformResponse: (response: any[]) => response.map(mapBuilding),
+      transformResponse: (res: any[]) => (res || []).map(adaptBuilding),
       providesTags: (result) =>
         result
           ? [
@@ -17,15 +17,22 @@ export const buildingApi = baseApi.injectEndpoints({
     }),
 
     getApartments: builder.query<IApartment[], { buildingId?: number; status?: ApartmentStatus; floor?: number }>({
-      query: (params) => ({
-        url: '/apartments',
-        params: {
-          building_id: params?.buildingId,
-          status: params?.status,
-          floor: params?.floor,
-        },
-      }),
-      transformResponse: (response: any[]) => response.map(mapApartment),
+      query: (params) => {
+        const queryParams: Record<string, any> = {};
+        if (params?.buildingId) queryParams.building_id = params.buildingId;
+        if (params?.status) queryParams.status = params.status;
+        return {
+          url: '/apartments',
+          params: queryParams,
+        };
+      },
+      transformResponse: (res: any[], _meta, arg) => {
+        let apts = (res || []).map((a) => adaptApartment(a));
+        if (arg?.floor) {
+          apts = apts.filter((a) => a.floor === Number(arg.floor));
+        }
+        return apts;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -37,17 +44,17 @@ export const buildingApi = baseApi.injectEndpoints({
 
     getApartmentById: builder.query<IApartment, number>({
       query: (id) => `/apartments/${id}`,
-      transformResponse: (response: any) => mapApartment(response),
+      transformResponse: (res: any) => adaptApartment(res),
       providesTags: (_result, _error, id) => [{ type: 'Apartment', id }],
     }),
 
     updateApartmentStatus: builder.mutation<IApartment, { id: number; status: ApartmentStatus }>({
       query: ({ id, status }) => ({
-        url: `/apartments/${id}/status`,
-        method: 'PATCH',
+        url: `/apartments/${id}`,
+        method: 'PUT',
         body: { status },
       }),
-      transformResponse: (response: any) => mapApartment(response),
+      transformResponse: (res: any) => adaptApartment(res),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Apartment', id },
         { type: 'Apartment', id: 'LIST' },
@@ -61,24 +68,41 @@ export const buildingApi = baseApi.injectEndpoints({
         url: '/apartments',
         method: 'POST',
         body: {
-          building_id: payload.buildingId,
-          room_number: payload.roomNumber,
-          floor: payload.floor,
-          area_sqm: payload.areaSqm,
-          price: payload.price,
-          max_occupants: payload.maxOccupants,
-          status: payload.status ?? 'AVAILABLE',
+          building_id: payload.buildingId || 1,
+          room_number: payload.roomNumber || `P.${Math.floor(Math.random() * 900 + 100)}`,
+          floor: payload.floor || 1,
+          area_sqm: payload.areaSqm || 60,
+          price: payload.price || 10000000,
+          max_occupants: payload.maxOccupants || 3,
+          status: payload.status || 'AVAILABLE',
         },
       }),
-      transformResponse: (response: any) => mapApartment(response),
+      transformResponse: (res: any) => adaptApartment(res),
       invalidatesTags: [
         { type: 'Apartment', id: 'LIST' },
         { type: 'Building', id: 'LIST' },
         { type: 'Dashboard', id: 'STATS' },
       ],
     }),
+
+    createBuilding: builder.mutation<IBuilding, Partial<IBuilding>>({
+      query: (payload) => ({
+        url: '/buildings',
+        method: 'POST',
+        body: {
+          building_code: `BLD-0${Date.now().toString().slice(-3)}`,
+          name: payload.name || 'Tòa nhà mới',
+          address: payload.address || 'Hồ Chí Minh',
+          total_floors: payload.totalFloors || 10,
+          total_apartments: payload.totalApartments || 50,
+          status: payload.status || 'ACTIVE',
+        },
+      }),
+      transformResponse: (res: any) => adaptBuilding(res),
+      invalidatesTags: [{ type: 'Building', id: 'LIST' }],
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
@@ -87,4 +111,5 @@ export const {
   useGetApartmentByIdQuery,
   useUpdateApartmentStatusMutation,
   useCreateApartmentMutation,
+  useCreateBuildingMutation,
 } = buildingApi;

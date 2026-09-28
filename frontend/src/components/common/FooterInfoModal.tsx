@@ -65,8 +65,8 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
       case 'ABOUT_US':
         return (
           <div className="space-y-5">
-            <div className="bg-gradient-to-r from-teal-50 to-sky-50 p-4 rounded-xl border border-teal-100 flex items-start gap-3">
-              <Building2 className="w-6 h-6 text-[#00a680] shrink-0 mt-0.5" />
+            <div className="bg-gradient-to-r from-brand-50 to-sky-50 p-4 rounded-xl border border-brand-100 flex items-start gap-3">
+              <Building2 className="w-6 h-6 text-brand-600 shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-slate-900 text-sm">Hệ Thống Quản Lý Căn Hộ Cho Thuê Dwell Living</h4>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
@@ -77,7 +77,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-center shadow-xs">
-                <div className="text-2xl font-black text-[#00a680]">500+</div>
+                <div className="text-2xl font-black text-brand-600">500+</div>
                 <div className="text-[11px] text-slate-500 font-medium mt-0.5">Cư dân đang sinh sống</div>
               </div>
               <div className="bg-white p-3.5 rounded-xl border border-slate-200 text-center shadow-xs">
@@ -130,17 +130,17 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
                   <tr>
                     <td className="py-2.5 px-3 font-semibold text-slate-800">Căn 1PN Studio Cao Cấp</td>
                     <td className="py-2.5 px-3">38 - 48 m²</td>
-                    <td className="py-2.5 px-3 text-right font-bold text-[#00a680]">6.500.000 – 9.000.000 đ/tháng</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-brand-700">6.500.000 – 9.000.000 đ/tháng</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-3 font-semibold text-slate-800">Căn 2PN Chuẩn Gia Đình</td>
                     <td className="py-2.5 px-3">65 - 78 m²</td>
-                    <td className="py-2.5 px-3 text-right font-bold text-[#00a680]">10.000.000 – 15.000.000 đ/tháng</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-brand-700">10.000.000 – 15.000.000 đ/tháng</td>
                   </tr>
                   <tr>
                     <td className="py-2.5 px-3 font-semibold text-slate-800">Căn 3PN / Sky Panorama</td>
                     <td className="py-2.5 px-3">85 - 130 m²</td>
-                    <td className="py-2.5 px-3 text-right font-bold text-[#00a680]">16.000.000 – 24.000.000 đ/tháng</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-brand-700">16.000.000 – 24.000.000 đ/tháng</td>
                   </tr>
                   <tr className="bg-slate-50/50">
                     <td className="py-2.5 px-3 font-medium">Phí quản lý vận hành</td>
@@ -225,7 +225,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-                <div className="w-8 h-8 rounded-full bg-teal-100 text-[#00a680] font-bold flex items-center justify-center mx-auto mb-2">1</div>
+                <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 font-bold flex items-center justify-center mx-auto mb-2">1</div>
                 <div className="font-bold text-slate-900">Mở Cổng Cư Dân</div>
                 <div className="text-[11px] text-slate-500 mt-1">Truy cập mục Hóa đơn hoặc Thông báo đóng tiền phòng</div>
               </div>
@@ -243,12 +243,12 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
               </div>
             </div>
 
-            <div className="bg-teal-50 p-3.5 rounded-xl border border-teal-200 text-teal-900">
+            <div className="bg-brand-50/70 p-3.5 rounded-xl border border-brand-200 text-brand-950">
               <div className="font-bold mb-1 flex items-center gap-1.5">
-                <QrCode className="w-4 h-4 text-[#00a680]" />
+                <QrCode className="w-4 h-4 text-brand-600" />
                 <span>Không cần nhớ số tài khoản – Không lo gõ nhầm cú pháp</span>
               </div>
-              <p className="text-[11px] text-teal-800 leading-relaxed">
+              <p className="text-[11px] text-brand-800 leading-relaxed">
                 Mỗi hóa đơn đều gắn mã giao dịch định danh duy nhất (Virtual Account). Tiền được hạch toán ngay lập tức kể cả đêm muộn, ngày lễ hoặc cuối tuần.
               </p>
             </div>
@@ -382,7 +382,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#00c5a0] hover:bg-[#00b28e] text-white font-bold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Gửi Phản Hồi Ngay</span>
@@ -399,8 +399,8 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span>🏢 Tòa Sunshine Tower A – Cầu Giấy / Nam Từ Liêm</span>
-                  <span className="text-xs text-[#00a680]">25 Tầng</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-brand-600 inline mr-2 shrink-0" /> Tòa Sunshine Tower A – Cầu Giấy / Nam Từ Liêm</span>
+                  <span className="text-xs text-brand-600 font-bold">25 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">
                   <div>Tầng hầm: 02 tầng đỗ xe</div>
@@ -412,7 +412,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span>🏢 Tòa Sky Park Residence – Bình Thạnh, TP.HCM</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-sky-600 inline mr-2 shrink-0" /> Tòa Sky Park Residence – Bình Thạnh, TP.HCM</span>
                   <span className="text-xs text-sky-600">30 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">
@@ -425,7 +425,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span>🏢 Tòa Sunshine Golden River – Tây Hồ, Hà Nội</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-amber-600 inline mr-2 shrink-0" /> Tòa Sunshine Golden River – Tây Hồ, Hà Nội</span>
                   <span className="text-xs text-amber-600">28 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">
@@ -501,26 +501,26 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
               <h6 className="font-bold text-slate-900">Hồ sơ cần chuẩn bị (gửi file ảnh qua ứng dụng):</h6>
               <div className="space-y-1.5 pl-2">
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00a680]" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                   <span>Bản chụp 02 mặt Căn cước công dân (hoặc Hộ chiếu / Visa còn hạn đối với khách nước ngoài).</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00a680]" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                   <span>Hợp đồng thuê căn hộ điện tử Dwell Living (đã ký số thành công).</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00a680]" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                   <span>Tài khoản định danh điện tử VNeID mức độ 2 (để xác thực trực tuyến).</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-3 bg-teal-50 rounded-xl border border-teal-200 text-teal-900 flex items-center justify-between">
+            <div className="p-3 bg-brand-50/70 rounded-xl border border-brand-200 text-brand-950 flex items-center justify-between">
               <div>
                 <div className="font-bold">Thời gian hoàn thành: 02 - 03 ngày làm việc</div>
-                <div className="text-[11px] text-teal-700 mt-0.5">Kết quả xác nhận tạm trú sẽ được gửi qua VNeID và lưu trữ tại hồ sơ cư dân.</div>
+                <div className="text-[11px] text-brand-800 mt-0.5">Kết quả xác nhận tạm trú sẽ được gửi qua VNeID và lưu trữ tại hồ sơ cư dân.</div>
               </div>
-              <ShieldCheck className="w-8 h-8 text-[#00a680] shrink-0" />
+              <ShieldCheck className="w-8 h-8 text-brand-600 shrink-0" />
             </div>
           </div>
         );

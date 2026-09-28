@@ -3,14 +3,11 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutGrid,
   Building2,
+  Users,
   FileText,
-  Radio,
+  CreditCard,
   Wrench,
-  Landmark,
-  Zap,
-  ShieldCheck,
-  Sparkles,
-  History,
+  BellRing,
 } from 'lucide-react';
 import { useAppSelector } from '../../hooks/useRedux';
 import { useAuth } from '../../hooks/useAuth';
@@ -26,13 +23,13 @@ export const AdminSidebar: React.FC = () => {
     ? [
         {
           to: '/admin/dashboard',
-          label: 'Tổng quan tài chính',
+          label: 'Thống kê & Tổng quan',
           icon: <LayoutGrid className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/finance?tab=REPORTS',
-          label: 'Sổ quỹ & Báo cáo thu chi',
-          icon: <Landmark className="w-[18px] h-[18px]" />,
+          to: '/admin/finance',
+          label: 'Thanh toán & Công nợ',
+          icon: <CreditCard className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/contracts',
@@ -40,13 +37,18 @@ export const AdminSidebar: React.FC = () => {
           icon: <FileText className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/buildings',
-          label: 'Mặt bằng tòa nhà',
-          icon: <Building2 className="w-[18px] h-[18px]" />,
+          to: '/admin/tenants',
+          label: 'Khách thuê & Sổ nợ',
+          icon: <Users className="w-[18px] h-[18px]" />,
+        },
+        {
+          to: '/admin/alerts',
+          label: 'Cảnh báo & AI Nhắc nợ',
+          icon: <BellRing className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/rag-chatbot',
-          label: 'Trợ lý AI Kế toán',
+          label: 'AI Hỏi đáp quy định',
           icon: <AIBotLogo size="xs" />,
         },
       ]
@@ -54,95 +56,80 @@ export const AdminSidebar: React.FC = () => {
     ? [
         {
           to: '/admin/dashboard',
-          label: 'Bảng tổng quan',
+          label: 'Thống kê & Tổng quan',
           icon: <LayoutGrid className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/buildings',
-          label: 'Quản lý phòng',
+          label: 'Căn hộ & Tòa nhà',
           icon: <Building2 className="w-[18px] h-[18px]" />,
         },
         {
+          to: '/admin/tenants',
+          label: 'Khách thuê & Liên hệ',
+          icon: <Users className="w-[18px] h-[18px]" />,
+        },
+        {
           to: '/admin/contracts',
-          label: 'Quản lý hợp đồng',
+          label: 'Hợp đồng & Tiền cọc',
           icon: <FileText className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/alerts',
-          label: 'Giám sát IoT',
-          icon: <Radio className="w-[18px] h-[18px]" />,
-        },
-        {
           to: '/admin/maintenance',
-          label: 'Vận hành bảo trì',
+          label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/bookings',
-          label: 'Quản lý dịch vụ',
-          icon: <Zap className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/tenants',
-          label: 'An ninh & Cư dân',
-          icon: <ShieldCheck className="w-[18px] h-[18px]" />,
+          to: '/admin/alerts',
+          label: 'Cảnh báo & AI Nhắc nợ',
+          icon: <BellRing className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/rag-chatbot',
-          label: 'Trợ lý AI',
+          label: 'AI Hỏi đáp quy định',
           icon: <AIBotLogo size="xs" />,
         },
       ]
     : [
         {
           to: '/admin/dashboard',
-          label: 'Bảng tổng quan',
+          label: 'Thống kê & Tổng quan',
           icon: <LayoutGrid className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/buildings',
-          label: 'Quản lý phòng',
+          label: 'Căn hộ & Tòa nhà',
           icon: <Building2 className="w-[18px] h-[18px]" />,
         },
         {
+          to: '/admin/tenants',
+          label: 'Khách thuê & Liên hệ',
+          icon: <Users className="w-[18px] h-[18px]" />,
+        },
+        {
           to: '/admin/contracts',
-          label: 'Quản lý hợp đồng',
+          label: 'Hợp đồng & Tiền cọc',
           icon: <FileText className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/alerts',
-          label: 'Giám sát IoT',
-          icon: <Radio className="w-[18px] h-[18px]" />,
+          to: '/admin/finance',
+          label: 'Thanh toán & Công nợ',
+          icon: <CreditCard className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/maintenance',
-          label: 'Vận hành bảo trì',
+          label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
         },
         {
-          to: '/admin/finance?tab=REPORTS',
-          label: 'Báo cáo thu chi',
-          icon: <Landmark className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/bookings',
-          label: 'Quản lý dịch vụ',
-          icon: <Zap className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/tenants',
-          label: 'An ninh',
-          icon: <ShieldCheck className="w-[18px] h-[18px]" />,
+          to: '/admin/alerts',
+          label: 'Cảnh báo & AI Nhắc nợ',
+          icon: <BellRing className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/rag-chatbot',
-          label: 'Trợ lý AI',
+          label: 'AI Hỏi đáp quy định',
           icon: <AIBotLogo size="xs" />,
-        },
-        {
-          to: '/resident-portal',
-          label: 'Cổng cư dân',
-          icon: <History className="w-[18px] h-[18px]" />,
         },
       ];
 
@@ -160,8 +147,7 @@ export const AdminSidebar: React.FC = () => {
           <DwellLogo
             badge={isAccountant ? 'Kế Toán' : isStaff ? 'Vận Hành' : 'ADMIN'}
             badgeVariant={isAccountant ? 'emerald' : isStaff ? 'slate' : 'blue'}
-            subtitle1={isAccountant ? 'Phân hệ tài chính & kế toán' : 'Hệ thống căn hộ cho thuê toàn quốc'}
-            subtitle2={isAccountant ? 'Đối soát & sổ quỹ tức thì' : 'Bàn giao nhận phòng tức thì'}
+            showSubtitles={false}
           />
         </div>
 
@@ -203,6 +189,16 @@ export const AdminSidebar: React.FC = () => {
             </NavLink>
           ))}
         </nav>
+
+        {/* System Information Badge */}
+        <div className="pt-2 border-t border-slate-100 mt-auto text-center">
+          <div className="text-[11px] text-slate-400 font-medium">
+            Hệ thống Quản trị BQL Căn hộ
+          </div>
+          <div className="text-[10px] text-slate-400">
+            Dwell v2.4 • Nghiệp vụ Quản lý & Vận hành
+          </div>
+        </div>
       </div>
     </aside>
   );

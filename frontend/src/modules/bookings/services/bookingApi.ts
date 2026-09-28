@@ -1,12 +1,18 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IBooking, BookingStatus } from '../../../types';
-import { mapBooking } from '../../../utils/apiMappers';
+import { adaptBooking } from '../../../utils/adapters';
 
 export const bookingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getBookings: builder.query<IBooking[], { status?: BookingStatus }>({
+    getBookings: builder.query<IBooking[], { status?: BookingStatus } | void>({
       query: () => '/bookings',
-      transformResponse: (response: any[]) => response.map(mapBooking),
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptBooking);
+        if (arg && 'status' in arg && arg.status) {
+          list = list.filter((b) => b.status === arg.status);
+        }
+        return list;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -14,6 +20,20 @@ export const bookingApi = baseApi.injectEndpoints({
               { type: 'Booking', id: 'LIST' },
             ]
           : [{ type: 'Booking', id: 'LIST' }],
+    }),
+
+    lookupBooking: builder.query<IBooking[], { code?: string; phone?: string }>({
+      query: (params) => ({
+        url: '/bookings/lookup',
+        params,
+      }),
+      transformResponse: (res: any[]) => (res || []).map(adaptBooking),
+    }),
+
+    getBookingById: builder.query<IBooking, number>({
+      query: (id) => `/bookings/${id}`,
+      transformResponse: (res: any) => adaptBooking(res),
+      providesTags: (_res, _err, id) => [{ type: 'Booking', id }],
     }),
 
     createBooking: builder.mutation<IBooking, Partial<IBooking>>({
@@ -30,7 +50,7 @@ export const bookingApi = baseApi.injectEndpoints({
           notes: payload.notes,
         },
       }),
-      transformResponse: (response: any) => mapBooking(response),
+      transformResponse: (res: any) => adaptBooking(res),
       invalidatesTags: [
         { type: 'Booking', id: 'LIST' },
         { type: 'Apartment', id: 'LIST' },
@@ -39,19 +59,27 @@ export const bookingApi = baseApi.injectEndpoints({
     }),
 
     updateBookingStatus: builder.mutation<IBooking, { id: number; status: BookingStatus }>({
-      query: ({ id, status }) => ({
-        url: `/bookings/${id}/${status === 'CONFIRMED' ? 'confirm' : 'cancel'}`,
-        method: 'PATCH',
-      }),
-      transformResponse: (response: any) => mapBooking(response),
-      invalidatesTags: [{ type: 'Booking', id: 'LIST' }],
+      query: ({ id, status }) => {
+        const action = status === 'CONFIRMED' ? 'confirm' : 'cancel';
+        return {
+          url: `/bookings/${id}/${action}`,
+          method: 'PATCH',
+        };
+      },
+      transformResponse: (res: any) => adaptBooking(res),
+      invalidatesTags: [
+        { type: 'Booking', id: 'LIST' },
+        { type: 'Apartment', id: 'LIST' },
+      ],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetBookingsQuery,
+  useLookupBookingQuery,
+  useGetBookingByIdQuery,
   useCreateBookingMutation,
   useUpdateBookingStatusMutation,
 } = bookingApi;

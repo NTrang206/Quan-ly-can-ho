@@ -1,13 +1,28 @@
 import { baseApi } from '../../../stores/baseApi';
 import { ITenant, IRoommate, IEmergencyContact } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
-import { mapTenant } from '../../../utils/apiMappers';
+import { adaptTenant } from '../../../utils/adapters';
 
 export const tenantApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getTenants: builder.query<ITenant[], { search?: string; isBadDebt?: boolean }>({
+    getTenants: builder.query<ITenant[], { search?: string; isBadDebt?: boolean } | void>({
       query: () => '/tenants',
-      transformResponse: (response: any[]) => response.map(mapTenant),
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptTenant);
+        if (arg && 'search' in arg && arg.search) {
+          const s = arg.search.toLowerCase();
+          list = list.filter(
+            (t) =>
+              t.fullName.toLowerCase().includes(s) ||
+              t.citizenId.includes(s) ||
+              t.phone.includes(s) ||
+              t.currentRoomNumber?.toLowerCase().includes(s)
+          );
+        }
+        if (arg && 'isBadDebt' in arg && arg.isBadDebt !== undefined) {
+          list = list.filter((t) => t.isBadDebt === arg.isBadDebt);
+        }
+        return list;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -17,9 +32,20 @@ export const tenantApi = baseApi.injectEndpoints({
           : [{ type: 'Tenant', id: 'LIST' }],
     }),
 
+    getMyTenantProfile: builder.query<ITenant, void>({
+      query: () => '/tenants/me',
+      transformResponse: (res: any) => adaptTenant(res),
+      providesTags: ['Tenant'],
+    }),
+
     getTenantById: builder.query<ITenant, number>({
       query: (id) => `/tenants/${id}`,
-      transformResponse: (response: any) => mapTenant(response),
+      transformResponse: (res: any) => adaptTenant(res),
+      providesTags: (_result, _error, id) => [{ type: 'Tenant', id }],
+    }),
+
+    getTenantSummary: builder.query<any, number>({
+      query: (id) => `/tenants/${id}/summary`,
       providesTags: (_result, _error, id) => [{ type: 'Tenant', id }],
     }),
 
@@ -32,31 +58,49 @@ export const tenantApi = baseApi.injectEndpoints({
           citizen_id: payload.citizenId,
           phone: payload.phone,
           email: payload.email,
-          hometown: payload.hometown,
+          hometown: payload.hometown || 'Việt Nam',
         },
       }),
-      transformResponse: (response: any) => mapTenant(response),
+      transformResponse: (res: any) => adaptTenant(res),
       invalidatesTags: [{ type: 'Tenant', id: 'LIST' }],
     }),
 
-    addRoommate: builder.mutation<
-      ITenant,
-      { tenantId: number; roommate: Omit<IRoommate, 'id' | 'tenantId'> }
-    >({
-      queryFn: async ({ tenantId, roommate }) => {
-        const tenants = mockDb.getTenants();
-        const index = tenants.findIndex(t => t.id === tenantId);
-        if (index === -1) return { error: { status: 404, data: 'Không tìm thấy khách thuê' } };
+    updateTenant: builder.mutation<ITenant, { id: number; data: Partial<ITenant> }>({
+      query: ({ id, data }) => ({
+        url: `/tenants/${id}`,
+        method: 'PUT',
+        body: {
+          full_name: data.fullName,
+          citizen_id: data.citizenId,
+          phone: data.phone,
+          email: data.email,
+          hometown: data.hometown,
+          is_bad_debt: data.isBadDebt,
+        },
+      }),
+      transformResponse: (res: any) => adaptTenant(res),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Tenant', id },
+        { type: 'Tenant', id: 'LIST' },
+      ],
+    }),
 
-        const newRoommate: IRoommate = {
-          ...roommate,
-          id: Date.now(),
-          tenantId,
-        };
-        tenants[index].roommates.push(newRoommate);
-        mockDb.setTenants(tenants);
-        return { data: tenants[index] };
-      },
+    addRoommate: builder.mutation<
+      any,
+      { tenantId: number; apartmentId?: number; roommate: Omit<IRoommate, 'id' | 'tenantId'> }
+    >({
+      query: ({ tenantId, apartmentId, roommate }) => ({
+        url: '/roommates',
+        method: 'POST',
+        body: {
+          tenant_id: tenantId,
+          apartment_id: apartmentId || (roommate as any).apartmentId || 1,
+          full_name: roommate.fullName,
+          citizen_id: roommate.citizenId,
+          phone: roommate.phone,
+          relationship: roommate.relationship,
+        },
+      }),
       invalidatesTags: (_result, _error, { tenantId }) => [
         { type: 'Tenant', id: tenantId },
         { type: 'Tenant', id: 'LIST' },
@@ -64,36 +108,35 @@ export const tenantApi = baseApi.injectEndpoints({
     }),
 
     addEmergencyContact: builder.mutation<
-      ITenant,
+      any,
       { tenantId: number; contact: Omit<IEmergencyContact, 'id' | 'tenantId'> }
     >({
-      queryFn: async ({ tenantId, contact }) => {
-        const tenants = mockDb.getTenants();
-        const index = tenants.findIndex(t => t.id === tenantId);
-        if (index === -1) return { error: { status: 404, data: 'Không tìm thấy khách thuê' } };
-
-        const newContact: IEmergencyContact = {
-          ...contact,
-          id: Date.now(),
-          tenantId,
-        };
-        tenants[index].emergencyContacts.push(newContact);
-        mockDb.setTenants(tenants);
-        return { data: tenants[index] };
-      },
+      query: ({ tenantId, contact }) => ({
+        url: '/emergency-contacts',
+        method: 'POST',
+        body: {
+          tenant_id: tenantId,
+          full_name: contact.fullName,
+          phone: contact.phone,
+          relationship: contact.relationship,
+        },
+      }),
       invalidatesTags: (_result, _error, { tenantId }) => [
         { type: 'Tenant', id: tenantId },
         { type: 'Tenant', id: 'LIST' },
       ],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetTenantsQuery,
+  useGetMyTenantProfileQuery,
   useGetTenantByIdQuery,
+  useGetTenantSummaryQuery,
   useCreateTenantMutation,
+  useUpdateTenantMutation,
   useAddRoommateMutation,
   useAddEmergencyContactMutation,
 } = tenantApi;

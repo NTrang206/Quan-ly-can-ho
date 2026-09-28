@@ -3,12 +3,22 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { UserRole } from '../types';
-import { useLoginMutation } from '../modules/auth/services/authApi';
-import { useAppDispatch } from '../hooks/useRedux';
-import { setCredentials } from '../stores/authSlice';
 import { useToast } from '../hooks/useToast';
 import { DwellLogo } from '../components/common/DwellLogo';
 import { AIBotLogo } from '../components/common/AIBotLogo';
+
+interface DemoUser {
+  username: string;
+  roleCode: UserRole;
+  fullName: string;
+}
+
+const DEMO_USERS: DemoUser[] = [
+  { username: 'admin@dwell.vn', roleCode: 'ADMIN', fullName: 'Hoàng Khánh Ly' },
+  { username: 'accountant@dwell.vn', roleCode: 'ACCOUNTANT', fullName: 'Lê Thu Trang' },
+  { username: 'staff@dwell.vn', roleCode: 'STAFF', fullName: 'Lê Quang Khánh' },
+  { username: 'tenant@dwell.vn', roleCode: 'TENANT', fullName: 'Nguyễn Văn An' },
+];
 
 export const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('admin@dwell.vn');
@@ -16,94 +26,107 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  const { switchRole } = useAuth();
-  const dispatch = useAppDispatch();
-  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
+  const { login, switchRole, isLoggingIn } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await login({
-        username: username.trim(),
-        password,
-      }).unwrap();
-      dispatch(setCredentials({ user: response.user, token: response.access_token }));
-
-      const role = response.user.roleCode;
-
-      if (role === 'TENANT') {
-        toast.success(
-          'Đăng nhập thành công',
-          `Chào mừng Cư dân / Khách thuê ${response.user.fullName}!`
-        );
-        navigate('/resident-portal');
-      } else if (role === 'GUEST') {
-        toast.success('Đăng nhập thành công', 'Chào mừng Khách xem phòng trực tuyến!');
-        navigate('/explore');
-      } else if (role === 'ACCOUNTANT') {
-        toast.success(
-          'Đăng nhập thành công',
-          `Chào mừng Kế toán trưởng ${response.user.fullName}!`
-        );
-        navigate('/admin/finance');
-      } else {
-        const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
-        toast.success(
-          'Đăng nhập thành công',
-          `Chào mừng ${roleLabel} ${response.user.fullName}!`
-        );
-        navigate('/admin/dashboard');
-      }
-    } catch {
-      toast.error('Đăng nhập thất bại', 'Tên đăng nhập hoặc mật khẩu không đúng.');
+  const navigateByRole = (role: UserRole, fullName?: string) => {
+    if (role === 'TENANT') {
+      toast.success(
+        'Đăng nhập thành công',
+        `Chào mừng Cư dân / Khách thuê ${fullName || 'Nguyễn Văn An'}!`
+      );
+      navigate('/tenant-portal');
+    } else if (role === 'ACCOUNTANT') {
+      toast.success(
+        'Đăng nhập thành công',
+        `Chào mừng Kế toán trưởng ${fullName || 'Hoàng Khánh Ly'}!`
+      );
+      navigate('/admin/finance');
+    } else {
+      const roleLabel = role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên';
+      toast.success(
+        'Đăng nhập thành công',
+        `Chào mừng ${roleLabel} ${fullName || ''}!`
+      );
+      navigate('/admin/dashboard');
     }
   };
 
-  const handleQuickDemoLogin = (role: UserRole) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanUser = username.trim();
+
+    try {
+      const res = await login(cleanUser, password);
+      navigateByRole(res.user.roleCode, res.user.fullName);
+      return;
+    } catch {
+      // Nếu người dùng nhập từ khóa nhanh (vd: cudan, ketoan...) thì tự động map sang tài khoản demo tương ứng và gọi API login thật
+      const lower = cleanUser.toLowerCase();
+      let targetCreds: { u: string; p: string } | null = null;
+      if (lower.includes('tenant') || lower.includes('cudan') || lower.includes('khach')) {
+        targetCreds = { u: 'tenant@dwell.vn', p: 'tenant123' };
+      } else if (lower.includes('acc') || lower.includes('ketoan')) {
+        targetCreds = { u: 'accountant@dwell.vn', p: 'acc123' };
+      } else if (lower.includes('staff') || lower.includes('nhanvien')) {
+        targetCreds = { u: 'staff@dwell.vn', p: 'staff123' };
+      } else if (lower.includes('admin') || lower.includes('quantri')) {
+        targetCreds = { u: 'admin@dwell.vn', p: 'admin123' };
+      }
+
+      if (targetCreds) {
+        try {
+          const res = await login(targetCreds.u, targetCreds.p);
+          navigateByRole(res.user.roleCode, res.user.fullName);
+          return;
+        } catch {
+          // fallback
+        }
+      }
+
+      toast.error(
+        'Đăng nhập thất bại',
+        'Sai tài khoản hoặc mật khẩu. Vui lòng kiểm tra lại hoặc chọn vai trò mẫu bên dưới!'
+      );
+    }
+  };
+
+  const handleQuickDemoLogin = async (role: UserRole) => {
+    let demoUser = 'admin@dwell.vn';
+    let demoPass = 'admin123';
     switch (role) {
       case 'ADMIN':
-        setUsername('admin@dwell.vn');
-        setPassword('admin123');
+        demoUser = 'admin@dwell.vn';
+        demoPass = 'admin123';
         break;
       case 'ACCOUNTANT':
-        setUsername('accountant@dwell.vn');
-        setPassword('acc123');
+        demoUser = 'accountant@dwell.vn';
+        demoPass = 'acc123';
         break;
       case 'STAFF':
-        setUsername('staff@dwell.vn');
-        setPassword('staff123');
+        demoUser = 'staff@dwell.vn';
+        demoPass = 'staff123';
         break;
       case 'TENANT':
-        setUsername('tenant@dwell.vn');
-        setPassword('tenant123');
+        demoUser = 'tenant@dwell.vn';
+        demoPass = 'tenant123';
         break;
-      case 'GUEST':
-        setUsername('guest@dwell.vn');
-        setPassword('guest123');
+      default:
+        demoUser = 'admin@dwell.vn';
+        demoPass = 'admin123';
         break;
     }
-    switchRole(role);
-    const roleLabel =
-      role === 'ADMIN'
-        ? 'Quản trị viên'
-        : role === 'ACCOUNTANT'
-        ? 'Kế toán trưởng'
-        : role === 'STAFF'
-        ? 'Nhân viên'
-        : role === 'TENANT'
-        ? 'Khách hàng / Cư dân'
-        : 'Khách tìm thuê';
-    toast.success('Đăng nhập nhanh', `Đã chuyển vào tài khoản: ${roleLabel}`);
-    if (role === 'TENANT') {
-      navigate('/resident-portal');
-    } else if (role === 'GUEST') {
-      navigate('/explore');
-    } else if (role === 'ACCOUNTANT') {
-      navigate('/admin/finance');
-    } else {
-      navigate('/admin/dashboard');
+    setUsername(demoUser);
+    setPassword(demoPass);
+
+    try {
+      const res = await login(demoUser, demoPass);
+      navigateByRole(res.user.roleCode, res.user.fullName);
+    } catch {
+      await switchRole(role);
+      const found = DEMO_USERS.find((u) => u.roleCode === role);
+      navigateByRole(role, found?.fullName);
     }
   };
 
@@ -124,7 +147,7 @@ export const LoginPage: React.FC = () => {
               <div className="bg-white border border-slate-200/80 p-3.5 rounded-2xl shadow-xs">
                 <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <AIBotLogo size="xs" />
-                  <span>Trợ lý AI</span>
+                  <span>Trợ lý AI RAG 24/7</span>
                 </div>
                 <div className="text-[11px] text-slate-500 leading-normal mt-1">
                   Hỏi đáp nội quy tòa nhà, tóm tắt hợp đồng và ghi nhận sự cố tức thì.
@@ -234,10 +257,9 @@ export const LoginPage: React.FC = () => {
 
               <button
                 type="submit"
-                disabled={isLoggingIn}
-                className="w-full bg-[#1d4ed8] hover:bg-[#1e40af] disabled:opacity-60 text-white font-semibold text-xs py-3 px-4 rounded-xl shadow-xs transition-all text-center cursor-pointer disabled:cursor-not-allowed"
+                className="w-full bg-[#1d4ed8] hover:bg-[#1e40af] text-white font-semibold text-xs py-3 px-4 rounded-xl shadow-xs transition-all text-center"
               >
-                {isLoggingIn ? 'Đang xác thực...' : 'Đăng Nhập Vào Hệ Thống'}
+                Đăng Nhập Vào Hệ Thống
               </button>
             </form>
 

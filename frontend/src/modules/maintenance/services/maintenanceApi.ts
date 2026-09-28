@@ -1,23 +1,32 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IMaintenanceRequest, MaintenancePriority, MaintenanceStatus } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
-import { mapMaintenance } from '../../../utils/apiMappers';
+import { adaptMaintenance } from '../../../utils/adapters';
 
 export const maintenanceApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getMaintenanceRequests: builder.query<
       IMaintenanceRequest[],
-      { status?: MaintenanceStatus; priority?: MaintenancePriority; apartmentId?: number; tenantId?: number }
+      { status?: MaintenanceStatus; priority?: MaintenancePriority; apartmentId?: number; tenantId?: number } | void
     >({
-      query: (params) => ({
-        url: params?.tenantId ? '/maintenance-requests/my' : '/maintenance-requests',
-        params: {
-          status: params?.status,
-          priority: params?.priority,
-          apartment_id: params?.apartmentId,
-        },
-      }),
-      transformResponse: (response: any[]) => response.map(mapMaintenance),
+      query: (params) => {
+        const queryParams: Record<string, any> = {};
+        if (params && 'status' in params && params.status) queryParams.status = params.status;
+        if (params && 'priority' in params && params.priority) queryParams.priority = params.priority;
+        return {
+          url: '/maintenance-requests',
+          params: queryParams,
+        };
+      },
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptMaintenance);
+        if (arg && 'apartmentId' in arg && arg.apartmentId) {
+          list = list.filter((m) => m.apartmentId === Number(arg.apartmentId));
+        }
+        if (arg && 'tenantId' in arg && arg.tenantId) {
+          list = list.filter((m) => m.tenantId === Number(arg.tenantId));
+        }
+        return list;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -25,6 +34,18 @@ export const maintenanceApi = baseApi.injectEndpoints({
               { type: 'Maintenance', id: 'LIST' },
             ]
           : [{ type: 'Maintenance', id: 'LIST' }],
+    }),
+
+    getMyMaintenanceRequests: builder.query<IMaintenanceRequest[], void>({
+      query: () => '/maintenance-requests/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptMaintenance),
+      providesTags: ['Maintenance'],
+    }),
+
+    getMaintenanceRequestById: builder.query<IMaintenanceRequest, number>({
+      query: (id) => `/maintenance-requests/${id}`,
+      transformResponse: (res: any) => adaptMaintenance(res),
+      providesTags: (_res, _err, id) => [{ type: 'Maintenance', id }],
     }),
 
     createMaintenanceRequest: builder.mutation<IMaintenanceRequest, Partial<IMaintenanceRequest>>({
@@ -36,12 +57,12 @@ export const maintenanceApi = baseApi.injectEndpoints({
           reporter_name: payload.reporterName,
           phone: payload.phone,
           issue_description: payload.issueDescription,
-          priority: payload.priority ?? 'MEDIUM',
+          priority: payload.priority || 'MEDIUM',
           image_url: payload.imageUrl,
           tenant_id: payload.tenantId,
         },
       }),
-      transformResponse: (response: any) => mapMaintenance(response),
+      transformResponse: (res: any) => adaptMaintenance(res),
       invalidatesTags: [
         { type: 'Maintenance', id: 'LIST' },
         { type: 'Apartment', id: 'LIST' },
@@ -49,71 +70,51 @@ export const maintenanceApi = baseApi.injectEndpoints({
       ],
     }),
 
+    createMyMaintenanceRequest: builder.mutation<IMaintenanceRequest, any>({
+      query: (payload) => ({
+        url: '/maintenance-requests/my',
+        method: 'POST',
+        body: {
+          apartment_id: payload.apartmentId,
+          issue_description: payload.issueDescription,
+          priority: payload.priority || 'MEDIUM',
+          image_url: payload.imageUrl,
+        },
+      }),
+      transformResponse: (res: any) => adaptMaintenance(res),
+      invalidatesTags: [
+        { type: 'Maintenance', id: 'LIST' },
+        { type: 'Dashboard', id: 'STATS' },
+      ],
+    }),
+
     assignTechnician: builder.mutation<
       IMaintenanceRequest,
-      { ticketId: number; technicianName: string; technicianPhone: string }
+      { ticketId: number; assignedStaffId?: number; technicianName?: string; technicianPhone?: string }
     >({
-      queryFn: async ({ ticketId, technicianName, technicianPhone }) => {
-        const requests = mockDb.getMaintenanceRequests();
-        const index = requests.findIndex(r => r.id === ticketId);
-        if (index === -1) return { error: { status: 404, data: 'Không tìm thấy phiếu sự cố' } };
-
-        requests[index] = {
-          ...requests[index],
-          status: 'IN_PROGRESS',
-          assignedStaffId: 2,
-          technicianName,
-          technicianPhone,
-          technicianAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
-        };
-        mockDb.setMaintenanceRequests(requests);
-        return { data: requests[index] };
-      },
+      query: ({ ticketId, assignedStaffId }) => ({
+        url: `/maintenance-requests/${ticketId}/assign`,
+        method: 'PATCH',
+        body: {
+          assigned_staff_id: assignedStaffId || 2,
+        },
+      }),
+      transformResponse: (res: any) => adaptMaintenance(res),
       invalidatesTags: [{ type: 'Maintenance', id: 'LIST' }],
     }),
 
     completeAndInspectMaintenance: builder.mutation<
       IMaintenanceRequest,
-      { ticketId: number; cost: number; rating?: number; feedback?: string; isPass: boolean }
+      { ticketId: number; cost: number; rating?: number; feedback?: string; isPass?: boolean }
     >({
-      queryFn: async ({ ticketId, cost, rating = 5, feedback = '', isPass }) => {
-        const requests = mockDb.getMaintenanceRequests();
-        const apts = mockDb.getApartments();
-
-        const index = requests.findIndex(r => r.id === ticketId);
-        if (index === -1) return { error: { status: 404, data: 'Không tìm thấy phiếu sự cố' } };
-
-        const target = requests[index];
-        if (isPass) {
-          requests[index] = {
-            ...target,
-            status: 'COMPLETED',
-            repairCost: cost,
-            resolvedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
-            rating,
-            feedback,
-          };
-
-          // Re-open apartment to OCCUPIED or AVAILABLE if it was locked to MAINTENANCE
-          const aptIndex = apts.findIndex(a => a.id === target.apartmentId);
-          if (aptIndex !== -1 && apts[aptIndex].status === 'MAINTENANCE') {
-            apts[aptIndex] = {
-              ...apts[aptIndex],
-              status: apts[aptIndex].currentOccupants > 0 ? 'OCCUPIED' : 'AVAILABLE',
-            };
-            mockDb.setApartments(apts);
-          }
-        } else {
-          requests[index] = {
-            ...target,
-            status: 'IN_PROGRESS',
-            feedback: `Nghiệm thu KHÔNG ĐẠT: ${feedback}`,
-          };
-        }
-
-        mockDb.setMaintenanceRequests(requests);
-        return { data: requests[index] };
-      },
+      query: ({ ticketId, cost }) => ({
+        url: `/maintenance-requests/${ticketId}/complete`,
+        method: 'PATCH',
+        body: {
+          repair_cost: cost,
+        },
+      }),
+      transformResponse: (res: any) => adaptMaintenance(res),
       invalidatesTags: [
         { type: 'Maintenance', id: 'LIST' },
         { type: 'Apartment', id: 'LIST' },
@@ -121,12 +122,15 @@ export const maintenanceApi = baseApi.injectEndpoints({
       ],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetMaintenanceRequestsQuery,
+  useGetMyMaintenanceRequestsQuery,
+  useGetMaintenanceRequestByIdQuery,
   useCreateMaintenanceRequestMutation,
+  useCreateMyMaintenanceRequestMutation,
   useAssignTechnicianMutation,
   useCompleteAndInspectMaintenanceMutation,
 } = maintenanceApi;

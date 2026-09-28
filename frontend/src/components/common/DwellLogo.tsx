@@ -16,7 +16,7 @@ export const DwellLogo: React.FC<DwellLogoProps> = ({
   badgeVariant = 'sky',
   subtitle1 = 'Hệ thống căn hộ cho thuê toàn quốc',
   subtitle2 = 'Bàn giao nhận phòng tức thì',
-  showSubtitles = true,
+  showSubtitles = false,
   size = 'md',
   className,
 }) => {

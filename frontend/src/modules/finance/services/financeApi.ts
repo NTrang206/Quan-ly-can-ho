@@ -1,19 +1,25 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IReceivable, IPayment, IDebtLedger, PaymentMethod } from '../../../types';
-import { mapDebtLedger, mapPayment, mapReceivable } from '../../../utils/apiMappers';
+import { adaptReceivable, adaptPayment, adaptDebtLedger } from '../../../utils/adapters';
 
 export const financeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getReceivables: builder.query<IReceivable[], { month?: number; year?: number; status?: string; tenantId?: number }>({
-      query: (params) => ({
-        url: params?.tenantId ? '/receivables/my' : '/receivables',
-        params: {
-          billing_month: params?.month,
-          billing_year: params?.year,
-          status: params?.status,
-        },
-      }),
-      transformResponse: (response: any[]) => response.map(mapReceivable),
+    getReceivables: builder.query<IReceivable[], { month?: number; year?: number; status?: string; tenantId?: number } | void>({
+      query: (params) => {
+        const queryParams: Record<string, any> = {};
+        if (params && 'status' in params && params.status) queryParams.status = params.status;
+        return {
+          url: '/receivables',
+          params: queryParams,
+        };
+      },
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptReceivable);
+        if (arg && 'month' in arg && arg.month) list = list.filter((r) => r.billingMonth === Number(arg.month));
+        if (arg && 'year' in arg && arg.year) list = list.filter((r) => r.billingYear === Number(arg.year));
+        if (arg && 'tenantId' in arg && arg.tenantId) list = list.filter((r) => r.tenantId === Number(arg.tenantId));
+        return list;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -23,12 +29,34 @@ export const financeApi = baseApi.injectEndpoints({
           : [{ type: 'Receivable', id: 'LIST' }],
     }),
 
-    getPayments: builder.query<IPayment[], { receivableId?: number; contractId?: number }>({
-      query: (params) => ({
-        url: '/payments',
-        params: params?.receivableId ? { receivable_id: params.receivableId } : undefined,
-      }),
-      transformResponse: (response: any[]) => response.map(mapPayment),
+    getMyReceivables: builder.query<IReceivable[], void>({
+      query: () => '/receivables/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptReceivable),
+      providesTags: ['Receivable'],
+    }),
+
+    getReceivableById: builder.query<IReceivable, number>({
+      query: (id) => `/receivables/${id}`,
+      transformResponse: (res: any) => adaptReceivable(res),
+      providesTags: (_res, _err, id) => [{ type: 'Receivable', id }],
+    }),
+
+    getVietQR: builder.query<{ qr_quick_url: string; qr_data_text: string }, number>({
+      query: (receivableId) => `/receivables/${receivableId}/vietqr`,
+    }),
+
+    getPayments: builder.query<IPayment[], { receivableId?: number; contractId?: number } | void>({
+      query: () => '/payments',
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptPayment);
+        if (arg && 'receivableId' in arg && arg.receivableId) {
+          list = list.filter((p) => p.receivableId === Number(arg.receivableId));
+        }
+        if (arg && 'contractId' in arg && arg.contractId) {
+          list = list.filter((p) => p.contractId === Number(arg.contractId));
+        }
+        return list;
+      },
       providesTags: (result) =>
         result
           ? [
@@ -38,9 +66,15 @@ export const financeApi = baseApi.injectEndpoints({
           : [{ type: 'Payment', id: 'LIST' }],
     }),
 
+    getMyPayments: builder.query<IPayment[], void>({
+      query: () => '/payments/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptPayment),
+      providesTags: ['Payment'],
+    }),
+
     getDebtLedgers: builder.query<IDebtLedger[], void>({
       query: () => '/debt-ledgers',
-      transformResponse: (response: any[]) => response.map(mapDebtLedger),
+      transformResponse: (res: any[]) => (res || []).map(adaptDebtLedger),
       providesTags: (result) =>
         result
           ? [
@@ -50,6 +84,12 @@ export const financeApi = baseApi.injectEndpoints({
           : [{ type: 'DebtLedger', id: 'LIST' }],
     }),
 
+    getMyDebt: builder.query<IDebtLedger, void>({
+      query: () => '/debt-ledgers/my',
+      transformResponse: (res: any) => adaptDebtLedger(res),
+      providesTags: ['DebtLedger'],
+    }),
+
     recordPayment: builder.mutation<
       { payment: IPayment; receivable: IReceivable },
       {
@@ -57,21 +97,23 @@ export const financeApi = baseApi.injectEndpoints({
         amount: number;
         paymentMethod: PaymentMethod;
         note?: string;
+        transactionCode?: string;
       }
     >({
-      query: ({ receivableId, amount, paymentMethod, note }) => ({
+      query: ({ receivableId, amount, paymentMethod, note, transactionCode }) => ({
         url: '/payments',
         method: 'POST',
         body: {
           receivable_id: receivableId,
           amount,
           payment_method: paymentMethod,
+          transaction_code: transactionCode || (paymentMethod === 'BANK_TRANSFER' ? `TX-${Date.now().toString().slice(-8)}` : undefined),
           note,
         },
       }),
-      transformResponse: (response: any) => ({
-        payment: mapPayment(response),
-        receivable: {} as IReceivable,
+      transformResponse: (res: any) => ({
+        payment: adaptPayment(res),
+        receivable: adaptReceivable(res.receivable || { id: res.receivable_id }),
       }),
       invalidatesTags: [
         { type: 'Receivable', id: 'LIST' },
@@ -84,89 +126,50 @@ export const financeApi = baseApi.injectEndpoints({
 
     generateMonthlyReceivables: builder.mutation<
       { count: number; totalAmount: number },
-      { month: number; year: number }
+      { month: number; year: number; defaultServiceFee?: number }
     >({
-      query: ({ month, year }) => ({
-        url: '/receivables/generate-monthly',
+      query: ({ month, year, defaultServiceFee }) => ({
+        url: '/billing/generate-monthly',
         method: 'POST',
-        body: { billing_month: month, billing_year: year },
+        body: {
+          billing_month: month,
+          billing_year: year,
+          due_day: 10,
+          default_service_fee: defaultServiceFee || 1500000,
+        },
       }),
-      transformResponse: (response: any) => ({
-        count: Number(response.count ?? 0),
-        totalAmount: Number(response.total_amount ?? response.totalAmount ?? 0),
+      transformResponse: (res: any) => ({
+        count: res.generated_count || 0,
+        totalAmount: Number(res.total_amount || 0),
       }),
-      /*
-      queryFn: async ({ month, year }) => {
-        const contracts = mockDb.getContracts().filter(c => c.status === 'ACTIVE');
-        const receivables = mockDb.getReceivables();
-        let addedCount = 0;
-        let sumAmount = 0;
-
-        contracts.forEach(contract => {
-          // Prevent duplicates for same month & year
-          const exists = receivables.some(
-            r => r.contractId === contract.id && r.billingMonth === month && r.billingYear === year
-          );
-          if (!exists) {
-            const elecUsage = Math.floor(Math.random() * 100 + 100);
-            const waterUsage = Math.floor(Math.random() * 10 + 10);
-            const elecCost = elecUsage * 3500;
-            const waterCost = waterUsage * 15000;
-            const serviceCost = elecCost + waterCost + 200000;
-            const total = contract.rentalPrice + serviceCost;
-
-            const newRec: IReceivable = {
-              id: Date.now() + addedCount,
-              contractId: contract.id,
-              apartmentId: contract.apartmentId,
-              roomNumber: contract.roomNumber,
-              buildingName: contract.buildingName,
-              tenantId: contract.tenantId,
-              tenantName: contract.tenantName,
-              tenantPhone: contract.tenantPhone,
-              billingMonth: month,
-              billingYear: year,
-              roomAmount: contract.rentalPrice,
-              serviceAmount: serviceCost,
-              electricityCost: elecCost,
-              electricityUsageKwh: elecUsage,
-              waterCost: waterCost,
-              waterUsageM3: waterUsage,
-              managementCost: 200000,
-              parkingCost: 0,
-              internetCost: 0,
-              totalAmount: total,
-              paidAmount: 0,
-              remainingDebt: total,
-              status: 'UNPAID',
-              dueDate: `${year}-${String(month).padStart(2, '0')}-05`,
-              createdAt: new Date().toISOString().split('T')[0],
-              qrPayload: `${contract.contractCode.replace(/[^a-zA-Z0-9]/g, '')} T${month}`,
-            };
-            receivables.unshift(newRec);
-            addedCount++;
-            sumAmount += total;
-          }
-        });
-
-        mockDb.setReceivables(receivables);
-        return { data: { count: addedCount, totalAmount: sumAmount } };
-      },
-      */
       invalidatesTags: [
         { type: 'Receivable', id: 'LIST' },
         { type: 'DebtLedger', id: 'LIST' },
         { type: 'Dashboard', id: 'STATS' },
       ],
     }),
+
+    checkOverdueReceivables: builder.mutation<any, void>({
+      query: () => ({
+        url: '/receivables/check-overdue',
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['Receivable', 'Alert', 'Dashboard'],
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetReceivablesQuery,
+  useGetMyReceivablesQuery,
+  useGetReceivableByIdQuery,
+  useGetVietQRQuery,
   useGetPaymentsQuery,
+  useGetMyPaymentsQuery,
   useGetDebtLedgersQuery,
+  useGetMyDebtQuery,
   useRecordPaymentMutation,
   useGenerateMonthlyReceivablesMutation,
+  useCheckOverdueReceivablesMutation,
 } = financeApi;

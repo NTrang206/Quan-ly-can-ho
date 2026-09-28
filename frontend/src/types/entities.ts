@@ -108,6 +108,7 @@ export interface ITenant {
   isBadDebt: boolean;
   createdAt: string;
   userId?: number;
+  username?: string;
   currentApartmentId?: number;
   currentRoomNumber?: string;
   buildingName?: string;

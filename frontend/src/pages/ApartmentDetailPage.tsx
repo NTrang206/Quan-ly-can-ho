@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Building2, BedDouble, Maximize2, MapPin, Calendar, CheckCircle2, 
   ArrowLeft, Sparkles, FileText, 
-  Wrench, AlertCircle, Phone, X
+  Wrench, AlertCircle, Phone, X, Bath
 } from 'lucide-react';
 import { useGetApartmentByIdQuery, useGetBuildingsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetContractsQuery } from '../modules/contracts/services/contractApi';
@@ -58,10 +58,10 @@ export const ApartmentDetailPage: React.FC = () => {
         <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center max-w-md">
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
           <h2 className="text-lg font-bold text-slate-800">Không tìm thấy căn hộ</h2>
-          <p className="text-xs text-slate-500 mt-1 mb-6">Căn hộ không tồn tại hoặc đã bị xóa khỏi hệ thống Sunshine Homes.</p>
+          <p className="text-xs text-slate-500 mt-1 mb-6">Căn hộ không tồn tại hoặc đã bị xóa khỏi hệ thống Dwell Living.</p>
           <button
             onClick={() => navigate('/explore')}
-            className="px-4 py-2 bg-sky-600 text-white rounded-xl text-xs font-semibold"
+            className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all"
           >
             Quay lại danh sách
           </button>
@@ -101,7 +101,7 @@ export const ApartmentDetailPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
             className="inline-flex items-center space-x-2 text-xs font-semibold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
@@ -119,7 +119,7 @@ export const ApartmentDetailPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <main className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 pt-6">
         {/* Breadcrumbs */}
         <div className="flex items-center space-x-2 text-xs text-slate-500 mb-4">
           <span className="hover:text-sky-600 cursor-pointer" onClick={() => navigate('/explore')}>Trang chủ</span>
@@ -197,7 +197,7 @@ export const ApartmentDetailPage: React.FC = () => {
                 Căn hộ {apartment.roomNumber}
               </h1>
               <p className="text-xs text-slate-500 mb-6">
-                {building?.address || 'Khu phức hợp Sunshine Homes'}
+                {building?.address || 'Hệ thống căn hộ cao cấp Dwell Living'}
               </p>
 
               {/* Price block */}
@@ -223,7 +223,7 @@ export const ApartmentDetailPage: React.FC = () => {
                   <span className="text-[10px] text-slate-400">Phòng ngủ</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 font-bold block mb-1">🚿</span>
+                  <Bath className="w-4 h-4 text-sky-600 mx-auto mb-1" />
                   <span className="text-xs font-bold text-slate-800 block">{apartment.bathrooms} WC</span>
                   <span className="text-[10px] text-slate-400">Vệ sinh</span>
                 </div>
@@ -275,7 +275,7 @@ export const ApartmentDetailPage: React.FC = () => {
                 <span>Mô Tả Không Gian Sống</span>
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                {apartment.description || 'Căn hộ thuộc chuỗi không gian Sunshine Homes cao cấp, được thiết kế tối ưu hóa ánh sáng tự nhiên và công năng sử dụng. Đầy đủ tiện nghi nội thất cao cấp thông minh, khóa vân tay chống trộm, hệ thống điều hòa Inverter tiết kiệm điện năng và view panorama tuyệt đẹp.'}
+                {apartment.description || 'Căn hộ thuộc chuỗi không gian Dwell Living cao cấp, được thiết kế tối ưu hóa ánh sáng tự nhiên và công năng sử dụng. Đầy đủ tiện nghi nội thất cao cấp thông minh, khóa vân tay chống trộm, hệ thống điều hòa Inverter tiết kiệm điện năng và view panorama tuyệt đẹp.'}
               </p>
             </div>
 

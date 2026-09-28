@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 
 // Layouts
 import { AdminLayout } from '../components/layout/AdminLayout';
@@ -24,54 +23,31 @@ import { ResidentPortalPage } from '../pages/ResidentPortalPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 
-const RootRedirect: React.FC = () => {
-  const { isAuthenticated, user } = useAuth();
-
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/explore" replace />;
-  }
-
-  if (user.roleCode === 'TENANT') {
-    return <Navigate to="/resident-portal" replace />;
-  }
-
-  if (user.roleCode === 'GUEST') {
-    return <Navigate to="/explore" replace />;
-  }
-
-  if (user.roleCode === 'ACCOUNTANT') {
-    return <Navigate to="/admin/finance" replace />;
-  }
-
-  return <Navigate to="/admin/dashboard" replace />;
-};
-
 export const AppRouter: React.FC = () => {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<RootRedirect />} />
-
-      {/* Public Routes */}
+      {/* 1. Root Route: Luôn là Trang Khách Vãng Lai (PublicExplorePage) */}
+      <Route path="/" element={<PublicExplorePage />} />
       <Route path="/explore" element={<PublicExplorePage />} />
       <Route path="/apartments/:id" element={<ApartmentDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-      {/* Resident / Tenant Portal Route */}
-      <Route path="/tenant-portal" element={<Navigate to="/resident-portal" replace />} />
+      {/* 2. Resident Portal Routes (Tenant and simulation mode for Management) */}
       <Route
-        path="/resident-portal"
+        path="/tenant-portal"
         element={
-          <PrivateRoute allowedRoles={['TENANT', 'ADMIN', 'STAFF']}>
+          <PrivateRoute allowedRoles={['TENANT', 'ADMIN', 'STAFF', 'ACCOUNTANT']}>
             <TenantLayout>
               <ResidentPortalPage />
             </TenantLayout>
           </PrivateRoute>
         }
       />
+      {/* Alias for resident-portal link compatibility */}
+      <Route path="/resident-portal" element={<Navigate to="/tenant-portal" replace />} />
 
-      {/* Admin / Staff / Accountant Enterprise Portal Routes */}
+      {/* 3. Admin / Staff / Accountant Enterprise Portal Routes */}
       <Route
         path="/admin"
         element={
@@ -82,17 +58,45 @@ export const AppRouter: React.FC = () => {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="buildings" element={<BuildingsPage />} />
+        <Route
+          path="buildings"
+          element={
+            <PrivateRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BuildingsPage />
+            </PrivateRoute>
+          }
+        />
         <Route path="contracts" element={<ContractsPage />} />
-        <Route path="finance" element={<FinancePage />} />
-        <Route path="maintenance" element={<MaintenancePage />} />
+        <Route path="tenants" element={<TenantsPage />} />
+        <Route
+          path="bookings"
+          element={
+            <PrivateRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <BookingsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="finance"
+          element={
+            <PrivateRoute allowedRoles={['ADMIN', 'ACCOUNTANT']}>
+              <FinancePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="maintenance"
+          element={
+            <PrivateRoute allowedRoles={['ADMIN', 'STAFF']}>
+              <MaintenancePage />
+            </PrivateRoute>
+          }
+        />
         <Route path="alerts" element={<AlertsAIPage />} />
         <Route path="rag-chatbot" element={<RagChatbotPage />} />
-        <Route path="bookings" element={<BookingsPage />} />
-        <Route path="tenants" element={<TenantsPage />} />
       </Route>
 
-      {/* 404 Catch-All */}
+      {/* 4. 404 Fallback */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

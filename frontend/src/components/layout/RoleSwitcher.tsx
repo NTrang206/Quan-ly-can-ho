@@ -11,7 +11,8 @@ export const RoleSwitcher: React.FC = () => {
     { code: 'ADMIN', label: 'Quản trị (Admin)', icon: <Shield className="w-3.5 h-3.5" />, color: 'hover:text-purple-600' },
     { code: 'STAFF', label: 'Nhân viên (Staff)', icon: <UserCheck className="w-3.5 h-3.5" />, color: 'hover:text-blue-600' },
     { code: 'ACCOUNTANT', label: 'Kế toán (Accountant)', icon: <Calculator className="w-3.5 h-3.5" />, color: 'hover:text-emerald-600' },
-    { code: 'TENANT', label: 'Cư dân / Khách hàng', icon: <Home className="w-3.5 h-3.5" />, color: 'hover:text-amber-600' },
+    { code: 'TENANT', label: 'Cư dân (Tenant)', icon: <Home className="w-3.5 h-3.5" />, color: 'hover:text-amber-600' },
+    { code: 'GUEST', label: 'Khách (Guest)', icon: <User className="w-3.5 h-3.5" />, color: 'hover:text-slate-600' },
   ];
 
   return (
@@ -21,7 +22,18 @@ export const RoleSwitcher: React.FC = () => {
         return (
           <button
             key={r.code}
-            onClick={() => switchRole(r.code)}
+            onClick={() => {
+              switchRole(r.code);
+              if (r.code === 'TENANT') {
+                window.location.href = '/tenant-portal';
+              } else if (r.code === 'ACCOUNTANT') {
+                window.location.href = '/admin/finance';
+              } else if (r.code === 'GUEST') {
+                window.location.href = '/explore';
+              } else {
+                window.location.href = '/admin/dashboard';
+              }
+            }}
             className={clsx(
               'flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150',
               isActive

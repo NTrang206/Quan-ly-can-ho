@@ -17,6 +17,7 @@ import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
+import { Pagination } from '../components/common/Pagination';
 import {
   useGetBookingsQuery,
   useUpdateBookingStatusMutation,
@@ -31,6 +32,8 @@ import { useNavigate } from 'react-router-dom';
 export const BookingsPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // New booking form
@@ -60,7 +63,13 @@ export const BookingsPage: React.FC = () => {
   };
 
   const handleConvertToContract = (booking: IBooking) => {
-    navigate(`/admin/contracts?action=create&aptId=${booking.apartmentId}`);
+    navigate(
+      `/admin/contracts?action=create&aptId=${booking.apartmentId}&customerName=${encodeURIComponent(
+        booking.customerName
+      )}&customerPhone=${booking.customerPhone}&customerEmail=${encodeURIComponent(
+        booking.customerEmail || ''
+      )}`
+    );
   };
 
   const handleCreateBooking = async (e: React.FormEvent) => {
@@ -100,6 +109,9 @@ export const BookingsPage: React.FC = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredBookings.length / pageSize) || 1;
+  const paginatedBookings = filteredBookings.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
@@ -137,7 +149,10 @@ export const BookingsPage: React.FC = () => {
           ].map((st) => (
             <button
               key={st.label}
-              onClick={() => setSelectedStatus(st.id as any)}
+              onClick={() => {
+                setSelectedStatus(st.id as any);
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 selectedStatus === st.id
                   ? 'bg-slate-900 text-white shadow-xs'
@@ -154,7 +169,10 @@ export const BookingsPage: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             placeholder="Tìm theo mã Booking, tên khách..."
             className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white"
           />
@@ -177,7 +195,7 @@ export const BookingsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredBookings.map((b) => (
+              {paginatedBookings.map((b) => (
                 <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-5 py-4 font-mono font-bold text-brand-700">
                     {b.bookingCode}
@@ -237,6 +255,17 @@ export const BookingsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredBookings.length}
+          pageSize={pageSize}
+          itemLabel="đặt phòng"
+          className="px-5 py-3 border-t border-slate-200"
+        />
       </div>
 
       {/* Create Booking Modal */}

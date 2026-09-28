@@ -21,7 +21,7 @@ export const AIRoomMatcherModal: React.FC<AIRoomMatcherModalProps> = ({
   apartments,
   onSelectApartment,
 }) => {
-  const [budgetMax, setBudgetMax] = useState<number>(10000000);
+  const [budgetMax, setBudgetMax] = useState<number>(20000000);
   const [bedrooms, setBedrooms] = useState<number>(2);
   const [view, setView] = useState<string>('Đông Nam');
 
@@ -61,10 +61,11 @@ export const AIRoomMatcherModal: React.FC<AIRoomMatcherModalProps> = ({
               onChange={(e) => setBudgetMax(Number(e.target.value))}
               className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 outline-none focus:border-brand-500"
             >
-              <option value={6000000}>Dưới 6.000.000 ₫</option>
-              <option value={8500000}>Dưới 8.500.000 ₫</option>
+              <option value={8000000}>Dưới 8.000.000 ₫</option>
               <option value={10000000}>Dưới 10.000.000 ₫</option>
               <option value={15000000}>Dưới 15.000.000 ₫</option>
+              <option value={20000000}>Dưới 20.000.000 ₫</option>
+              <option value={30000000}>Dưới 30.000.000 ₫ (Cao cấp)</option>
             </select>
           </div>
 

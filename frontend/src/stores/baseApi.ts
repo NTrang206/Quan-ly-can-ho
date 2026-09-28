@@ -5,21 +5,12 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000/api/v1',
-    prepareHeaders: (headers, { arg }) => {
+    prepareHeaders: (headers) => {
       const token = localStorage.getItem('token');
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
-
-      const requestBody =
-        typeof arg === 'object' && arg !== null && 'body' in arg
-          ? arg.body
-          : undefined;
-
-      if (!(requestBody instanceof FormData)) {
-        headers.set('Content-Type', 'application/json');
-      }
-
+      headers.set('Content-Type', 'application/json');
       return headers;
     },
   }),

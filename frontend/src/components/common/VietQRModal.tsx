@@ -36,8 +36,7 @@ export const VietQRModal: React.FC<VietQRModalProps> = ({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [recordPayment, { isLoading }] = useRecordPaymentMutation();
   const toast = useToast();
-
-  const description = customDescription || `HD2024089 T${billMonth} ${roomNumber.replace('.', '')}`;
+  const description = customDescription || `HD2026${roomNumber.replace(/[^a-zA-Z0-9]/g, '')} T${billMonth}`;
   const qrUrl = generateVietQRUrl({
     bankId: 'MB',
     accountNo: DEFAULT_BUILDING_BANK_ACCOUNT.accountNo,

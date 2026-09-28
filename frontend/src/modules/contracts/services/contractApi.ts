@@ -1,16 +1,20 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IContract, IDeposit, ContractStatus } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
-import { mapContract, mapDeposit } from '../../../utils/apiMappers';
+import { adaptContract, adaptDeposit } from '../../../utils/adapters';
 
 export const contractApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getContracts: builder.query<IContract[], { status?: ContractStatus; tenantId?: number }>({
-      query: (params) => ({
-        url: params?.tenantId ? '/contracts/my' : '/contracts',
-        params: params?.status ? { status: params.status } : undefined,
-      }),
-      transformResponse: (response: any[]) => response.map(mapContract),
+    getContracts: builder.query<IContract[], { status?: ContractStatus; tenantId?: number } | void>({
+      query: (params) => {
+        const queryParams: Record<string, any> = {};
+        if (params && 'status' in params && params.status) queryParams.status = params.status;
+        if (params && 'tenantId' in params && params.tenantId) queryParams.tenant_id = params.tenantId;
+        return {
+          url: '/contracts',
+          params: queryParams,
+        };
+      },
+      transformResponse: (res: any[]) => (res || []).map(adaptContract),
       providesTags: (result) =>
         result
           ? [
@@ -20,15 +24,21 @@ export const contractApi = baseApi.injectEndpoints({
           : [{ type: 'Contract', id: 'LIST' }],
     }),
 
+    getMyContracts: builder.query<IContract[], void>({
+      query: () => '/contracts/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptContract),
+      providesTags: ['Contract'],
+    }),
+
     getContractById: builder.query<IContract, number>({
       query: (id) => `/contracts/${id}`,
-      transformResponse: (response: any) => mapContract(response),
+      transformResponse: (res: any) => adaptContract(res),
       providesTags: (_result, _error, id) => [{ type: 'Contract', id }],
     }),
 
     getDeposits: builder.query<IDeposit[], void>({
       query: () => '/deposits',
-      transformResponse: (response: any[]) => response.map(mapDeposit),
+      transformResponse: (res: any[]) => (res || []).map(adaptDeposit),
       providesTags: (result) =>
         result
           ? [
@@ -38,20 +48,26 @@ export const contractApi = baseApi.injectEndpoints({
           : [{ type: 'Deposit', id: 'LIST' }],
     }),
 
+    getMyDeposits: builder.query<IDeposit[], void>({
+      query: () => '/deposits/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptDeposit),
+      providesTags: ['Deposit'],
+    }),
+
     createContract: builder.mutation<IContract, Partial<IContract>>({
       query: (payload) => ({
         url: '/contracts',
         method: 'POST',
         body: {
           apartment_id: payload.apartmentId,
-          tenant_id: payload.tenantId ?? 1,
+          tenant_id: payload.tenantId,
           start_date: payload.startDate,
           end_date: payload.endDate,
           rental_price: payload.rentalPrice,
           deposit_amount: payload.depositAmount,
         },
       }),
-      transformResponse: (response: any) => mapContract(response),
+      transformResponse: (res: any) => adaptContract(res),
       invalidatesTags: [
         { type: 'Contract', id: 'LIST' },
         { type: 'Apartment', id: 'LIST' },
@@ -64,7 +80,7 @@ export const contractApi = baseApi.injectEndpoints({
         url: `/contracts/${contractId}/activate`,
         method: 'PATCH',
       }),
-      transformResponse: (response: any) => mapContract(response),
+      transformResponse: (res: any) => adaptContract(res),
       invalidatesTags: [
         { type: 'Contract', id: 'LIST' },
         { type: 'Deposit', id: 'LIST' },
@@ -79,11 +95,10 @@ export const contractApi = baseApi.injectEndpoints({
         method: 'POST',
         body: {
           new_end_date: newEndDate,
-          rental_price: newPrice,
-          deposit_amount: 0,
+          new_rental_price: newPrice,
         },
       }),
-      transformResponse: (response: any) => mapContract(response),
+      transformResponse: (res: any) => adaptContract(res),
       invalidatesTags: [
         { type: 'Contract', id: 'LIST' },
         { type: 'Alert', id: 'LIST' },
@@ -94,66 +109,19 @@ export const contractApi = baseApi.injectEndpoints({
       { contract: IContract; deposit: IDeposit; refundAmount: number },
       { contractId: number; deductionAmount: number; deductionReason: string }
     >({
-      queryFn: async ({ contractId, deductionAmount, deductionReason }) => {
-        const contracts = mockDb.getContracts();
-        const deposits = mockDb.getDeposits();
-        const apts = mockDb.getApartments();
-
-        const cIndex = contracts.findIndex(c => c.id === contractId);
-        if (cIndex === -1) return { error: { status: 404, data: 'Không tìm thấy hợp đồng' } };
-
-        const contract = contracts[cIndex];
-        contracts[cIndex] = { ...contract, status: 'TERMINATED' };
-        mockDb.setContracts(contracts);
-
-        // Settle Deposit
-        const dIndex = deposits.findIndex(d => d.contractId === contractId);
-        let updatedDeposit: IDeposit;
-        const refund = Math.max(0, contract.depositAmount - deductionAmount);
-
-        if (dIndex !== -1) {
-          deposits[dIndex] = {
-            ...deposits[dIndex],
-            deductionAmount,
-            deductionReason,
-            refundAmount: refund,
-            status: refund > 0 ? 'REFUNDED' : 'DEDUCTED',
-            handledBy: 3,
-            handledByName: 'Hoàng Khánh Ly',
-          };
-          updatedDeposit = deposits[dIndex];
-        } else {
-          updatedDeposit = {
-            id: Date.now(),
-            contractId: contract.id,
-            contractCode: contract.contractCode,
-            roomNumber: contract.roomNumber,
-            tenantName: contract.tenantName,
-            amount: contract.depositAmount,
-            deductionAmount,
-            deductionReason,
-            refundAmount: refund,
-            status: refund > 0 ? 'REFUNDED' : 'DEDUCTED',
-            handledBy: 3,
-            handledByName: 'Hoàng Khánh Ly',
-            createdAt: new Date().toISOString(),
-          };
-          deposits.unshift(updatedDeposit);
-        }
-        mockDb.setDeposits(deposits);
-
-        // Update Apartment back to AVAILABLE or MAINTENANCE if damage
-        const aptIndex = apts.findIndex(a => a.id === contract.apartmentId);
-        if (aptIndex !== -1) {
-          apts[aptIndex] = {
-            ...apts[aptIndex],
-            status: deductionAmount > 0 ? 'MAINTENANCE' : 'AVAILABLE',
-          };
-          mockDb.setApartments(apts);
-        }
-
-        return { data: { contract: contracts[cIndex], deposit: updatedDeposit, refundAmount: refund } };
-      },
+      query: ({ contractId, deductionAmount, deductionReason }) => ({
+        url: `/deposits/contract/${contractId}/settle-detail`,
+        method: 'POST',
+        body: {
+          deduction_amount: deductionAmount,
+          deduction_reason: deductionReason,
+        },
+      }),
+      transformResponse: (res: any) => ({
+        contract: adaptContract(res.contract || { id: res.contract_id, status: 'TERMINATED' }),
+        deposit: adaptDeposit(res.deposit || { id: res.deposit_id, status: 'REFUNDED' }),
+        refundAmount: Number(res.refund_amount || 0),
+      }),
       invalidatesTags: [
         { type: 'Contract', id: 'LIST' },
         { type: 'Deposit', id: 'LIST' },
@@ -161,16 +129,26 @@ export const contractApi = baseApi.injectEndpoints({
         { type: 'Dashboard', id: 'STATS' },
       ],
     }),
+
+    summarizeContractAI: builder.mutation<any, { contractId: number }>({
+      query: ({ contractId }) => ({
+        url: `/contracts/${contractId}/summarize`,
+        method: 'POST',
+      }),
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetContractsQuery,
+  useGetMyContractsQuery,
   useGetContractByIdQuery,
   useGetDepositsQuery,
+  useGetMyDepositsQuery,
   useCreateContractMutation,
   useApproveAndActivateContractMutation,
   useRenewContractMutation,
   useTerminateAndSettleContractMutation,
+  useSummarizeContractAIMutation,
 } = contractApi;

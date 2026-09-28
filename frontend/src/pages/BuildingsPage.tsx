@@ -13,12 +13,14 @@ import {
   ArrowUpDown,
   MoreVertical,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
+import { Pagination } from '../components/common/Pagination';
 import {
   useGetBuildingsQuery,
   useGetApartmentsQuery,
@@ -29,12 +31,18 @@ import { ApartmentStatus, IApartment } from '../types';
 import { formatCurrency, formatCompactCurrency } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
+import { parseApiError } from '../utils/errorHandler';
 
 export const BuildingsPage: React.FC = () => {
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | undefined>(undefined);
   const [selectedStatus, setSelectedStatus] = useState<ApartmentStatus | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Form error state
+  const [aptErrors, setAptErrors] = useState<Record<string, string>>({});
 
   // New Apartment Form state
   const [newRoomNumber, setNewRoomNumber] = useState('');
@@ -69,6 +77,9 @@ export const BuildingsPage: React.FC = () => {
     return true;
   });
 
+  const totalPages = Math.ceil(filteredApartments.length / pageSize) || 1;
+  const paginatedApartments = filteredApartments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   const handleStatusChange = async (aptId: number, newStatus: ApartmentStatus) => {
     try {
       await updateApartmentStatus({ id: aptId, status: newStatus }).unwrap();
@@ -80,10 +91,32 @@ export const BuildingsPage: React.FC = () => {
 
   const handleCreateApartment = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+
+    if (!newRoomNumber.trim()) {
+      errors.newRoomNumber = 'Vui lòng nhập số phòng (VD: P.508)';
+    }
+    if (Number(newFloor) <= 0) {
+      errors.newFloor = 'Tầng phải lớn hơn 0';
+    }
+    if (Number(newArea) <= 0) {
+      errors.newArea = 'Diện tích phải lớn hơn 0 m²';
+    }
+    if (Number(newPrice) <= 0) {
+      errors.newPrice = 'Giá thuê phải lớn hơn 0 VNĐ';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAptErrors(errors);
+      toast.error('Lỗi nhập liệu', 'Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
+      return;
+    }
+
+    setAptErrors({});
     try {
       const selectedB = buildings.find((b) => b.id === Number(newBuildingId));
       await createApartment({
-        roomNumber: newRoomNumber,
+        roomNumber: newRoomNumber.trim(),
         buildingId: Number(newBuildingId),
         buildingName: selectedB?.name || 'Sunshine Tower A',
         floor: Number(newFloor),
@@ -99,9 +132,26 @@ export const BuildingsPage: React.FC = () => {
       toast.success('Thành công', `Đã khởi tạo căn hộ ${newRoomNumber} sẵn sàng cho thuê!`);
       setIsAddModalOpen(false);
       setNewRoomNumber('');
-    } catch {
-      toast.error('Lỗi', 'Không thể tạo mới căn hộ');
+      setAptErrors({});
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể tạo mới căn hộ');
+      setAptErrors({ general: parsed.message, ...parsed.fieldErrors });
+      toast.error('Tạo căn hộ thất bại', parsed.message);
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setNewRoomNumber('');
+    setNewFloor(1);
+    setNewArea(50);
+    setNewPrice(8500000);
+    setAptErrors({});
+    setIsAddModalOpen(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
+    setAptErrors({});
   };
 
   return (
@@ -124,7 +174,7 @@ export const BuildingsPage: React.FC = () => {
           variant="primary"
           size="sm"
           leftIcon={<Plus className="w-3.5 h-3.5" />}
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={handleOpenAddModal}
         >
           Thêm Căn Hộ Mới
         </Button>
@@ -137,7 +187,10 @@ export const BuildingsPage: React.FC = () => {
           return (
             <div
               key={b.id}
-              onClick={() => setSelectedBuildingId(isSelected ? undefined : b.id)}
+              onClick={() => {
+                setSelectedBuildingId(isSelected ? undefined : b.id);
+                setCurrentPage(1);
+              }}
               className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
                 isSelected
                   ? 'bg-brand-50/60 border-brand-500 shadow-xs ring-1 ring-brand-500'
@@ -175,7 +228,10 @@ export const BuildingsPage: React.FC = () => {
           ].map((st) => (
             <button
               key={st.label}
-              onClick={() => setSelectedStatus(st.id as any)}
+              onClick={() => {
+                setSelectedStatus(st.id as any);
+                setCurrentPage(1);
+              }}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
                 selectedStatus === st.id
                   ? 'bg-slate-900 text-white shadow-xs font-semibold'
@@ -192,8 +248,11 @@ export const BuildingsPage: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm số phòng (P.302)..."
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Tìm số phòng (P101, P201)..."
             className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white"
           />
         </div>
@@ -201,7 +260,7 @@ export const BuildingsPage: React.FC = () => {
 
       {/* Apartment Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {filteredApartments.map((apt) => (
+        {paginatedApartments.map((apt) => (
           <div
             key={apt.id}
             className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-all duration-200 flex flex-col justify-between"
@@ -277,15 +336,25 @@ export const BuildingsPage: React.FC = () => {
         ))}
       </div>
 
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={filteredApartments.length}
+        pageSize={pageSize}
+        itemLabel="căn hộ"
+      />
+
       {/* Modal Add New Apartment */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={handleCloseAddModal}
         title="Thêm Mới Căn Hộ Vào Khối Nhà"
         subtitle="Khởi tạo số phòng, diện tích, giá niêm yết và hướng ban công"
         footer={
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsAddModalOpen(false)}>
+            <Button variant="ghost" size="sm" onClick={handleCloseAddModal}>
               Hủy
             </Button>
             <Button
@@ -299,6 +368,13 @@ export const BuildingsPage: React.FC = () => {
           </div>
         }
       >
+        {aptErrors.general && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+            <div className="flex-1 font-medium">{aptErrors.general}</div>
+          </div>
+        )}
+
         <form onSubmit={handleCreateApartment} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -306,7 +382,11 @@ export const BuildingsPage: React.FC = () => {
               required
               placeholder="VD: P.508"
               value={newRoomNumber}
-              onChange={(e) => setNewRoomNumber(e.target.value)}
+              error={aptErrors.newRoomNumber}
+              onChange={(e) => {
+                setNewRoomNumber(e.target.value);
+                if (aptErrors.newRoomNumber) setAptErrors({ ...aptErrors, newRoomNumber: '' });
+              }}
             />
 
             <Select
@@ -323,21 +403,33 @@ export const BuildingsPage: React.FC = () => {
               type="number"
               required
               value={newFloor}
-              onChange={(e) => setNewFloor(Number(e.target.value))}
+              error={aptErrors.newFloor}
+              onChange={(e) => {
+                setNewFloor(Number(e.target.value));
+                if (aptErrors.newFloor) setAptErrors({ ...aptErrors, newFloor: '' });
+              }}
             />
             <Input
               label="Diện tích (m²)"
               type="number"
               required
               value={newArea}
-              onChange={(e) => setNewArea(Number(e.target.value))}
+              error={aptErrors.newArea}
+              onChange={(e) => {
+                setNewArea(Number(e.target.value));
+                if (aptErrors.newArea) setAptErrors({ ...aptErrors, newArea: '' });
+              }}
             />
             <Input
               label="Giá thuê/tháng (VNĐ)"
               type="number"
               required
               value={newPrice}
-              onChange={(e) => setNewPrice(Number(e.target.value))}
+              error={aptErrors.newPrice}
+              onChange={(e) => {
+                setNewPrice(Number(e.target.value));
+                if (aptErrors.newPrice) setAptErrors({ ...aptErrors, newPrice: '' });
+              }}
             />
           </div>
 

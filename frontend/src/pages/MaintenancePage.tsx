@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   Building,
   Phone,
+  AlertCircle,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -28,6 +29,7 @@ import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi
 import { IMaintenanceRequest, MaintenancePriority, MaintenanceStatus } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
+import { parseApiError } from '../utils/errorHandler';
 
 export const MaintenancePage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<MaintenanceStatus | undefined>(undefined);
@@ -38,6 +40,11 @@ export const MaintenancePage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [assignTicket, setAssignTicket] = useState<IMaintenanceRequest | null>(null);
   const [inspectTicket, setInspectTicket] = useState<IMaintenanceRequest | null>(null);
+
+  // Error states
+  const [createTicketErrors, setCreateTicketErrors] = useState<Record<string, string>>({});
+  const [assignErrors, setAssignErrors] = useState<Record<string, string>>({});
+  const [inspectErrors, setInspectErrors] = useState<Record<string, string>>({});
 
   // Form states
   const [techName, setTechName] = useState('KTV. Lê Văn Thắng');
@@ -70,58 +77,137 @@ export const MaintenancePage: React.FC = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
+
+    if (!newReporter.trim()) {
+      errors.newReporter = 'Vui lòng nhập họ tên người báo hỏng';
+    }
+    if (!newPhone.trim()) {
+      errors.newPhone = 'Vui lòng nhập số điện thoại liên hệ';
+    } else if (!/^0\d{9,10}$/.test(newPhone.trim())) {
+      errors.newPhone = 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10-11 số)';
+    }
+    if (!newDesc.trim()) {
+      errors.newDesc = 'Vui lòng mô tả tình trạng hư hỏng';
+    } else if (newDesc.trim().length < 5) {
+      errors.newDesc = 'Mô tả hư hỏng cần ít nhất 5 ký tự để KTV nắm bắt';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCreateTicketErrors(errors);
+      toast.error('Lỗi nhập liệu', 'Vui lòng kiểm tra lại thông tin báo hỏng');
+      return;
+    }
+
+    setCreateTicketErrors({});
     const apt = apartments.find((a) => a.id === Number(newAptId));
     try {
       await createTicket({
         apartmentId: Number(newAptId),
-        roomNumber: apt?.roomNumber || 'P.302',
-        buildingName: apt?.buildingName || 'Sunshine Tower A',
-        reporterName: newReporter,
-        phone: newPhone,
-        issueDescription: newDesc,
+        roomNumber: apt?.roomNumber || 'P101',
+        buildingName: apt?.buildingName || 'Sunshine Diamond Tower',
+        reporterName: newReporter.trim(),
+        phone: newPhone.trim(),
+        issueDescription: newDesc.trim(),
         priority: newPriority,
         category: newCategory,
       }).unwrap();
 
       toast.success('Thành công', 'Đã tiếp nhận phiếu báo hỏng và phân loại SLA!');
       setIsCreateModalOpen(false);
+      setNewReporter('');
+      setNewPhone('');
       setNewDesc('');
-    } catch {
-      toast.error('Lỗi', 'Không thể tạo phiếu bảo trì');
+      setCreateTicketErrors({});
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể tạo phiếu bảo trì');
+      setCreateTicketErrors({ general: parsed.message, ...parsed.fieldErrors });
+      toast.error('Tạo phiếu thất bại', parsed.message);
     }
+  };
+
+  const handleOpenCreateModal = () => {
+    setNewReporter('');
+    setNewPhone('');
+    setNewDesc('');
+    setCreateTicketErrors({});
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateTicketErrors({});
   };
 
   const handleAssign = async () => {
     if (!assignTicket) return;
+    const errors: Record<string, string> = {};
+
+    if (!techName.trim()) {
+      errors.techName = 'Vui lòng nhập tên kỹ thuật viên';
+    }
+    if (techPhone.trim() && !/^0\d{9,10}$/.test(techPhone.trim().replace(/\./g, ''))) {
+      errors.techPhone = 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0)';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setAssignErrors(errors);
+      toast.error('Lỗi nhập liệu', 'Vui lòng kiểm tra lại thông tin KTV');
+      return;
+    }
+
+    setAssignErrors({});
     try {
       await assignTechnician({
         ticketId: assignTicket.id,
-        technicianName: techName,
-        technicianPhone: techPhone,
+        technicianName: techName.trim(),
+        technicianPhone: techPhone.trim(),
       }).unwrap();
 
       toast.success('Phân công thành công', `Đã điều phối ${techName} tiếp nhận xử lý phiếu #${assignTicket.ticketCode}!`);
       setAssignTicket(null);
-    } catch {
-      toast.error('Lỗi', 'Không thể phân công kỹ thuật viên');
+      setAssignErrors({});
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể phân công kỹ thuật viên');
+      setAssignErrors({ general: parsed.message, ...parsed.fieldErrors });
+      toast.error('Lỗi phân công', parsed.message);
     }
   };
 
   const handleInspect = async () => {
     if (!inspectTicket) return;
+    const errors: Record<string, string> = {};
+
+    if (Number(inspectCost) < 0) {
+      errors.inspectCost = 'Chi phí phát sinh không được là số âm';
+    }
+    if (!inspectFeedback.trim()) {
+      errors.inspectFeedback = 'Vui lòng nhập biên bản hoàn công / phản hồi';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setInspectErrors(errors);
+      toast.error('Lỗi nhập liệu', 'Vui lòng kiểm tra lại biên bản nghiệm thu');
+      return;
+    }
+
+    setInspectErrors({});
     try {
       await completeMaintenance({
         ticketId: inspectTicket.id,
         cost: Number(inspectCost),
         rating: inspectRating,
-        feedback: inspectFeedback,
+        feedback: inspectFeedback.trim(),
         isPass,
       }).unwrap();
 
       toast.success('Nghiệm thu thành công', `Phiếu sự cố ${inspectTicket.ticketCode} đã được đóng và mở khóa phòng!`);
       setInspectTicket(null);
-    } catch {
-      toast.error('Lỗi', 'Không thể nghiệm thu phiếu');
+      setInspectErrors({});
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể nghiệm thu phiếu');
+      setInspectErrors({ general: parsed.message, ...parsed.fieldErrors });
+      toast.error('Lỗi nghiệm thu', parsed.message);
     }
   };
 
@@ -157,7 +243,7 @@ export const MaintenancePage: React.FC = () => {
           variant="primary"
           size="sm"
           leftIcon={<Plus className="w-3.5 h-3.5" />}
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={handleOpenCreateModal}
         >
           Tạo Phiếu Báo Hỏng
         </Button>
@@ -342,6 +428,13 @@ export const MaintenancePage: React.FC = () => {
           }
         >
           <div className="space-y-4">
+            {assignErrors.general && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                <div className="flex-1 font-medium">{assignErrors.general}</div>
+              </div>
+            )}
+
             <Select
               label="Chọn Kỹ thuật viên phụ trách"
               value={techName}
@@ -349,6 +442,7 @@ export const MaintenancePage: React.FC = () => {
                 setTechName(e.target.value);
                 if (e.target.value.includes('Thắng')) setTechPhone('0988.123.456');
                 else setTechPhone('0977.888.999');
+                if (assignErrors.techName) setAssignErrors({ ...assignErrors, techName: '' });
               }}
               options={[
                 { label: 'KTV. Lê Văn Thắng (Điện - Nước - Khóa)', value: 'KTV. Lê Văn Thắng' },
@@ -360,7 +454,11 @@ export const MaintenancePage: React.FC = () => {
             <Input
               label="Số điện thoại kỹ thuật viên"
               value={techPhone}
-              onChange={(e) => setTechPhone(e.target.value)}
+              error={assignErrors.techPhone}
+              onChange={(e) => {
+                setTechPhone(e.target.value);
+                if (assignErrors.techPhone) setAssignErrors({ ...assignErrors, techPhone: '' });
+              }}
             />
           </div>
         </Modal>
@@ -370,12 +468,18 @@ export const MaintenancePage: React.FC = () => {
       {inspectTicket && (
         <Modal
           isOpen={!!inspectTicket}
-          onClose={() => setInspectTicket(null)}
+          onClose={() => {
+            setInspectTicket(null);
+            setInspectErrors({});
+          }}
           title={`Nghiệm Thu Sửa Chữa & Đánh Giá Dịch Vụ 5 Sao`}
           subtitle={`Phiếu #${inspectTicket.ticketCode} • Căn ${inspectTicket.roomNumber}`}
           footer={
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setInspectTicket(null)}>
+              <Button variant="ghost" size="sm" onClick={() => {
+                setInspectTicket(null);
+                setInspectErrors({});
+              }}>
                 Hủy
               </Button>
               <Button
@@ -390,6 +494,13 @@ export const MaintenancePage: React.FC = () => {
           }
         >
           <div className="space-y-4 text-xs">
+            {inspectErrors.general && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+                <div className="flex-1 font-medium">{inspectErrors.general}</div>
+              </div>
+            )}
+
             <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
               <label className="flex items-center gap-2 font-bold cursor-pointer">
                 <input
@@ -418,7 +529,11 @@ export const MaintenancePage: React.FC = () => {
               label="Chi phí vật tư sửa chữa phát sinh (VNĐ)"
               type="number"
               value={inspectCost}
-              onChange={(e) => setInspectCost(Number(e.target.value))}
+              error={inspectErrors.inspectCost}
+              onChange={(e) => {
+                setInspectCost(Number(e.target.value));
+                if (inspectErrors.inspectCost) setInspectErrors({ ...inspectErrors, inspectCost: '' });
+              }}
             />
 
             <div>
@@ -447,7 +562,11 @@ export const MaintenancePage: React.FC = () => {
             <Input
               label="Ý kiến phản hồi & Biên bản hoàn công"
               value={inspectFeedback}
-              onChange={(e) => setInspectFeedback(e.target.value)}
+              error={inspectErrors.inspectFeedback}
+              onChange={(e) => {
+                setInspectFeedback(e.target.value);
+                if (inspectErrors.inspectFeedback) setInspectErrors({ ...inspectErrors, inspectFeedback: '' });
+              }}
             />
           </div>
         </Modal>
@@ -456,12 +575,12 @@ export const MaintenancePage: React.FC = () => {
       {/* Modal Create Request */}
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={handleCloseCreateModal}
         title="Tiếp Nhận Phiếu Báo Hỏng Mới (Smart Ticket)"
         subtitle="Hệ thống tự động tính toán SLA và tạm khóa phòng nếu mức độ khẩn cấp"
         footer={
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setIsCreateModalOpen(false)}>
+            <Button variant="ghost" size="sm" onClick={handleCloseCreateModal}>
               Hủy
             </Button>
             <Button
@@ -475,6 +594,13 @@ export const MaintenancePage: React.FC = () => {
           </div>
         }
       >
+        {createTicketErrors.general && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500 mt-0.5" />
+            <div className="flex-1 font-medium">{createTicketErrors.general}</div>
+          </div>
+        )}
+
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <Select
@@ -507,14 +633,22 @@ export const MaintenancePage: React.FC = () => {
               required
               placeholder="VD: Nguyễn Văn An"
               value={newReporter}
-              onChange={(e) => setNewReporter(e.target.value)}
+              error={createTicketErrors.newReporter}
+              onChange={(e) => {
+                setNewReporter(e.target.value);
+                if (createTicketErrors.newReporter) setCreateTicketErrors({ ...createTicketErrors, newReporter: '' });
+              }}
             />
             <Input
               label="Số điện thoại người báo"
               required
               placeholder="0912.***.***"
               value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
+              error={createTicketErrors.newPhone}
+              onChange={(e) => {
+                setNewPhone(e.target.value);
+                if (createTicketErrors.newPhone) setCreateTicketErrors({ ...createTicketErrors, newPhone: '' });
+              }}
             />
           </div>
 
@@ -535,7 +669,11 @@ export const MaintenancePage: React.FC = () => {
             required
             placeholder="VD: Rò rỉ van nước cấp bồn cầu phòng tắm, nước tràn ra sàn..."
             value={newDesc}
-            onChange={(e) => setNewDesc(e.target.value)}
+            error={createTicketErrors.newDesc}
+            onChange={(e) => {
+              setNewDesc(e.target.value);
+              if (createTicketErrors.newDesc) setCreateTicketErrors({ ...createTicketErrors, newDesc: '' });
+            }}
           />
         </form>
       </Modal>

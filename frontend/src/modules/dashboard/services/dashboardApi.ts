@@ -1,36 +1,36 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IDashboardStats } from '../../../types';
+import { adaptDashboardStats } from '../../../utils/adapters';
 
 export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getDashboardStats: builder.query<IDashboardStats, { buildingId?: number }>({
+    getDashboardStats: builder.query<IDashboardStats, { buildingId?: number } | void>({
       query: () => '/dashboard/summary',
-      transformResponse: (response: any): IDashboardStats => ({
-        occupancyRate: Number(response.apartments?.occupancy_rate ?? 0),
-        occupiedRooms: Number(response.apartments?.occupied ?? 0),
-        totalRooms: Number(response.apartments?.total ?? 0),
-        vacantRooms: Number(response.apartments?.available ?? 0),
-        reservedRooms: Number(response.apartments?.reserved ?? 0),
-        maintenanceRooms: Number(response.apartments?.maintenance ?? 0),
-        totalRevenueMonth: Number(response.finance?.total_revenue ?? 0),
-        targetRevenueMonth: Number(response.finance?.total_revenue ?? 0),
-        revenueGrowthMoM: 0,
-        netOperatingIncome: Number(response.finance?.total_revenue ?? 0),
-        noiMarginPercent: 0,
-        totalDebtOverdue: Number(response.finance?.total_debt ?? 0),
-        overdueDebtCount: Number(response.finance?.overdue_receivables ?? 0),
-        debtChangeMoM: 0,
-        csatScore: 0,
-        avgMaintenanceSlaHours: 0,
-        activeContractsCount: 0,
-        expiringContractsCount: Number(response.operations?.expiring_contracts ?? 0),
-        draftContractsCount: 0,
-        totalDepositsHeld: Number(response.finance?.held_deposit ?? 0),
+      transformResponse: (res: any) => adaptDashboardStats(res),
+      providesTags: [{ type: 'Dashboard', id: 'STATS' }],
+    }),
+
+    getRevenueReport: builder.query<{ totalRevenue: number; paymentCount: number }, { startDate: string; endDate: string }>({
+      query: ({ startDate, endDate }) => ({
+        url: '/dashboard/revenue',
+        params: { start_date: startDate, end_date: endDate },
       }),
+      transformResponse: (res: any) => ({
+        totalRevenue: Number(res.total_revenue || 0),
+        paymentCount: res.payment_count || 0,
+      }),
+    }),
+
+    getOverdueReport: builder.query<any[], void>({
+      query: () => '/dashboard/overdue',
       providesTags: [{ type: 'Dashboard', id: 'STATS' }],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
-export const { useGetDashboardStatsQuery } = dashboardApi;
+export const {
+  useGetDashboardStatsQuery,
+  useGetRevenueReportQuery,
+  useGetOverdueReportQuery,
+} = dashboardApi;

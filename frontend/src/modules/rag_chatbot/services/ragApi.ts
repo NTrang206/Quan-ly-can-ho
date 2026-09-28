@@ -1,15 +1,18 @@
 import { baseApi } from '../../../stores/baseApi';
 import { IDocumentChunk } from '../../../types';
-import { mockDb } from '../../../stores/mockDatabase';
+import { adaptDocumentChunk } from '../../../utils/adapters';
 import { IRAGAnswerResult } from '../../../utils/aiEngines';
 
 export const ragApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getRAGChunks: builder.query<IDocumentChunk[], { category?: string }>({
-      queryFn: async (params) => {
-        let list = mockDb.getRAGChunks();
-        if (params?.category) list = list.filter(c => c.category === params.category);
-        return { data: list };
+    getRAGChunks: builder.query<IDocumentChunk[], { category?: string } | void>({
+      query: () => '/ai/knowledge-chunks',
+      transformResponse: (res: any[], _meta, arg) => {
+        let list = (res || []).map(adaptDocumentChunk);
+        if (arg && 'category' in arg && arg.category) {
+          list = list.filter((c) => c.category === arg.category);
+        }
+        return list;
       },
       providesTags: (result) =>
         result
@@ -22,34 +25,61 @@ export const ragApi = baseApi.injectEndpoints({
 
     askRAGChatbot: builder.mutation<IRAGAnswerResult, { question: string }>({
       query: ({ question }) => ({
-        url: '/ai/chat',
+        url: '/ai/rag-chat',
         method: 'POST',
-        body: { question, top_k: 3 },
+        body: {
+          question,
+          history: [],
+        },
       }),
+      transformResponse: (res: any): IRAGAnswerResult => {
+        const citationsList = res.citations || [];
+        const matchedChunks: IDocumentChunk[] = citationsList.map((c: any, index: number) => {
+          if (typeof c === 'string') {
+            return {
+              id: index + 1,
+              docCode: 'DOC-NOI-QUY-2026',
+              documentName: 'Sổ tay Nội quy Tòa nhà Dwell',
+              title: c,
+              chunkIndex: index + 1,
+              category: 'LIVING_RULES',
+              content: c,
+              citation: c,
+              createdAt: new Date().toISOString(),
+            };
+          }
+          return adaptDocumentChunk(c);
+        });
+
+        return {
+          answer: res.answer || 'Hệ thống đã ghi nhận câu hỏi của bạn.',
+          confidence: Number(res.confidence_score) || 0.95,
+          matchedChunks,
+          guardrailStatus: 'PASSED',
+        };
+      },
     }),
 
     addDocumentChunk: builder.mutation<IDocumentChunk, Partial<IDocumentChunk>>({
-      queryFn: async (payload) => {
-        const chunks = mockDb.getRAGChunks();
-        const newChunk: IDocumentChunk = {
-          id: Date.now(),
-          docCode: payload.docCode || 'Tai_lieu_noi_quy_moi.pdf',
-          documentName: payload.documentName || 'Tài liệu Nội quy Bổ sung 2026',
-          title: payload.title || 'Quy định mới cập nhật',
-          chunkIndex: chunks.length + 1,
-          category: payload.category || 'LIVING_RULES',
-          content: payload.content || '',
-          citation: payload.citation || 'Quy chế BQL Sunshine Homes',
-          createdAt: new Date().toISOString().split('T')[0],
-        };
-        chunks.unshift(newChunk);
-        mockDb.setRAGChunks(chunks);
-        return { data: newChunk };
-      },
+      query: () => ({
+        url: '/ai/seed-knowledge',
+        method: 'POST',
+      }),
+      transformResponse: (res: any): IDocumentChunk => ({
+        id: Date.now(),
+        docCode: 'DOC-NOI-QUY-BO-SUNG',
+        documentName: 'Nội quy Tòa nhà Bổ sung',
+        title: 'Quy định mới cập nhật',
+        chunkIndex: res.total_chunks || 1,
+        category: 'LIVING_RULES',
+        content: res.message || 'Đã nạp phân đoạn tri thức mới vào CSDL',
+        citation: 'Ban Quản trị Tòa nhà Dwell',
+        createdAt: new Date().toISOString(),
+      }),
       invalidatesTags: [{ type: 'RAGChunk', id: 'LIST' }],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {

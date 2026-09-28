@@ -26,26 +26,26 @@ export const ResidentPortalModal: React.FC<ResidentPortalModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 bg-gradient-to-r from-teal-800 via-teal-700 to-emerald-800 text-white flex items-center justify-between shrink-0">
+        <div className="px-5 py-4 bg-gradient-to-r from-slate-900 via-brand-900 to-slate-900 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-teal-200">
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-brand-300">
               <Home className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="text-base font-bold">Cổng Dịch Vụ Cư Dân</h3>
-                <span className="px-2 py-0.5 bg-emerald-400/20 text-emerald-200 border border-emerald-300/30 text-[10px] font-bold rounded-full">
+                <span className="px-2 py-0.5 bg-brand-500/20 text-brand-200 border border-brand-400/30 text-[10px] font-bold rounded-full">
                   Resident Portal
                 </span>
               </div>
-              <p className="text-xs text-teal-100 mt-0.5">
+              <p className="text-xs text-brand-200/80 mt-0.5">
                 Khu vực chuyên biệt dành riêng cho cư dân đang sinh sống tại Dwell Living
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-teal-200 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -53,11 +53,11 @@ export const ResidentPortalModal: React.FC<ResidentPortalModalProps> = ({
 
         {/* Content Body */}
         <div className="p-5 overflow-y-auto space-y-4">
-          <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-emerald-950">
+          <div className="bg-brand-50/70 border border-brand-200/80 rounded-xl p-3.5 flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-brand-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-brand-950">
               <div className="font-bold">Trải nghiệm số hóa toàn diện cho cư dân:</div>
-              <div className="text-emerald-800 mt-0.5 leading-relaxed">
+              <div className="text-brand-800 mt-0.5 leading-relaxed">
                 Tất cả thủ tục từ hợp đồng, hóa đơn điện nước, báo sự cố kỹ thuật đến thông tin tạm trú đều được xử lý 100% trực tuyến.
               </div>
             </div>
@@ -69,7 +69,7 @@ export const ResidentPortalModal: React.FC<ResidentPortalModalProps> = ({
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
@@ -129,7 +129,7 @@ export const ResidentPortalModal: React.FC<ResidentPortalModalProps> = ({
               onClose();
               onEnterPortalAsTenant();
             }}
-            className="px-5 py-2.5 text-xs font-bold text-white bg-[#00c5a0] hover:bg-[#00b28e] rounded-xl shadow-md shadow-teal-500/20 transition-all flex items-center justify-center gap-1.5"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
           >
             <span>Trải Nghiệm Cổng Cư Dân Ngay</span>
             <ArrowRight className="w-4 h-4" />
