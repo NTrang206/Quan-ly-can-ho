@@ -8,6 +8,7 @@ import {
   Wrench,
   Phone,
   ShieldCheck,
+  Compass,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { toggleSidebar } from '../../stores/globalSlice';
@@ -51,7 +52,7 @@ export const TenantSidebar: React.FC = () => {
     (m) => m.roomNumber === activeApartment?.roomNumber && m.status === 'IN_PROGRESS'
   );
 
-  // Exact 5 Essential Menu Items for Tenants - Short, clear labels that never truncate
+  // Essential Menu Items for Tenants - Short, clear labels that never truncate
   const navItems = [
     {
       id: 'overview',
@@ -62,9 +63,17 @@ export const TenantSidebar: React.FC = () => {
     {
       id: 'apartment',
       to: '/tenant-portal?tab=apartment',
-      label: 'Căn hộ & Thiết bị',
+      label: 'Căn hộ của tôi',
       icon: <Building2 className="w-[18px] h-[18px]" />,
       badge: activeApartment?.roomNumber || 'P101',
+    },
+    {
+      id: 'explore',
+      to: '/tenant-portal?tab=explore',
+      label: 'Xem căn hộ cho thuê',
+      icon: <Compass className="w-[18px] h-[18px]" />,
+      badge: `${apartments.length || 11} căn`,
+      badgeVariant: 'blue',
     },
     {
       id: 'contract',

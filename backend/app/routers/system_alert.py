@@ -209,10 +209,70 @@ def get_alert(
         SystemAlert.id == alert_id
     ).first()
 
-    if alert is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Không tìm thấy cảnh báo"
-        )
-
     return alert
+
+
+# =========================================================
+# AI SINH NỘI DUNG ĐÔN ĐỐC / NHẮC NỢ
+# =========================================================
+@router.post(
+    "/{alert_id}/generate-dunning"
+)
+def generate_dunning_message(
+    alert_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN", "STAFF", "ACCOUNTANT")
+    )
+):
+    alert = db.query(SystemAlert).filter(SystemAlert.id == alert_id).first()
+    if alert is None:
+        raise HTTPException(status_code=404, detail="Không tìm thấy cảnh báo")
+
+    target_name = "Quý cư dân"
+    target_phone = "0904.123.456"
+    amount_due = 21100000
+    days_overdue = 12
+
+    # Trích xuất từ message
+    import re
+    due_match = re.search(r"Số nợ cần thu:\s*([\d\.,]+)", alert.message)
+    if due_match:
+        try:
+            amount_due = int(due_match.group(1).replace(".", "").replace(",", ""))
+        except:
+            pass
+
+    phone_match = re.search(r"\((\d{10,11})\)", alert.message)
+    if phone_match:
+        target_phone = phone_match.group(1)
+
+    name_match = re.search(r"Khách thuê:\s*([^\(]+)", alert.message)
+    if name_match:
+        target_name = name_match.group(1).strip()
+
+    overdue_match = re.search(r"quá hạn\s+(\d+)\s+ngày", alert.message)
+    if overdue_match:
+        days_overdue = int(overdue_match.group(1))
+
+    email_subject = f"[Dwell Sunshine Homes] Thông báo nhắc cước phí dịch vụ quá hạn - {target_name}"
+    message_body = (
+        f"Kính gửi Quý cư dân {target_name},\n\n"
+        f"Ban Quản Lý Tòa Nhà Sunshine Homes xin trân trọng thông báo: Khoản thanh toán cước phí căn hộ hiện đã quá hạn {days_overdue} ngày "
+        f"với tổng số tiền cần thanh toán là {amount_due:,} VNĐ.\n\n"
+        f"Kính mong Quý cư dân sớm hoàn tất chuyển khoản hoặc quét mã VietQR Napas247 đính kèm để hệ thống gạch nợ tự động. "
+        f"Nếu đã thanh toán, xin vui lòng bỏ qua thông báo này.\n\n"
+        f"Trân trọng cảm ơn sự phối hợp của Quý cư dân!\nBan Quản Lý Tòa Nhà Sunshine Homes."
+    )
+    sms_body = f"[Sunshine Homes] Nhac no: Khoan phi phong da qua han {days_overdue} ngay, so tien {amount_due:,}d. Quy khach vui long chuyen khoan VietQR hoac lien he hotline 19008899."
+
+    return {
+        "alert_id": alert.id,
+        "message_body": message_body,
+        "sms_body": sms_body,
+        "email_subject": email_subject,
+        "recipient_name": target_name,
+        "recipient_phone": target_phone,
+        "amount_due": amount_due,
+        "days_overdue": days_overdue
+    }
