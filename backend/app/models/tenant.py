@@ -69,3 +69,15 @@ class Tenant(Base):
         "Contract",
         back_populates="tenant"
     )
+
+    roommates = relationship(
+        "Roommate",
+        back_populates="tenant",
+        cascade="all, delete-orphan"
+    )
+
+    emergency_contacts = relationship(
+        "EmergencyContact",
+        back_populates="tenant",
+        cascade="all, delete-orphan"
+    )

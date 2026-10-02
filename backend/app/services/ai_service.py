@@ -227,35 +227,24 @@ def split_into_chunks(
 
 
 # =========================================================
-# TÓM TẮT HỢP ĐỒNG
+# TÓM TẮT HỢP ĐỒNG (Bám sát đề tài 12 - Prompt mẫu chuẩn)
 # =========================================================
 def summarize_contract_text(
     contract_text: str
 ):
-
-    prompt = f"""
-Bạn là trợ lý AI của hệ thống quản lý thuê căn hộ.
-
-Chỉ sử dụng nội dung hợp đồng được cung cấp.
-
-Hãy tóm tắt chính xác 5 mục:
-
-1. Thời hạn hợp đồng
-2. Tiền thuê
-3. Tiền cọc
-4. Nghĩa vụ thanh toán
-5. Điều kiện chấm dứt hợp đồng
+    prompt = f"""System: Bạn là trợ lý quản lý căn hộ. Chỉ tóm tắt điều khoản từ hợp đồng được cung cấp, không tư vấn pháp lý.
+User: Hãy tóm tắt hợp đồng sau thành các mục: thời hạn, tiền thuê, tiền cọc, nghĩa vụ thanh toán, điều kiện chấm dứt.
 
 Quy tắc:
-- Không tự suy đoán.
-- Không thêm điều khoản.
-- Không sửa số tiền hoặc ngày tháng.
-- Nếu không tìm thấy thông tin,
-  ghi "Không tìm thấy trong tài liệu".
-- Đây chỉ là bản nháp để người dùng kiểm duyệt.
+1. Thời hạn hợp đồng: Nêu rõ ngày bắt đầu, ngày kết thúc và thời hạn báo trước khi gia hạn.
+2. Tiền thuê: Nêu rõ mức giá thuê/tháng và phương thức thanh toán.
+3. Tiền cọc: Nêu rõ số tiền đặt cọc bảo đảm.
+4. Nghĩa vụ thanh toán: Nêu rõ kỳ hạn thanh toán định kỳ hàng tháng.
+5. Điều kiện chấm dứt: Nêu rõ điều kiện thông báo trước và bàn giao phòng.
+- Không tự suy đoán, không thêm điều khoản ngoài tài liệu.
+- Không thay đổi số tiền hay ngày tháng.
 
-NỘI DUNG HỢP ĐỒNG:
-
+Hợp đồng:
 {contract_text}
 """
 

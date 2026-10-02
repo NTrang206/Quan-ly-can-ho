@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CreditCard,
   Printer,
+  Sparkles,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -29,6 +30,7 @@ import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { VietQRModal } from '../components/common/VietQRModal';
 import { ReceiptModal } from '../components/common/ReceiptModal';
+import { AISummarizerModal } from '../components/ai/AISummarizerModal';
 import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetContractsQuery, useRenewContractMutation } from '../modules/contracts/services/contractApi';
 import { useGetReceivablesQuery, useRecordPaymentMutation, useGetPaymentsQuery } from '../modules/finance/services/financeApi';
@@ -124,6 +126,7 @@ export const ResidentPortalPage: React.FC = () => {
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [isAddRoommateOpen, setIsAddRoommateOpen] = useState(false);
   const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
+  const [isAISummarizerOpen, setIsAISummarizerOpen] = useState(false);
 
   // New Ticket State
   const [newCategory, setNewCategory] = useState<'PLUMBING' | 'ELECTRICAL' | 'APPLIANCE' | 'DOOR_LOCK' | 'OTHER'>('PLUMBING');
@@ -192,27 +195,38 @@ export const ResidentPortalPage: React.FC = () => {
 
   const handleAddRoommate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!rmName.trim()) {
+      toast.error('Lỗi', 'Vui lòng nhập họ và tên người ở cùng');
+      return;
+    }
+    if (!rmCitizenId.trim()) {
+      toast.error('Lỗi', 'Vui lòng nhập số CCCD 12 chữ số');
+      return;
+    }
+
     try {
       await addRoommate({
         tenantId: currentTenant.id,
         roommate: {
-          apartmentId: activeApartment?.id || 1,
-          fullName: rmName,
-          citizenId: rmCitizenId,
-          phone: rmPhone,
-          relationship: rmRelation,
+          apartmentId: activeApartment?.id || activeContract?.apartmentId || 1,
+          fullName: rmName.trim(),
+          citizenId: rmCitizenId.trim(),
+          phone: rmPhone.trim(),
+          relationship: rmRelation.trim() || 'Người ở cùng',
           isRegisteredTemp: true,
           registeredDate: new Date().toISOString().split('T')[0],
         },
       }).unwrap();
 
-      toast.success('Đăng ký thành công', `Hồ sơ tạm trú của ${rmName} đã được cập nhật!`);
+      toast.success('Khai báo thành công', `Hồ sơ tạm trú của ${rmName.trim()} đã được cập nhật thành công!`);
       setIsAddRoommateOpen(false);
       setRmName('');
       setRmCitizenId('');
       setRmPhone('');
-    } catch {
-      toast.error('Lỗi', 'Không thể thêm thành viên');
+      setRmRelation('Vợ / Chồng');
+    } catch (err: any) {
+      const errMsg = err?.data?.detail || err?.error || err?.message || 'Không thể thêm thành viên';
+      toast.error('Lỗi', typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   };
 
@@ -700,7 +714,17 @@ export const ResidentPortalPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2.5 self-start sm:self-auto">
+              <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100"
+                  leftIcon={<Sparkles className="w-4 h-4 text-sky-600" />}
+                  onClick={() => setIsAISummarizerOpen(true)}
+                >
+                  Tóm Tắt AI (5 Điều Khoản)
+                </Button>
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -1505,6 +1529,15 @@ export const ResidentPortalPage: React.FC = () => {
           contract={activeContract}
           tenant={currentTenant as any}
           apartment={activeApartment}
+        />
+      )}
+
+      {/* AI Contract Summarizer Modal */}
+      {isAISummarizerOpen && activeContract && (
+        <AISummarizerModal
+          isOpen={isAISummarizerOpen}
+          onClose={() => setIsAISummarizerOpen(false)}
+          contract={activeContract}
         />
       )}
     </div>

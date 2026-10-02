@@ -139,7 +139,7 @@ def seed_all():
         # 4. APARTMENTS
         # =========================================================
         apartments_data = [
-            {"id": 1, "building_id": 1, "room_number": "P101", "floor": 1, "area_sqm": Decimal("55.0"), "price": Decimal("11500000"), "max_occupants": 2, "status": "OCCUPIED"},
+            {"id": 1, "building_id": 1, "room_number": "P101", "floor": 1, "area_sqm": Decimal("55.0"), "price": Decimal("11500000"), "max_occupants": 4, "status": "OCCUPIED"},
             {"id": 2, "building_id": 1, "room_number": "P102", "floor": 1, "area_sqm": Decimal("70.0"), "price": Decimal("14000000"), "max_occupants": 3, "status": "AVAILABLE"},
             {"id": 3, "building_id": 1, "room_number": "P201", "floor": 2, "area_sqm": Decimal("58.0"), "price": Decimal("12000000"), "max_occupants": 2, "status": "AVAILABLE"},
             {"id": 4, "building_id": 1, "room_number": "P202", "floor": 2, "area_sqm": Decimal("85.0"), "price": Decimal("17500000"), "max_occupants": 4, "status": "OCCUPIED"},

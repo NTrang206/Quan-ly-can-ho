@@ -16,6 +16,8 @@ import {
   Building,
   CheckCircle2,
   MoreVertical,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -27,10 +29,11 @@ import {
   useCreateTenantMutation,
   useAddRoommateMutation,
   useAddEmergencyContactMutation,
+  useDeleteTenantMutation,
 } from '../modules/tenants/services/tenantApi';
 import { useGetContractsQuery } from '../modules/contracts/services/contractApi';
 import { ITenant } from '../types';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency, formatDate, isSamePersonName } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
 import { parseApiError } from '../utils/errorHandler';
@@ -79,9 +82,23 @@ export const TenantsPage: React.FC = () => {
   const [createTenant, { isLoading: isCreating }] = useCreateTenantMutation();
   const [addRoommate, { isLoading: isAddingRm }] = useAddRoommateMutation();
   const [addContact, { isLoading: isAddingCt }] = useAddEmergencyContactMutation();
+  const [deleteTenant, { isLoading: isDeleting }] = useDeleteTenantMutation();
+  const [tenantToDelete, setTenantToDelete] = useState<ITenant | null>(null);
   const toast = useToast();
   const totalPages = Math.ceil(tenants.length / pageSize) || 1;
   const paginatedTenants = tenants.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handleDeleteTenant = async () => {
+    if (!tenantToDelete) return;
+    try {
+      await deleteTenant(tenantToDelete.id).unwrap();
+      toast.success('Xóa khách thuê thành công', `Đã xóa hồ sơ khách thuê ${tenantToDelete.fullName} khỏi hệ thống.`);
+      setTenantToDelete(null);
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể xóa khách thuê');
+      toast.error('Lỗi khi xóa khách thuê', parsed.message);
+    }
+  };
 
   const handleBlurField = (field: string, value: string) => {
     const val = value.trim();
@@ -90,6 +107,15 @@ export const TenantsPage: React.FC = () => {
     if (field === 'citizenId') {
       if (!/^\d{9,12}$/.test(val)) {
         setCreateErrors((prev) => ({ ...prev, citizenId: 'Số CMND/CCCD phải gồm 9 đến 12 chữ số hợp lệ' }));
+      } else {
+        const matched = tenants.find((t) => t.citizenId === val);
+        if (matched && fullName.trim() && !isSamePersonName(matched.fullName, fullName.trim())) {
+          setCreateErrors((prev) => ({
+            ...prev,
+            citizenId: `Số CCCD này đã thuộc về khách thuê "${matched.fullName}". Không thể tạo hồ sơ cho người khác tên!`,
+            fullName: `Tên không khớp với chủ sở hữu CCCD (${matched.fullName})`,
+          }));
+        }
       }
     } else if (field === 'phone') {
       if (!/^0\d{9,10}$/.test(val)) {
@@ -113,6 +139,12 @@ export const TenantsPage: React.FC = () => {
       errors.citizenId = 'Vui lòng nhập số CMND/CCCD';
     } else if (!/^\d{9,12}$/.test(citizenId.trim())) {
       errors.citizenId = 'Số CMND/CCCD phải gồm 9 đến 12 chữ số hợp lệ';
+    } else {
+      const matched = tenants.find((t) => t.citizenId === citizenId.trim());
+      if (matched && !isSamePersonName(matched.fullName, fullName.trim())) {
+        errors.citizenId = `Số CCCD này đã thuộc về khách thuê "${matched.fullName}". Không thể tạo hồ sơ cho người khác tên!`;
+        errors.fullName = `Tên không khớp với chủ sở hữu CCCD (${matched.fullName})`;
+      }
     }
 
     if (!phone.trim()) {
@@ -559,6 +591,23 @@ export const TenantsPage: React.FC = () => {
                             <Phone className="w-3.5 h-3.5 text-slate-400" />
                             <span>Thêm liên hệ khẩn cấp</span>
                           </button>
+
+                          {(isAdmin || isStaff) && (
+                            <>
+                              <div className="border-t border-slate-100 my-1" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownId(null);
+                                  setTenantToDelete(t);
+                                }}
+                                className="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Xóa khách thuê</span>
+                              </button>
+                            </>
+                          )}
                         </div>
                       </>
                     )}
@@ -620,6 +669,18 @@ export const TenantsPage: React.FC = () => {
             onChange={(e) => {
               setFullName(e.target.value);
               if (createErrors.fullName) setCreateErrors({ ...createErrors, fullName: '' });
+            }}
+            onBlur={() => {
+              if (citizenId.trim() && fullName.trim()) {
+                const matched = tenants.find((t) => t.citizenId === citizenId.trim());
+                if (matched && !isSamePersonName(matched.fullName, fullName.trim())) {
+                  setCreateErrors((prev) => ({
+                    ...prev,
+                    citizenId: `Số CCCD này đã thuộc về khách thuê "${matched.fullName}". Không thể tạo hồ sơ cho người khác tên!`,
+                    fullName: `Tên không khớp với chủ sở hữu CCCD (${matched.fullName})`,
+                  }));
+                }
+              }
             }}
           />
 
@@ -815,6 +876,59 @@ export const TenantsPage: React.FC = () => {
           </form>
         </Modal>
       )}
+
+      {/* Modal Confirm Delete Tenant */}
+      <Modal
+        isOpen={!!tenantToDelete}
+        onClose={() => !isDeleting && setTenantToDelete(null)}
+        title="Xác Nhận Xóa Khách Thuê"
+        subtitle="Gỡ bỏ hồ sơ định danh khách thuê khỏi hệ thống Dwell"
+        size="sm"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTenantToDelete(null)}
+              disabled={isDeleting}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              isLoading={isDeleting}
+              onClick={handleDeleteTenant}
+              leftIcon={<Trash2 className="w-3.5 h-3.5" />}
+            >
+              Xác Nhận Xóa
+            </Button>
+          </div>
+        }
+      >
+        {tenantToDelete && (
+          <div className="space-y-3 py-1">
+            <div className="p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-rose-900 leading-relaxed">
+                Bạn có chắc chắn muốn xóa hồ sơ khách thuê <strong className="font-bold text-rose-950">{tenantToDelete.fullName}</strong>?
+                {tenantToDelete.currentRoomNumber && (
+                  <span className="block mt-1 text-slate-700">
+                    Phòng hiện tại: <strong className="text-brand-700 font-bold">{tenantToDelete.currentRoomNumber}</strong>
+                  </span>
+                )}
+                <span className="block mt-1 text-slate-600">
+                  CCCD: <span className="font-mono font-medium">{tenantToDelete.citizenId}</span> • SĐT: <span className="font-mono font-medium">{tenantToDelete.phone}</span>
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 italic">
+              * Lưu ý: Hệ thống sẽ từ chối xóa nếu khách đang có hợp đồng thuê có hiệu lực. Mọi dữ liệu người ở cùng và liên hệ khẩn cấp liên kết sẽ được tự động xóa kèm theo.
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
+

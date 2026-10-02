@@ -356,7 +356,7 @@ export const ApartmentDetailPage: React.FC = () => {
                   Thông tin mô tả Căn hộ Dwell Living - {building?.name || apartment.buildingName} ({building?.address || 'Dwell, Hà Nội'})
                 </h2>
                 <p className="text-xs sm:text-[13px] text-slate-700 font-semibold mt-1.5 leading-relaxed">
-                  Căn hộ P.{apartment.roomNumber}. Chuỗi căn hộ cho thuê Dwell Living ({building?.name || apartment.buildingName}), {apartment.bedrooms} phòng ngủ full đồ
+                  Căn hộ {apartment.roomNumber?.startsWith('P') ? apartment.roomNumber : `P${apartment.roomNumber}`}. Chuỗi căn hộ cho thuê Dwell Living ({building?.name || apartment.buildingName}), {apartment.bedrooms} phòng ngủ full đồ
                 </p>
               </div>
 
@@ -453,22 +453,12 @@ export const ApartmentDetailPage: React.FC = () => {
                   <span className="font-bold text-slate-800">{apartment.viewDirection || 'Đông Nam'}</span>
                 </div>
 
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                <div className="flex items-center justify-between pb-2.5">
                   <div className="flex items-center gap-2 text-slate-500">
                     <Sofa className="w-4 h-4 text-slate-400" />
                     <span>Nội thất</span>
                   </div>
                   <span className="font-bold text-slate-800">Đầy đủ (Full nội thất)</span>
-                </div>
-
-                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-500">
-                    <Key className="w-4 h-4 text-slate-400" />
-                    <span>Tình trạng phòng</span>
-                  </div>
-                  <span className="font-bold text-emerald-700">
-                    {apartment.status === 'AVAILABLE' ? 'Sẵn sàng dọn vào' : 'Đang cho thuê'}
-                  </span>
                 </div>
               </div>
             </div>

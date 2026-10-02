@@ -14,6 +14,9 @@ import {
   BarChart3,
   PieChart,
   CheckCircle2,
+  FileSignature,
+  BellRing,
+  ChevronRight,
 } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { Badge } from '../components/common/Badge';
@@ -438,6 +441,114 @@ export const AdminDashboardPage: React.FC = () => {
                 </span>
                 <span className="font-semibold text-slate-900">194 Tr (4%)</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Operational Alerts & Warnings Row (Item 7 & 8) */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <BellRing className="w-4 h-4 animate-bounce" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Cảnh Báo Vận Hành & Thu Hồi Công Nợ</span>
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 rounded-full">
+                  Thời Gian Thực
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Tự động rà soát hợp đồng sắp đáo hạn trong 30 ngày và các khoản nợ phí quá hạn cần gửi đôn đốc.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/admin/alerts')}
+            className="self-start sm:self-auto text-xs"
+          >
+            <span>Trung Tâm Cảnh Báo AI</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: Expiring Contracts */}
+          <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 flex flex-col justify-between space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                  <FileSignature className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-900">
+                    Hợp Đồng Sắp Hết Hạn (&le; 30 Ngày)
+                  </h4>
+                  <div className="text-lg font-black text-amber-950 mt-0.5">
+                    {stats?.expiringContractsCount || 2} Hợp đồng cần gia hạn
+                  </div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-white text-amber-800 rounded-md border border-amber-200 shadow-2xs">
+                Cần xử lý
+              </span>
+            </div>
+            <p className="text-xs text-amber-800/90 leading-relaxed">
+              Các hợp đồng thuê sắp đáo hạn trong 30 ngày tới. Vui lòng liên hệ cư dân để đàm phán gia hạn hợp đồng mới hoặc chuẩn bị lịch nghiệm thu bàn giao mặt bằng.
+            </p>
+            <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between">
+              <span className="text-[11px] text-amber-800 font-medium">Quy trình: Gia hạn & Tái ký</span>
+              <button
+                type="button"
+                onClick={() => navigate('/admin/contracts')}
+                className="text-xs font-bold text-amber-900 hover:text-amber-950 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Xem danh sách hợp đồng</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Card 2: Overdue Receivables & Debts */}
+          <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200/80 flex flex-col justify-between space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-rose-900">
+                    Khoản Nợ Quá Hạn Cần Thu Hồi
+                  </h4>
+                  <div className="text-lg font-black text-rose-950 mt-0.5">
+                    {formatCurrency(stats?.totalDebtOverdue || 68500000)}
+                    <span className="text-xs font-normal text-rose-700 ml-1.5 font-sans">
+                      ({stats?.overdueDebtCount || 6} căn nợ &gt; 5 ngày)
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-white text-rose-700 rounded-md border border-rose-200 shadow-2xs">
+                Quá hạn
+              </span>
+            </div>
+            <p className="text-xs text-rose-800/90 leading-relaxed">
+              Các hóa đơn tiền thuê phòng và phí quản lý tiện ích đã quá hạn thanh toán. Hệ thống hỗ trợ phát sinh mã VietQR và gửi thông điệp đôn đốc tự động.
+            </p>
+            <div className="pt-2 border-t border-rose-200/60 flex items-center justify-between">
+              <span className="text-[11px] text-rose-800 font-medium">Hỗ trợ: SMS / Zalo / App</span>
+              <button
+                type="button"
+                onClick={() => navigate('/admin/alerts')}
+                className="text-xs font-bold text-rose-700 hover:text-rose-900 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Gửi đôn đốc thu nợ ngay</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>

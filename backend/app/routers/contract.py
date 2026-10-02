@@ -372,9 +372,17 @@ def create_contract_from_booking(
         )
 
     # Tìm Tenant theo CCCD
+    from app.routers.tenant import is_same_person
     tenant = db.query(Tenant).filter(
         Tenant.citizen_id == data.citizen_id
     ).first()
+
+    if tenant is not None:
+        if not is_same_person(tenant.full_name, booking.customer_name):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Số CCCD {data.citizen_id} đã thuộc về khách thuê '{tenant.full_name}'. Không thể lập hợp đồng cho khách thuê khác tên ('{booking.customer_name}') trùng CCCD!"
+            )
 
     # Nếu chưa có Tenant thì tạo
     if tenant is None:
@@ -467,10 +475,21 @@ def get_contracts(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
+    role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if role and role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(
+            (Tenant.user_id == current_user.id) |
+            (Tenant.phone == current_user.phone) |
+            (Tenant.email == current_user.email)
+        ).first()
+        if tenant:
+            return db.query(Contract).filter(Contract.tenant_id == tenant.id).all()
+        return []
 
     return db.query(Contract).all()
 

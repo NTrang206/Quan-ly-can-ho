@@ -137,26 +137,21 @@ export const AIDunningDrawer: React.FC<AIDunningDrawerProps> = ({
       {/* Drawer Panel */}
       <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl z-10 flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200/80 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-sky-500/20 bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-500 to-indigo-500 flex items-center justify-center text-white shadow-soft">
+            <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-xs border border-white/25 flex items-center justify-center text-white shadow-soft">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold">AI Smart Notification Assistant</h3>
-                <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">
-                  UC005 Active
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">
+              <h3 className="text-base font-bold text-white">AI Smart Notification Assistant</h3>
+              <p className="text-xs text-sky-100/90 mt-0.5">
                 Mô hình fine-tuned CRM-LLM chuyên biệt cho thu hồi công nợ & CSKH
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg transition-colors"
+            className="text-white/80 hover:text-white hover:bg-white/15 p-1.5 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

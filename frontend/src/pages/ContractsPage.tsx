@@ -18,6 +18,8 @@ import {
   AlertCircle,
   Users,
   UserPlus,
+  CreditCard,
+  QrCode,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -32,6 +34,8 @@ import {
   useApproveAndActivateContractMutation,
   useRenewContractMutation,
   useTerminateAndSettleContractMutation,
+  useReceiveDepositMutation,
+  useGetDepositsQuery,
 } from '../modules/contracts/services/contractApi';
 import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import {
@@ -39,7 +43,7 @@ import {
   useCreateTenantMutation,
 } from '../modules/tenants/services/tenantApi';
 import { IContract, ContractStatus } from '../types';
-import { formatCurrency, formatDate, getDaysRemaining } from '../utils/formatters';
+import { formatCurrency, formatDate, getDaysRemaining, isSamePersonName } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
 import { parseApiError } from '../utils/errorHandler';
@@ -94,12 +98,20 @@ export const ContractsPage: React.FC = () => {
   const { data: allContracts = [], isLoading } = useGetContractsQuery();
   const { data: apartments = [] } = useGetApartmentsQuery({});
   const { data: tenants = [] } = useGetTenantsQuery();
+  const { data: deposits = [] } = useGetDepositsQuery();
 
   const [createContract, { isLoading: isCreating }] = useCreateContractMutation();
   const [createTenant] = useCreateTenantMutation();
   const [approveContract, { isLoading: isApproving }] = useApproveAndActivateContractMutation();
+  const [receiveDeposit, { isLoading: isReceivingDeposit }] = useReceiveDepositMutation();
   const [renewContract, { isLoading: isRenewing }] = useRenewContractMutation();
   const [terminateContract, { isLoading: isTerminating }] = useTerminateAndSettleContractMutation();
+
+  // Deposit Form State
+  const [depositContract, setDepositContract] = useState<IContract | null>(null);
+  const [depositAmountInput, setDepositAmountInput] = useState<number>(0);
+  const [depositPaymentMethod, setDepositPaymentMethod] = useState<'BANK_TRANSFER' | 'CASH'>('BANK_TRANSFER');
+  const [autoActivateAfterDeposit, setAutoActivateAfterDeposit] = useState<boolean>(true);
 
   const toast = useToast();
 
@@ -188,6 +200,43 @@ export const ContractsPage: React.FC = () => {
   const totalPages = Math.ceil(filteredContracts.length / pageSize) || 1;
   const paginatedContracts = filteredContracts.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  const handleBlurContractField = (field: string, value: string) => {
+    const val = value.trim();
+    if (!val) return;
+
+    if (field === 'tenantCitizenId') {
+      if (!/^\d{9,12}$/.test(val)) {
+        setContractErrors((prev) => ({
+          ...prev,
+          tenantCitizenId: 'Số CMND/CCCD phải gồm 9 đến 12 chữ số hợp lệ',
+        }));
+      } else {
+        const matched = tenants.find((t) => t.citizenId === val);
+        if (matched && tenantName.trim() && !isSamePersonName(matched.fullName, tenantName.trim())) {
+          setContractErrors((prev) => ({
+            ...prev,
+            tenantCitizenId: `Số CCCD này đã thuộc về khách thuê "${matched.fullName}". Không thể lập hợp đồng cho người khác tên!`,
+            tenantName: `Tên khách không khớp với chủ sở hữu CCCD (${matched.fullName})`,
+          }));
+        }
+      }
+    } else if (field === 'tenantPhone') {
+      if (!/^0\d{9,10}$/.test(val)) {
+        setContractErrors((prev) => ({
+          ...prev,
+          tenantPhone: 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10-11 số)',
+        }));
+      }
+    } else if (field === 'tenantEmail') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+        setContractErrors((prev) => ({
+          ...prev,
+          tenantEmail: 'Định dạng email không đúng (VD: customer@email.com)',
+        }));
+      }
+    }
+  };
+
   const handleCreateContract = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
@@ -205,6 +254,13 @@ export const ContractsPage: React.FC = () => {
         errors.tenantCitizenId = 'Vui lòng nhập số CMND/CCCD';
       } else if (!/^\d{9,12}$/.test(tenantCitizenId.trim())) {
         errors.tenantCitizenId = 'Số CMND/CCCD phải gồm 9 đến 12 chữ số hợp lệ';
+      } else {
+        // Kiểm tra trùng CCCD nhưng khác họ tên
+        const matchedCccd = tenants.find((t) => t.citizenId === tenantCitizenId.trim());
+        if (matchedCccd && !isSamePersonName(matchedCccd.fullName, tenantName.trim())) {
+          errors.tenantCitizenId = `Số CCCD này đã thuộc về khách thuê "${matchedCccd.fullName}". Không thể lập hợp đồng cho người khác tên!`;
+          errors.tenantName = `Tên khách thuê không khớp với chủ sở hữu CCCD (${matchedCccd.fullName})`;
+        }
       }
       if (!tenantPhone.trim()) {
         errors.tenantPhone = 'Vui lòng nhập số điện thoại';
@@ -248,12 +304,23 @@ export const ContractsPage: React.FC = () => {
     setContractErrors({});
     try {
       if (tenantMode === 'NEW') {
-        const existingTenant = tenants.find(
-          (t) => t.citizenId === tenantCitizenId.trim() || t.phone === tenantPhone.trim()
+        const matchedCccd = tenants.find(
+          (t) => t.citizenId === tenantCitizenId.trim()
         );
 
-        if (existingTenant) {
-          finalTenantId = existingTenant.id;
+        if (matchedCccd) {
+          if (!isSamePersonName(matchedCccd.fullName, tenantName.trim())) {
+            toast.error(
+              'Xung đột định danh CCCD',
+              `Số CCCD ${tenantCitizenId.trim()} đã thuộc về "${matchedCccd.fullName}". Không thể lập hợp đồng cho người khác tên!`
+            );
+            setContractErrors({
+              tenantCitizenId: `Số CCCD này đã thuộc về khách thuê "${matchedCccd.fullName}". Không thể lập hợp đồng cho người khác tên!`,
+              tenantName: `Tên khách không khớp với chủ sở hữu CCCD (${matchedCccd.fullName})`,
+            });
+            return;
+          }
+          finalTenantId = matchedCccd.id;
         } else {
           try {
             const createdT = await createTenant({
@@ -264,14 +331,14 @@ export const ContractsPage: React.FC = () => {
             }).unwrap();
             finalTenantId = createdT.id;
           } catch (tenantErr: any) {
-            const matched = tenants.find(
-              (t) => t.citizenId === tenantCitizenId.trim() || t.phone === tenantPhone.trim()
-            );
-            if (matched) {
-              finalTenantId = matched.id;
-            } else {
-              throw tenantErr;
-            }
+            const parsed = parseApiError(tenantErr, 'Không thể tạo hồ sơ khách thuê mới');
+            setContractErrors({
+              general: parsed.message,
+              ...(parsed.fieldErrors.citizen_id && { tenantCitizenId: parsed.fieldErrors.citizen_id }),
+              ...(parsed.fieldErrors.full_name && { tenantName: parsed.fieldErrors.full_name }),
+            });
+            toast.error('Lỗi định danh khách thuê', parsed.message);
+            return;
           }
         }
       }
@@ -302,25 +369,6 @@ export const ContractsPage: React.FC = () => {
     }
   };
 
-  const handleBlurContractField = (field: string, value: string) => {
-    const val = value.trim();
-    if (!val) return;
-
-    if (field === 'tenantCitizenId') {
-      if (!/^\d{9,12}$/.test(val)) {
-        setContractErrors((prev) => ({ ...prev, tenantCitizenId: 'Số CMND/CCCD phải gồm 9 đến 12 chữ số hợp lệ' }));
-      }
-    } else if (field === 'tenantPhone') {
-      if (!/^0\d{9,10}$/.test(val)) {
-        setContractErrors((prev) => ({ ...prev, tenantPhone: 'Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và có 10-11 số)' }));
-      }
-    } else if (field === 'tenantEmail') {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-        setContractErrors((prev) => ({ ...prev, tenantEmail: 'Định dạng email không đúng (VD: customer@email.com)' }));
-      }
-    }
-  };
-
   const handleOpenCreateModal = () => {
     setContractErrors({});
     if (tenants.length > 0 && !selectedTenantId) {
@@ -344,7 +392,47 @@ export const ContractsPage: React.FC = () => {
     setTenantEmail('');
   };
 
+  const handleOpenDepositModal = (c: IContract) => {
+    setDepositContract(c);
+    setDepositAmountInput(c.depositAmount);
+    setDepositPaymentMethod('BANK_TRANSFER');
+    setAutoActivateAfterDeposit(true);
+  };
+
+  const handleConfirmReceiveDeposit = async () => {
+    if (!depositContract) return;
+    try {
+      await receiveDeposit({
+        contractId: depositContract.id,
+        amount: Number(depositAmountInput),
+      }).unwrap();
+
+      if (autoActivateAfterDeposit) {
+        await approveContract({ contractId: depositContract.id }).unwrap();
+        toast.success(
+          'Thu cọc & Kích hoạt thành công',
+          `Đã ghi nhận thu cọc ${formatCurrency(depositAmountInput)} (HELD) và kích hoạt Hợp đồng ${depositContract.contractCode} thành công!`
+        );
+      } else {
+        toast.success(
+          'Thu tiền cọc thành công',
+          `Đã ghi nhận thu cọc ${formatCurrency(depositAmountInput)} (Trạng thái HELD) cho Hợp đồng ${depositContract.contractCode}.`
+        );
+      }
+      setDepositContract(null);
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể thu tiền cọc');
+      toast.error('Lỗi thu tiền cọc', parsed.message);
+    }
+  };
+
   const handleApprove = async (contract: IContract) => {
+    const matchedDeposit = deposits.find((d) => d.contractId === contract.id);
+    if (!matchedDeposit || matchedDeposit.status !== 'HELD') {
+      handleOpenDepositModal(contract);
+      return;
+    }
+
     try {
       await approveContract({ contractId: contract.id }).unwrap();
       toast.success(
@@ -597,6 +685,9 @@ export const ContractsPage: React.FC = () => {
                   buildingName: buildingDisplayName,
                 };
 
+                const contractDeposit = deposits.find((d) => d.contractId === c.id);
+                const isDepositHeld = contractDeposit?.status === 'HELD';
+
                 return (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-5 py-4 font-bold text-brand-700">
@@ -639,6 +730,19 @@ export const ContractsPage: React.FC = () => {
                       <div className="text-[11px] text-slate-500">
                         Cọc: <strong className="text-slate-700">{formatCurrency(c.depositAmount)}</strong>
                       </div>
+                      {c.status === 'DRAFT' && (
+                        <div className="mt-1">
+                          {isDepositHeld ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Cọc: Đã thu (HELD)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                              <AlertCircle className="w-3 h-3 text-amber-600" /> Cọc: Chờ nộp
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-5 py-4">
@@ -657,15 +761,37 @@ export const ContractsPage: React.FC = () => {
                           <span>AI Tóm Tắt 5 ĐK</span>
                         </button>
 
-                        {/* Approval for DRAFT */}
+                        {/* Approval & Deposit for DRAFT */}
                         {c.status === 'DRAFT' && (
-                          <button
-                            onClick={() => handleApprove(contractItem)}
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                            title={isAccountant ? "Xác nhận đã thu cọc và kích hoạt hợp đồng" : "Quản lý phê duyệt & thu cọc"}
-                          >
-                            Duyệt HĐ
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {!isDepositHeld && (
+                              <button
+                                onClick={() => handleOpenDepositModal(contractItem)}
+                                className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1"
+                                title="Ghi nhận nộp tiền cọc hợp đồng"
+                              >
+                                <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Nộp Cọc</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() => handleApprove(contractItem)}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 ${
+                                isDepositHeld
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                              }`}
+                              title={
+                                isDepositHeld
+                                  ? 'Kích hoạt hợp đồng ngay (Tiền cọc đã ghi nhận HELD)'
+                                  : 'Thu tiền cọc và duyệt kích hoạt hợp đồng'
+                              }
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{isDepositHeld ? 'Kích Hoạt HĐ' : 'Duyệt HĐ'}</span>
+                            </button>
+                          </div>
                         )}
 
                         {/* Renew SQ03 - Only for Staff and Admin */}
@@ -863,6 +989,18 @@ export const ContractsPage: React.FC = () => {
                 onChange={(e) => {
                   setTenantName(e.target.value);
                   if (contractErrors.tenantName) setContractErrors({ ...contractErrors, tenantName: '' });
+                }}
+                onBlur={() => {
+                  if (tenantCitizenId.trim() && tenantName.trim()) {
+                    const matched = tenants.find((t) => t.citizenId === tenantCitizenId.trim());
+                    if (matched && !isSamePersonName(matched.fullName, tenantName.trim())) {
+                      setContractErrors((prev) => ({
+                        ...prev,
+                        tenantCitizenId: `Số CCCD này đã thuộc về khách thuê "${matched.fullName}". Không thể lập hợp đồng cho người khác tên!`,
+                        tenantName: `Tên không khớp với chủ sở hữu CCCD (${matched.fullName})`,
+                      }));
+                    }
+                  }
                 }}
               />
 
@@ -1130,6 +1268,143 @@ export const ContractsPage: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Modal Nộp Tiền Cọc (PENDING -> HELD) */}
+      <Modal
+        isOpen={!!depositContract}
+        onClose={() => !isReceivingDeposit && setDepositContract(null)}
+        title="Ghi Nhận Nộp Tiền Cọc Hợp Đồng"
+        subtitle="Xác nhận khách thuê đã hoàn tất nộp tiền cọc lưu ký (HELD) theo hợp đồng"
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDepositContract(null)}
+              disabled={isReceivingDeposit || isApproving}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              isLoading={isReceivingDeposit || isApproving}
+              onClick={handleConfirmReceiveDeposit}
+              leftIcon={<CreditCard className="w-3.5 h-3.5" />}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft"
+            >
+              {autoActivateAfterDeposit ? 'Thu Cọc & Kích Hoạt HĐ' : 'Xác Nhận Thu Cọc (HELD)'}
+            </Button>
+          </div>
+        }
+      >
+        {depositContract && (
+          <div className="space-y-4 py-1">
+            {/* Context Box */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border border-sky-200/80 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-brand-700 text-sm">{depositContract.contractCode}</span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  Cọc Chờ Thu (PENDING)
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700">
+                <div>
+                  <span className="text-slate-500">Khách thuê:</span>{' '}
+                  <strong className="text-slate-900 font-bold">{depositContract.tenantName || 'Khách thuê'}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500">Căn hộ:</span>{' '}
+                  <strong className="text-slate-900 font-bold">{depositContract.roomNumber || 'P101'}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500">Giá thuê:</span>{' '}
+                  <strong className="text-slate-800">{formatCurrency(depositContract.rentalPrice)}/th</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500">Cọc quy định:</span>{' '}
+                  <strong className="text-emerald-700 font-bold">{formatCurrency(depositContract.depositAmount)}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Amount */}
+            <div>
+              <Input
+                label="Số tiền cọc thực thu (VNĐ)"
+                required
+                type="number"
+                value={depositAmountInput}
+                onChange={(e) => setDepositAmountInput(Number(e.target.value))}
+                helperText={`Mặc định bằng số tiền cọc quy định trên hợp đồng (${formatCurrency(depositContract.depositAmount)})`}
+              />
+            </div>
+
+            {/* Payment Method Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Phương thức thu cọc
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setDepositPaymentMethod('BANK_TRANSFER')}
+                  className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    depositPaymentMethod === 'BANK_TRANSFER'
+                      ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <QrCode className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">Chuyển khoản (VietQR)</div>
+                    <div className="text-[11px] text-slate-500">Napas 247 liên ngân hàng</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDepositPaymentMethod('CASH')}
+                  className={`p-3 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                    depositPaymentMethod === 'CASH'
+                      ? 'border-brand-500 bg-brand-50/60 ring-2 ring-brand-500/20'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">Tiền mặt tại quầy</div>
+                    <div className="text-[11px] text-slate-500">Thu trực tiếp tại ban quản lý</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Checkbox Auto-activate */}
+            <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autoActivateAfterDeposit}
+                  onChange={(e) => setAutoActivateAfterDeposit(e.target.checked)}
+                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 w-4 h-4"
+                />
+                <div className="text-xs text-emerald-950">
+                  <span className="font-bold">Tự động duyệt và kích hoạt hợp đồng ngay sau khi thu cọc</span>
+                  <p className="text-[11px] text-emerald-800 mt-0.5">
+                    Hợp đồng sẽ chuyển sang <strong>Đang hiệu lực (ACTIVE)</strong> và căn hộ <strong>{depositContract.roomNumber}</strong> chuyển sang trạng thái <strong>Đang thuê (OCCUPIED)</strong>.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

@@ -131,3 +131,15 @@ export const numberToVietnameseWords = (amount: number): string => {
   const capitalized = str.charAt(0).toUpperCase() + str.slice(1);
   return `${capitalized} đồng chẵn.`;
 };
+
+/**
+ * So sánh họ tên người để kiểm tra cùng một người hay khác người.
+ * Loại bỏ các ghi chú trong ngoặc đơn (VD: "Nguyễn Văn An (Cập nhật SĐT)" và "Nguyễn Văn An")
+ */
+export const isSamePersonName = (name1?: string | null, name2?: string | null): boolean => {
+  if (!name1 || !name2) return false;
+  const clean1 = name1.replace(/[\(\[\{].*?[\)\]\}]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const clean2 = name2.replace(/[\(\[\{].*?[\)\]\}]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  return clean1 === clean2;
+};
+

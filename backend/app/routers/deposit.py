@@ -7,6 +7,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from datetime import date
+from decimal import Decimal
 
 from app.database import get_db
 from app.services.debt_service import (
@@ -112,7 +113,8 @@ def receive_deposit(
     current_user: User = Depends(
         require_roles(
             "ADMIN",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "STAFF"
         )
     )
 ):
@@ -138,10 +140,19 @@ def receive_deposit(
     ).first()
 
     if deposit is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Không tìm thấy bản ghi tiền cọc"
+        deposit = Deposit(
+            contract_id=contract_id,
+            amount=data.amount,
+            paid_date=date.today(),
+            status="HELD",
+            refund_amount=0,
+            deduction_amount=0,
+            handled_by=current_user.id
         )
+        db.add(deposit)
+        db.commit()
+        db.refresh(deposit)
+        return deposit
 
     if deposit.status != "PENDING":
         raise HTTPException(
