@@ -5,6 +5,7 @@ import {
   LogOut,
   ShieldCheck,
   Menu,
+  Compass,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppDispatch } from '../../hooks/useRedux';
@@ -38,7 +39,7 @@ export const TenantHeader: React.FC = () => {
           {isTenant ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold text-slate-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Phòng P101 • Sunshine Diamond Tower</span>
+              <span>Phòng P101 • Dwell</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-full text-xs font-semibold text-amber-900">
@@ -51,6 +52,17 @@ export const TenantHeader: React.FC = () => {
 
       {/* Right: Hotline, Simulation Quick Back & Profile */}
       <div className="flex items-center gap-3">
+        {/* Quick Link to Explore Apartments */}
+        <Link
+          to="/explore"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded-xl text-xs font-semibold border border-sky-200 transition-colors shadow-2xs"
+          title="Xem danh sách toàn bộ căn hộ cho thuê trong hệ thống"
+        >
+          <Compass className="w-3.5 h-3.5 text-sky-600" />
+          <span className="hidden sm:inline">Xem Căn Hộ Cho Thuê</span>
+          <span className="sm:hidden">Căn Hộ</span>
+        </Link>
+
         {!isTenant && (
           <Link
             to="/admin/dashboard"

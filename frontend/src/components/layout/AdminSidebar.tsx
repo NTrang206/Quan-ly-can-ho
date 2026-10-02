@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
   Building2,
@@ -7,17 +7,26 @@ import {
   FileText,
   CreditCard,
   Wrench,
-  BellRing,
+  CalendarCheck,
+  LogOut,
 } from 'lucide-react';
 import { useAppSelector } from '../../hooks/useRedux';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/useToast';
 import { DwellLogo } from '../common/DwellLogo';
-import { AIBotLogo } from '../common/AIBotLogo';
 import clsx from 'clsx';
 
 export const AdminSidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const toast = useToast();
   const { sidebarOpen } = useAppSelector((state) => state.global);
-  const { isAccountant, isStaff } = useAuth();
+  const { isAccountant, isStaff, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Đăng xuất thành công', 'Hẹn gặp lại bạn!');
+    navigate('/login');
+  };
 
   const navItems = isAccountant
     ? [
@@ -41,28 +50,18 @@ export const AdminSidebar: React.FC = () => {
           label: 'Khách thuê & Sổ nợ',
           icon: <Users className="w-[18px] h-[18px]" />,
         },
-        {
-          to: '/admin/alerts',
-          label: 'Cảnh báo & AI Nhắc nợ',
-          icon: <BellRing className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/rag-chatbot',
-          label: 'AI Hỏi đáp quy định',
-          icon: <AIBotLogo size="xs" />,
-        },
       ]
     : isStaff
     ? [
         {
-          to: '/admin/dashboard',
-          label: 'Thống kê & Tổng quan',
-          icon: <LayoutGrid className="w-[18px] h-[18px]" />,
-        },
-        {
           to: '/admin/buildings',
           label: 'Căn hộ & Tòa nhà',
           icon: <Building2 className="w-[18px] h-[18px]" />,
+        },
+        {
+          to: '/admin/bookings',
+          label: 'Đặt lịch & Giữ chỗ',
+          icon: <CalendarCheck className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/tenants',
@@ -79,16 +78,6 @@ export const AdminSidebar: React.FC = () => {
           label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
         },
-        {
-          to: '/admin/alerts',
-          label: 'Cảnh báo & AI Nhắc nợ',
-          icon: <BellRing className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/rag-chatbot',
-          label: 'AI Hỏi đáp quy định',
-          icon: <AIBotLogo size="xs" />,
-        },
       ]
     : [
         {
@@ -100,6 +89,11 @@ export const AdminSidebar: React.FC = () => {
           to: '/admin/buildings',
           label: 'Căn hộ & Tòa nhà',
           icon: <Building2 className="w-[18px] h-[18px]" />,
+        },
+        {
+          to: '/admin/bookings',
+          label: 'Đặt lịch & Giữ chỗ',
+          icon: <CalendarCheck className="w-[18px] h-[18px]" />,
         },
         {
           to: '/admin/tenants',
@@ -120,16 +114,6 @@ export const AdminSidebar: React.FC = () => {
           to: '/admin/maintenance',
           label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/alerts',
-          label: 'Cảnh báo & AI Nhắc nợ',
-          icon: <BellRing className="w-[18px] h-[18px]" />,
-        },
-        {
-          to: '/admin/rag-chatbot',
-          label: 'AI Hỏi đáp quy định',
-          icon: <AIBotLogo size="xs" />,
         },
       ];
 
@@ -190,14 +174,17 @@ export const AdminSidebar: React.FC = () => {
           ))}
         </nav>
 
-        {/* System Information Badge */}
-        <div className="pt-2 border-t border-slate-100 mt-auto text-center">
-          <div className="text-[11px] text-slate-400 font-medium">
-            Hệ thống Quản trị BQL Căn hộ
-          </div>
-          <div className="text-[10px] text-slate-400">
-            Dwell v2.4 • Nghiệp vụ Quản lý & Vận hành
-          </div>
+        {/* Logout Button */}
+        <div className="pt-2 border-t border-slate-100 mt-auto">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50/80 rounded-xl transition-all duration-150 group cursor-pointer"
+            title="Đăng xuất khỏi hệ thống"
+          >
+            <LogOut className="w-4 h-4 text-rose-500 group-hover:text-rose-600 transition-colors shrink-0" />
+            <span className="text-[13px] font-bold">Đăng Xuất</span>
+          </button>
         </div>
       </div>
     </aside>

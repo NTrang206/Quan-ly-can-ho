@@ -81,35 +81,20 @@ def create_building(
     response_model=list[BuildingResponse]
 )
 def get_buildings(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(
-            "ADMIN",
-            "STAFF",
-            "ACCOUNTANT"
-        )
-    )
+    db: Session = Depends(get_db)
 ):
-
     buildings = db.query(Building).all()
-
     return buildings
+
+
 @router.get(
     "/{building_id}",
     response_model=BuildingResponse
 )
 def get_building(
     building_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(
-            "ADMIN",
-            "STAFF",
-            "ACCOUNTANT"
-        )
-    )
+    db: Session = Depends(get_db)
 ):
-
     building = db.query(Building).filter(
         Building.id == building_id
     ).first()

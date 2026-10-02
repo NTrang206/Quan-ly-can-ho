@@ -95,8 +95,13 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://169.254.81.70:5173",
+        "http://169.254.81.70:3000",
+        "http://172.172.6.230:5173",
+        "http://172.172.6.230:3000"
     ],
+    allow_origin_regex=r"^https?:\/\/.*$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]

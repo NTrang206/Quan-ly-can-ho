@@ -91,7 +91,7 @@ export const alertApi = baseApi.injectEndpoints({
           targetName: res.recipient_name || promptOptions.customerName || 'Cư dân',
           targetPhone: res.recipient_phone || '0912.888.999',
           roomNumber: promptOptions.roomNumber || 'P101',
-          buildingName: promptOptions.buildingName || 'Sunshine Diamond Tower',
+          buildingName: promptOptions.buildingName || 'Dwell',
           amountDue: Number(res.amount_due) || promptOptions.amountDue || 0,
           daysOverdue: res.days_overdue || promptOptions.daysOverdue || 0,
           priority: 'HIGH',

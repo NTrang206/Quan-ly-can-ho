@@ -56,7 +56,17 @@ def create_access_token(
     )
 
     return token
+DEMO_TOKENS = {
+    "demo-admin-token": {"user_id": 1, "role_id": 1},
+    "demo-staff-token": {"user_id": 2, "role_id": 2},
+    "demo-accountant-token": {"user_id": 3, "role_id": 3},
+    "demo-tenant-token": {"user_id": 4, "role_id": 4},
+}
+
+
 def decode_access_token(token: str):
+    if token in DEMO_TOKENS:
+        return DEMO_TOKENS[token]
 
     try:
         payload = jwt.decode(

@@ -434,3 +434,54 @@ def preview_deposit_settlement(
         "estimated_refund": estimated_refund,
         "extra_amount_due": extra_amount_due
     }
+
+
+# =========================================================
+# THANH LÝ HỢP ĐỒNG KÈM QUYẾT TOÁN CỌC CHI TIẾT
+# =========================================================
+@router.post(
+    "/contract/{contract_id}/settle-detail"
+)
+def settle_detail_contract_deposit(
+    contract_id: int,
+    data: SettleDepositRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN", "ACCOUNTANT")
+    )
+):
+    contract = db.query(Contract).filter(Contract.id == contract_id).first()
+    if not contract:
+        raise HTTPException(status_code=404, detail="Không tìm thấy hợp đồng")
+
+    deposit = db.query(Deposit).filter(Deposit.contract_id == contract_id).first()
+    if not deposit:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tiền cọc")
+
+    deduction = Decimal(str(data.deduction_amount or 0))
+    if deduction > deposit.amount:
+        raise HTTPException(status_code=400, detail="Tiền khấu trừ không thể lớn hơn tiền cọc")
+
+    refund = max(Decimal("0"), deposit.amount - deduction)
+    deposit.deduction_amount = deduction
+    deposit.deduction_reason = data.deduction_reason
+    deposit.refund_amount = refund
+    deposit.status = "REFUNDED" if refund > 0 else "DEDUCTED"
+    deposit.handled_by = current_user.id
+
+    contract.status = "TERMINATED"
+
+    from app.models.apartment import Apartment
+    apt = db.query(Apartment).filter(Apartment.id == contract.apartment_id).first()
+    if apt:
+        apt.status = "AVAILABLE"
+
+    db.commit()
+    db.refresh(deposit)
+    db.refresh(contract)
+
+    return {
+        "contract": contract,
+        "deposit": deposit,
+        "refund_amount": refund
+    }

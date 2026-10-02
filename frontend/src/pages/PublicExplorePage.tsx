@@ -5,7 +5,8 @@ import {
   Maximize2, MapPin, Calendar, CheckCircle2, 
   Phone, Mail, ArrowRight, X, Heart, Bookmark, ChevronDown, 
   Camera, ShieldCheck, Flame, Tag, Clock, Share2, PlusCircle,
-  Headphones, Send, Globe, QrCode, LogOut, LayoutGrid, List
+  Headphones, Send, Globe, LogOut,
+  Lock, LogIn, UserCheck, RotateCcw, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { useGetBuildingsQuery, useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import { useCreateBookingMutation } from '../modules/bookings/services/bookingApi';
@@ -15,7 +16,7 @@ import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
 import { DwellLogo } from '../components/common/DwellLogo';
 import { FooterInfoModal, FooterModalKey } from '../components/common/FooterInfoModal';
-import { Pagination } from '../components/common/Pagination';
+import { PropertyVideoShowcase } from '../components/common/PropertyVideoShowcase';
 
 export const PublicExplorePage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,7 +24,12 @@ export const PublicExplorePage: React.FC = () => {
   const { isAuthenticated, isTenant, isAdmin, isStaff, switchRole, user, logout } = useAuth();
   
   const { data: buildings = [] } = useGetBuildingsQuery();
-  const { data: apartments = [] } = useGetApartmentsQuery({});
+  const { 
+    data: apartments = [], 
+    isLoading: isApartmentsLoading, 
+    isError: isApartmentsError, 
+    refetch: refetchApartments 
+  } = useGetApartmentsQuery({});
   const [createBooking, { isLoading: isBookingLoading }] = useCreateBookingMutation();
 
   // Search & Filter state
@@ -32,8 +38,6 @@ export const PublicExplorePage: React.FC = () => {
   const [selectedBedrooms, setSelectedBedrooms] = useState<string>('ALL');
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'DEFAULT' | 'PRICE_ASC' | 'PRICE_DESC' | 'AREA_DESC'>('DEFAULT');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
   const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isSavedSearch, setIsSavedSearch] = useState(false);
@@ -47,16 +51,55 @@ export const PublicExplorePage: React.FC = () => {
     setNewsletterEmail('');
   };
 
-  // Booking Modal State
+  // Booking Modal & Auth Required State
   const [bookingModalApartment, setBookingModalApartment] = useState<IApartment | null>(null);
+  const [authRequiredModalApartment, setAuthRequiredModalApartment] = useState<IApartment | null>(null);
   const [bookingForm, setBookingForm] = useState({
     guestName: '',
     guestPhone: '',
     guestEmail: '',
     viewingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     viewingTime: '10:00',
-    notes: 'Tôi muốn xem thực tế căn hộ này vào thời gian trên.'
+    notes: 'Tôi muốn đặt lịch xem và đăng ký thuê căn hộ này.'
   });
+
+  const handleInitiateBooking = (apt: IApartment) => {
+    if (!isAuthenticated) {
+      setAuthRequiredModalApartment(apt);
+      return;
+    }
+    setBookingForm({
+      guestName: user?.fullName || '',
+      guestPhone: user?.phone || '',
+      guestEmail: user?.email || '',
+      viewingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      viewingTime: '10:00',
+      notes: 'Tôi muốn đặt lịch xem và đăng ký thuê căn hộ này.'
+    });
+    setBookingModalApartment(apt);
+  };
+
+  const handleQuickLoginAsTenant = async () => {
+    try {
+      await switchRole('TENANT');
+      showSuccessToast('Đã đăng nhập thành công với vai trò Khách thuê / Cư dân!');
+      const apt = authRequiredModalApartment;
+      setAuthRequiredModalApartment(null);
+      if (apt) {
+        setBookingForm({
+          guestName: 'Nguyễn Văn An',
+          guestPhone: '0912888999',
+          guestEmail: 'tenant@dwell.vn',
+          viewingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          viewingTime: '10:00',
+          notes: 'Tôi muốn đặt lịch xem và đăng ký thuê căn hộ này.'
+        });
+        setBookingModalApartment(apt);
+      }
+    } catch {
+      navigate('/login?redirect=/explore');
+    }
+  };
 
   const toggleFavorite = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,12 +161,14 @@ export const PublicExplorePage: React.FC = () => {
 
   // Filter logic
   const filteredApartments = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
     return apartments.filter(apt => {
-      const matchesSearch = apt.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            apt.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            apt.buildingName?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesBuilding = selectedBuildingId === 'ALL' || apt.buildingId.toString() === selectedBuildingId;
-      const matchesBedrooms = selectedBedrooms === 'ALL' || apt.bedrooms.toString() === selectedBedrooms;
+      const matchesSearch = !term ||
+                            (apt.roomNumber || '').toLowerCase().includes(term) ||
+                            (apt.description || '').toLowerCase().includes(term) ||
+                            (apt.buildingName || '').toLowerCase().includes(term);
+      const matchesBuilding = selectedBuildingId === 'ALL' || (apt.buildingId != null && apt.buildingId.toString() === selectedBuildingId);
+      const matchesBedrooms = selectedBedrooms === 'ALL' || (apt.bedrooms != null && apt.bedrooms.toString() === selectedBedrooms);
       
       let matchesPrice = true;
       if (selectedPriceRange === 'UNDER_10M') matchesPrice = apt.price < 10000000;
@@ -131,7 +176,7 @@ export const PublicExplorePage: React.FC = () => {
       else if (selectedPriceRange === '15M_20M') matchesPrice = apt.price > 15000000 && apt.price <= 20000000;
       else if (selectedPriceRange === 'OVER_20M') matchesPrice = apt.price > 20000000;
 
-      return matchesSearch && matchesBuilding && matchesBedrooms && matchesPrice;
+      return Boolean(matchesSearch && matchesBuilding && matchesBedrooms && matchesPrice);
     });
   }, [apartments, searchTerm, selectedBuildingId, selectedBedrooms, selectedPriceRange]);
 
@@ -144,17 +189,17 @@ export const PublicExplorePage: React.FC = () => {
     return list.sort((a, b) => b.id - a.id);
   }, [filteredApartments, sortBy]);
 
-  const totalPages = Math.ceil(sortedApartments.length / pageSize) || 1;
-  const paginatedApartments = sortedApartments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Hiển thị toàn bộ căn hộ, kéo cuộn từ trên xuống dưới (không phân trang)
+  const displayedApartments = sortedApartments;
 
   const getBuildingName = (buildingId: number) => {
     const b = buildings.find(item => item.id === buildingId);
-    return b ? b.name : 'Dwell Tower';
+    return b ? b.name : 'Dwell';
   };
 
   const getBuildingAddress = (buildingId: number) => {
     const b = buildings.find(item => item.id === buildingId);
-    return b ? b.address : 'Quận Cầu Giấy, Hà Nội';
+    return b ? b.address : 'Số 16 Phạm Hùng, Mỹ Đình 2, Nam Từ Liêm, Hà Nội';
   };
 
   const formatPriceVND = (price: number) => {
@@ -168,21 +213,21 @@ export const PublicExplorePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f7f8f9] text-slate-800 font-sans">
       {/* 1. Top Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200/90 shadow-xs">
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 h-20 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="cursor-pointer" onClick={() => navigate('/')}>
-              <DwellLogo badge="Hệ Thống Thuê Căn Hộ" badgeVariant="sky" size="sm" />
+              <DwellLogo badge="Hệ Thống Thuê Căn Hộ" badgeVariant="sky" size="md" />
             </div>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-3">
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col text-right">
-                  <span className="text-xs font-bold text-slate-900 leading-tight">{user.fullName}</span>
-                  <span className="text-[10px] text-brand-600 font-semibold">
+                  <span className="text-sm font-bold text-slate-900 leading-tight">{user.fullName}</span>
+                  <span className="text-[11px] text-brand-600 font-semibold">
                     {user.roleCode === 'TENANT'
                       ? 'Cư dân căn hộ'
                       : user.roleCode === 'ADMIN'
@@ -195,21 +240,21 @@ export const PublicExplorePage: React.FC = () => {
                 {user.roleCode === 'TENANT' ? (
                   <button
                     onClick={() => navigate('/tenant-portal')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all"
                   >
                     <span>Vào Cổng Cư Dân</span>
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate(user.roleCode === 'ACCOUNTANT' ? '/admin/finance' : '/admin/dashboard')}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all"
                   >
                     <span>Vào Quản Trị</span>
                   </button>
                 )}
                 <button
                   onClick={() => navigate('/login')}
-                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all"
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl transition-all"
                   title="Đăng nhập tài khoản hoặc quyền khác"
                 >
                   Đổi quyền
@@ -217,7 +262,7 @@ export const PublicExplorePage: React.FC = () => {
                 <button
                   onClick={logout}
                   title="Đăng xuất"
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -226,7 +271,7 @@ export const PublicExplorePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate('/login')}
-                  className="inline-flex items-center justify-center px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all"
+                  className="inline-flex items-center justify-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-xs hover:shadow-md transition-all"
                 >
                   <span>Đăng Nhập</span>
                 </button>
@@ -238,294 +283,179 @@ export const PublicExplorePage: React.FC = () => {
 
       {/* 2. Main Body Content */}
       <main className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-3.5 space-y-3.5">
-        {/* Compact Breadcrumb & Page Title in One Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 pb-1 border-b border-slate-200/60">
-          <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <span>Hệ Thống Căn Hộ Cho Thuê</span>
-              <span className="text-xs font-normal text-slate-500 hidden sm:inline">
-                • {apartments.length} phòng đầy đủ tiện nghi, nhận phòng ngay
+        {/* ================= THANH TÌM KIẾM & BỘ LỌC TINH GỌN ================= */}
+        <section aria-label="Bộ lọc tìm kiếm" className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 shadow-2xs space-y-2.5">
+          {/* Main Filter Inputs: Search, Bedroom, Price in 1 sleek aligned row */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+            {/* 1. Từ khóa tìm kiếm */}
+            <div className="md:col-span-5 relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Tìm số phòng (P.101), tên tòa nhà, địa chỉ..."
+                className="w-full text-xs sm:text-sm bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10 transition-all"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition-colors"
+                  title="Xóa từ khóa"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* 2. Cấu trúc phòng ngủ */}
+            <div className="md:col-span-3 relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-600">
+                <BedDouble className="w-4 h-4" />
+              </div>
+              <select
+                value={selectedBedrooms}
+                onChange={(e) => setSelectedBedrooms(e.target.value)}
+                className="w-full text-xs sm:text-sm bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl pl-9 pr-8 py-2 font-medium text-slate-700 appearance-none focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
+              >
+                <option value="ALL">Tất cả số phòng ngủ</option>
+                <option value="1">1 Phòng ngủ (Studio)</option>
+                <option value="2">2 Phòng ngủ</option>
+                <option value="3">3 Phòng ngủ (Gia đình)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
+            {/* 3. Khoảng giá thuê */}
+            <div className="md:col-span-4 relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-brand-600">
+                <Tag className="w-4 h-4" />
+              </div>
+              <select
+                value={selectedPriceRange}
+                onChange={(e) => setSelectedPriceRange(e.target.value)}
+                className="w-full text-xs sm:text-sm bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl pl-9 pr-8 py-2 font-medium text-slate-700 appearance-none focus:outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
+              >
+                <option value="ALL">Tất cả mức giá</option>
+                <option value="UNDER_10M">Dưới 10 triệu / tháng</option>
+                <option value="10M_15M">Từ 10 – 15 triệu / tháng</option>
+                <option value="15M_20M">Từ 15 – 20 triệu / tháng</option>
+                <option value="OVER_20M">Trên 20 triệu / tháng</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Dải chọn nhanh, Đếm số lượng căn hộ & Đặt lại bộ lọc */}
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0">
+                <BedDouble className="w-3.5 h-3.5 text-brand-600" />
+                Chọn nhanh:
               </span>
-            </h1>
-          </div>
-          <div className="text-[11px] text-slate-400 flex items-center space-x-1.5">
-            <span className="hover:text-slate-700 cursor-pointer" onClick={() => navigate('/')}>Dwell</span>
-            <span>/</span>
-            <span className="hover:text-slate-700 cursor-pointer" onClick={() => setSelectedBuildingId('ALL')}>Cho thuê</span>
-            <span>/</span>
-            <span className="text-slate-700 font-semibold truncate max-w-[200px]">
-              {selectedBuildingId !== 'ALL' ? getBuildingName(Number(selectedBuildingId)) : 'Tất cả tòa nhà'}
-            </span>
-          </div>
-        </div>
-
-        {/* 2-Column Responsive Layout: Filter on Left (280px) + Listings on Right (flex-1) */}
-        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-          
-          {/* ================= LEFT TAB: BỘ LỌC TÌM KIẾM ================= */}
-          <aside className="w-full lg:w-72 shrink-0 flex flex-col">
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex-1 flex flex-col justify-between">
-              <div className="space-y-3.5">
-                {/* Filter Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                    <SlidersHorizontal className="w-4 h-4 text-brand-600" />
-                    <span>Bộ Lọc Tìm Kiếm</span>
-                  </div>
-                {(searchTerm || selectedBuildingId !== 'ALL' || selectedBedrooms !== 'ALL' || selectedPriceRange !== 'ALL') && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setSelectedBuildingId('ALL');
-                      setSelectedBedrooms('ALL');
-                      setSelectedPriceRange('ALL');
-                      setCurrentPage(1);
-                    }}
-                    className="text-xs text-brand-600 hover:text-brand-700 font-semibold"
-                  >
-                    Xóa tất cả
-                  </button>
-                )}
-              </div>
-
-              {/* 1. Keyword search */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Từ khóa tìm kiếm
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    placeholder="Số phòng (P.101), tên tòa nhà..."
-                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:bg-white transition-all"
-                  />
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {searchTerm && (
+              <div className="flex items-center gap-1">
+                {[
+                  { id: 'ALL', label: 'Tất cả' },
+                  { id: '1', label: '1 PN' },
+                  { id: '2', label: '2 PN' },
+                  { id: '3', label: '3 PN' },
+                ].map((item) => {
+                  const isSelected = selectedBedrooms === item.id;
+                  return (
                     <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setCurrentPage(1);
-                      }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedBedrooms(item.id)}
+                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-lg border transition-all ${
+                        isSelected
+                          ? 'bg-brand-600 text-white border-brand-600 shadow-2xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
                     >
-                      <X className="w-3.5 h-3.5" />
+                      {item.label}
                     </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Building / Location */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Khu vực & Tòa nhà
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedBuildingId}
-                    onChange={(e) => {
-                      setSelectedBuildingId(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 font-medium text-slate-700 appearance-none focus:outline-none focus:border-brand-500 focus:bg-white cursor-pointer transition-all"
-                  >
-                    <option value="ALL">Tất cả khu vực / Tòa nhà</option>
-                    {buildings.map((b) => (
-                      <option key={b.id} value={b.id.toString()}>{b.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 3. Bedrooms */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Cấu trúc phòng ngủ
-                </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {[
-                    { id: 'ALL', label: 'Tất cả' },
-                    { id: '1', label: '1 PN (Studio)' },
-                    { id: '2', label: '2 Phòng ngủ' },
-                    { id: '3', label: '3 PN (Gia đình)' },
-                  ].map((item) => {
-                    const isSelected = selectedBedrooms === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedBedrooms(item.id);
-                          setCurrentPage(1);
-                        }}
-                        className={`py-2 px-2.5 text-xs font-semibold rounded-xl border transition-all text-center ${
-                          isSelected
-                            ? 'bg-brand-600 text-white border-brand-600 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 4. Price range */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 block">
-                  Khoảng giá thuê
-                </label>
-                <div className="space-y-1">
-                  {[
-                    { id: 'ALL', label: 'Tất cả mức giá' },
-                    { id: 'UNDER_10M', label: 'Dưới 10 triệu / tháng' },
-                    { id: '10M_15M', label: 'Từ 10 - 15 triệu / tháng' },
-                    { id: '15M_20M', label: 'Từ 15 - 20 triệu / tháng' },
-                    { id: 'OVER_20M', label: 'Trên 20 triệu / tháng' },
-                  ].map((p) => {
-                    const isSelected = selectedPriceRange === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPriceRange(p.id);
-                          setCurrentPage(1);
-                        }}
-                        className={`w-full text-left py-2 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-brand-50 text-brand-700 border-brand-300 font-bold'
-                            : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100 hover:border-slate-300'
-                        }`}
-                      >
-                        <span>{p.label}</span>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-brand-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
-              {/* Bottom: Featured Buildings & Quality Trust Badge */}
-              <div className="pt-3 mt-3 border-t border-slate-100 space-y-2.5">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Tòa nhà nổi bật</span>
-                </div>
-                <div className="space-y-1.5">
-                  {buildings.slice(0, 3).map((b) => {
-                    const count = apartments.filter(a => a.buildingId === b.id).length;
-                    const isSelected = selectedBuildingId === b.id.toString();
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={() => {
-                          setSelectedBuildingId(isSelected ? 'ALL' : b.id.toString());
-                          setCurrentPage(1);
-                        }}
-                        className={`p-2 rounded-xl border text-xs cursor-pointer flex items-center justify-between transition-colors ${
-                          isSelected
-                            ? 'border-brand-500 bg-brand-50/80 text-brand-700 font-bold'
-                            : 'border-slate-100 hover:bg-slate-50 text-slate-700'
-                        }`}
-                      >
-                        <div className="truncate pr-2">
-                          <div className="font-semibold truncate">{b.name}</div>
-                          <div className="text-[10px] text-slate-400 truncate">{b.address}</div>
-                        </div>
-                        <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium shrink-0">
-                          {count} căn
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2 flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>100% căn hộ thực tế, xem phòng trực tiếp miễn phí.</span>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* ================= RIGHT COLUMN: DANH SÁCH CĂN HỘ ================= */}
-          <div className="flex-1 min-w-0 space-y-3.5 flex flex-col justify-between">
-            
-            {/* Results Counter & Sort & View Mode Bar */}
-            <div className="bg-white px-3.5 py-2 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
-              <div className="text-slate-600 font-medium">
+            {/* Right side: Results counter & Reset button */}
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="text-slate-600 font-medium flex items-center gap-1.5 text-xs">
                 {sortedApartments.length > 0 ? (
                   <>
-                    Hiển thị <strong>{Math.min((currentPage - 1) * pageSize + 1, sortedApartments.length)} - {Math.min(currentPage * pageSize, sortedApartments.length)}</strong> / <strong>{sortedApartments.length}</strong> căn hộ
+                    <span>Hiển thị tất cả</span>
+                    <strong className="text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md font-bold">
+                      {sortedApartments.length}
+                    </strong>
+                    <span>căn hộ cho thuê</span>
                   </>
                 ) : (
-                  <span>Không tìm thấy căn hộ phù hợp tiêu chí</span>
+                  <span className="text-rose-600 font-medium">Không tìm thấy căn hộ phù hợp</span>
                 )}
               </div>
 
-              <div className="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
-                {/* View Mode Toggle: Grid vs Compact List */}
-                <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200/70">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('GRID')}
-                    className={`p-1 rounded-md transition-colors ${
-                      viewMode === 'GRID' 
-                        ? 'bg-white text-brand-600 shadow-2xs' 
-                        : 'text-slate-400 hover:text-slate-700'
-                    }`}
-                    title="Hiển thị dạng lưới (Xem được nhiều căn/màn hình)"
-                  >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('LIST')}
-                    className={`p-1 rounded-md transition-colors ${
-                      viewMode === 'LIST' 
-                        ? 'bg-white text-brand-600 shadow-2xs' 
-                        : 'text-slate-400 hover:text-slate-700'
-                    }`}
-                    title="Hiển thị danh sách siêu gọn"
-                  >
-                    <List className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-slate-400 text-[11px] hidden sm:inline">Sắp xếp:</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => {
-                      setSortBy(e.target.value as any);
-                      setCurrentPage(1);
-                    }}
-                    className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 font-semibold focus:outline-none focus:border-brand-500 cursor-pointer"
-                  >
-                    <option value="DEFAULT">Mới nhất</option>
-                    <option value="PRICE_ASC">Giá: Thấp đến cao</option>
-                    <option value="PRICE_DESC">Giá: Cao đến thấp</option>
-                    <option value="AREA_DESC">Diện tích: Lớn nhất</option>
-                  </select>
-                </div>
-              </div>
+              {(searchTerm || selectedBedrooms !== 'ALL' || selectedPriceRange !== 'ALL') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedBuildingId('ALL');
+                    setSelectedBedrooms('ALL');
+                    setSelectedPriceRange('ALL');
+                  }}
+                  className="text-xs text-rose-600 hover:text-rose-700 font-semibold inline-flex items-center gap-1 transition-colors pl-2.5 border-l border-slate-200"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Đặt lại</span>
+                </button>
+              )}
             </div>
+          </div>
+        </section>
+
+        {/* ================= KHU VỰC DANH SÁCH CĂN HỘ ================= */}
+        <div className="space-y-3.5 flex flex-col justify-between">
 
             {/* Apartment Cards */}
-            {sortedApartments.length === 0 ? (
+            {isApartmentsLoading ? (
+              /* Skeleton Loader */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-pulse">
+                {[1, 2, 3, 4, 5, 6].map((idx) => (
+                  <div key={idx} className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs">
+                    <div className="w-full h-36 bg-slate-200" />
+                    <div className="p-3.5 space-y-2.5">
+                      <div className="h-4 bg-slate-200 rounded-md w-3/4" />
+                      <div className="h-3 bg-slate-100 rounded-md w-1/2" />
+                      <div className="h-6 bg-slate-100 rounded-lg w-full mt-2" />
+                      <div className="h-8 bg-slate-200 rounded-xl w-full mt-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : isApartmentsError ? (
+              <div className="text-center py-12 bg-white rounded-2xl border border-rose-200 shadow-2xs p-6">
+                <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+                <h3 className="text-sm font-bold text-slate-800">Không thể kết nối đến máy chủ dữ liệu</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Vui lòng kiểm tra lại dịch vụ backend hoặc bấm nút bên dưới để thử lại.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetchApartments()}
+                  className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Tải lại dữ liệu</span>
+                </button>
+              </div>
+            ) : sortedApartments.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300">
                 <Building2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <h3 className="text-sm font-semibold text-slate-800">Không tìm thấy căn hộ phù hợp</h3>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  Vui lòng điều chỉnh lại mức giá hoặc chọn cấu trúc phòng ngủ khác ở bộ lọc bên trái.
+                  Vui lòng điều chỉnh lại mức giá hoặc chọn cấu trúc phòng ngủ khác ở bộ lọc phía trên.
                 </p>
                 <button
                   onClick={() => {
@@ -533,7 +463,6 @@ export const PublicExplorePage: React.FC = () => {
                     setSelectedBuildingId('ALL');
                     setSelectedBedrooms('ALL');
                     setSelectedPriceRange('ALL');
-                    setCurrentPage(1);
                   }}
                   className="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors"
                 >
@@ -543,9 +472,9 @@ export const PublicExplorePage: React.FC = () => {
             ) : (
               <>
                 {viewMode === 'GRID' ? (
-                  /* ================= MODE 1: GRID 3 CỘT GỌN GÀNG ================= */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
-                {paginatedApartments.map((apt) => {
+                  /* ================= MODE 1: GRID CĂN HỘ ================= */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {displayedApartments.map((apt) => {
                   const buildingName = apt.buildingName || getBuildingName(apt.buildingId);
                   const address = getBuildingAddress(apt.buildingId);
                   const isAvailable = apt.status === 'AVAILABLE';
@@ -628,7 +557,7 @@ export const PublicExplorePage: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setBookingModalApartment(apt);
+                              handleInitiateBooking(apt);
                             }}
                             className="px-2.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors shrink-0"
                           >
@@ -643,7 +572,7 @@ export const PublicExplorePage: React.FC = () => {
             ) : (
               /* ================= MODE 2: DANH SÁCH SIÊU GỌN ================= */
               <div className="space-y-2">
-                {paginatedApartments.map((apt) => {
+                {displayedApartments.map((apt) => {
                   const buildingName = apt.buildingName || getBuildingName(apt.buildingId);
                   const address = getBuildingAddress(apt.buildingId);
                   const isAvailable = apt.status === 'AVAILABLE';
@@ -709,7 +638,7 @@ export const PublicExplorePage: React.FC = () => {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setBookingModalApartment(apt);
+                            handleInitiateBooking(apt);
                           }}
                           className="px-2.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-lg shadow-2xs transition-colors"
                         >
@@ -721,25 +650,18 @@ export const PublicExplorePage: React.FC = () => {
                 })}
               </div>
             )}
-
-                {/* Pagination */}
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  totalItems={sortedApartments.length}
-                  pageSize={pageSize}
-                  itemLabel="căn hộ"
-                />
               </>
             )}
+
           </div>
-        </div>
         {/* ================= PHẦN HỖ TRỢ CHO CUỐI TRANG ================= */}
       </main>
 
+      {/* 3. Full-Width Video Showcase Section with Dwell Logo */}
+      <PropertyVideoShowcase />
+
       {/* 4. Comprehensive Real-Estate Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-16 text-slate-700">
+      <footer className="bg-white border-t border-slate-200 mt-12 text-slate-700">
         {/* Top Contact Strip */}
         <div className="border-b border-slate-200/80 bg-slate-50/70">
           <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 py-5">
@@ -803,39 +725,13 @@ export const PublicExplorePage: React.FC = () => {
               <div className="flex items-start space-x-2 text-slate-600 leading-relaxed">
                 <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                 <span>
-                  Tầng 12, Tòa nhà Sunshine Center, Số 16 Phạm Hùng, Phường Mỹ Đình 2, Quận Nam Từ Liêm, TP. Hà Nội, Việt Nam
+                  Tầng 12, Tòa nhà Dwell, Số 16 Phạm Hùng, Phường Mỹ Đình 2, Quận Nam Từ Liêm, TP. Hà Nội, Việt Nam
                 </span>
               </div>
 
               <div className="flex items-center space-x-2 text-slate-600">
                 <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                 <span>(024) 3562 5939 - (028) 7300 8899</span>
-              </div>
-
-              {/* QR Code & App Download Badges */}
-              <div className="pt-2 flex items-center space-x-4">
-                <div className="w-20 h-20 p-1.5 bg-white border border-slate-300 rounded-lg shadow-2xs flex flex-col items-center justify-center shrink-0 text-center">
-                  <QrCode className="w-12 h-12 text-slate-800" />
-                  <span className="text-[9px] text-slate-500 font-medium mt-0.5 leading-none">Quét tải App</span>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg cursor-pointer hover:bg-slate-800 transition-colors shadow-2xs">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M3.609 1.814L13.792 12 3.61 22.186c-.198-.182-.317-.442-.317-.745V2.559c0-.303.119-.563.316-.745zm11.235 11.235l2.052-2.052-2.052-2.052 1.341-1.341 3.393 3.393-3.393 3.393-1.341-1.341zM5.023.4l10.187 10.187-2.052 2.052L4.01 3.491c.217-.37.6-.669 1.013-.691v.001l-.001-.001-.001-.001-.001-.001-.001-.001.014-.399zm8.135 13.588l2.052 2.052L5.023 23.6c-.413-.022-.796-.321-1.013-.691l9.148-9.148v.227z"/></svg>
-                    <div>
-                      <div className="text-[8px] text-slate-400 uppercase leading-none">Tải về trên</div>
-                      <div className="text-[11px] font-bold leading-none mt-0.5">Google Play</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg cursor-pointer hover:bg-slate-800 transition-colors shadow-2xs">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.93-2.85-.9.04-1.99.6-2.64 1.35-.58.66-1.08 1.73-.95 2.76 1.01.08 2.03-.51 2.66-1.26z"/></svg>
-                    <div>
-                      <div className="text-[8px] text-slate-400 uppercase leading-none">Tải về trên</div>
-                      <div className="text-[11px] font-bold leading-none mt-0.5">App Store</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -932,6 +828,91 @@ export const PublicExplorePage: React.FC = () => {
         </div>
       </footer>
 
+      {/* Modal Bắt Buộc Đăng Nhập Trước Khi Thuê Căn Hộ */}
+      {authRequiredModalApartment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-5 bg-gradient-to-r from-brand-700 via-sky-700 to-teal-700 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+                  <Lock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base leading-tight">Yêu Cầu Đăng Nhập</h3>
+                  <p className="text-xs text-teal-100 mt-0.5">Đặt lịch xem & thuê căn hộ</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAuthRequiredModalApartment(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Selected Apartment preview */}
+              <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <img
+                  src={authRequiredModalApartment.imageUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400&q=80'}
+                  alt={authRequiredModalApartment.roomNumber}
+                  className="w-16 h-16 rounded-lg object-cover border border-slate-200"
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-slate-800 truncate">
+                    Căn hộ P.{authRequiredModalApartment.roomNumber} - {authRequiredModalApartment.buildingName}
+                  </h4>
+                  <p className="text-xs font-semibold text-brand-700 mt-0.5">
+                    {formatPriceVND(authRequiredModalApartment.price)} / tháng
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Cọc: {formatCurrency(authRequiredModalApartment.depositDefault)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 leading-relaxed flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  Để tạo hồ sơ giữ chỗ và xuất hợp đồng thuê căn hộ chính xác, quý khách cần đăng nhập tài khoản khách thuê vào hệ thống trước khi tiếp tục.
+                </span>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthRequiredModalApartment(null);
+                    navigate(`/login?redirect=${encodeURIComponent('/explore')}`);
+                  }}
+                  className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center space-x-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Đăng Nhập Tài Khoản Ngay</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleQuickLoginAsTenant}
+                  className="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2"
+                >
+                  <UserCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Dùng Thử Tài Khoản Khách Thuê Demo (1-Click)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAuthRequiredModalApartment(null)}
+                  className="w-full py-2 text-slate-500 hover:text-slate-700 text-xs font-semibold transition-colors"
+                >
+                  Để sau, tôi muốn xem thêm các phòng khác
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 4. Booking Appointment Modal (UC011) */}
       {bookingModalApartment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -955,6 +936,12 @@ export const PublicExplorePage: React.FC = () => {
             </div>
 
             <form onSubmit={handleBookingSubmit} className="p-6 space-y-4">
+              {isAuthenticated && user && (
+                <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-800 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-sky-600 shrink-0" />
+                  <span>Khách thuê: <strong>{user.fullName}</strong> ({user.email || user.username})</span>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Họ và tên quý khách <span className="text-rose-500">*</span>

@@ -495,8 +495,6 @@ export const TenantsPage: React.FC = () => {
             <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <div className="flex items-center gap-2 flex-wrap">
                 <div>SĐT: <strong className="text-slate-800 font-mono">{t.phone}</strong></div>
-                <span className="text-slate-300">•</span>
-                <div>Uy tín: <strong className="text-emerald-600 font-bold">{t.creditScore}/850</strong></div>
               </div>
               
               <div className="flex items-center gap-1.5 relative">
@@ -656,7 +654,7 @@ export const TenantsPage: React.FC = () => {
             <Input
               label="Email liên hệ"
               type="email"
-              placeholder="customer@sunshine.vn"
+              placeholder="customer@dwell.vn"
               value={email}
               error={createErrors.email}
               onChange={(e) => {

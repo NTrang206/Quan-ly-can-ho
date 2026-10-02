@@ -37,18 +37,18 @@ export const RagChatbotPage: React.FC = () => {
     },
     {
       sender: 'ai',
-      text: 'Chào anh Lê Hoàng Nam (Căn P.402 – Sunshine Tower A)! Căn cứ theo Điều 8.2 Quy chế Vận chuyển & Sử dụng thang máy hàng Sunshine Homes 2024, BQL xin phản hồi thông tin chi tiết như sau:\n\n1. Thời gian đăng ký: Cần nộp phiếu đăng ký trước ít nhất 24 giờ (Hạn chót trước 17:00 Thứ Sáu tuần này qua Cổng Cư Dân để BQL bố trí bảo vệ ốp lót thang máy).\n\n2. Khung giờ cho phép ngày cuối tuần (Thứ 7 & Chủ Nhật):\n   • Buổi sáng: 08:30 – 11:30\n   • Buổi chiều: 14:00 – 17:30\n   *Lưu ý: Nghiêm cấm vận chuyển sau 18:00 và giờ nghỉ trưa (11:30 – 14:00) để đảm bảo không gian yên tĩnh.\n\n3. Ký quỹ bảo vệ thang hàng: 1.000.000 VNĐ (Hoàn trả ngay vào tài khoản cư dân trong vòng 02 giờ sau khi kết thúc vận chuyển và nghiệm thu cabin thang máy không trầy xước).',
+      text: 'Chào anh Lê Hoàng Nam (Căn P.402 – Dwell)! Căn cứ theo Điều 8.2 Quy chế Vận chuyển & Sử dụng thang máy hàng Dwell 2024, BQL xin phản hồi thông tin chi tiết như sau:\n\n1. Thời gian đăng ký: Cần nộp phiếu đăng ký trước ít nhất 24 giờ (Hạn chót trước 17:00 Thứ Sáu tuần này qua Cổng Cư Dân để BQL bố trí bảo vệ ốp lót thang máy).\n\n2. Khung giờ cho phép ngày cuối tuần (Thứ 7 & Chủ Nhật):\n   • Buổi sáng: 08:30 – 11:30\n   • Buổi chiều: 14:00 – 17:30\n   *Lưu ý: Nghiêm cấm vận chuyển sau 18:00 và giờ nghỉ trưa (11:30 – 14:00) để đảm bảo không gian yên tĩnh.\n\n3. Ký quỹ bảo vệ thang hàng: 1.000.000 VNĐ (Hoàn trả ngay vào tài khoản cư dân trong vòng 02 giờ sau khi kết thúc vận chuyển và nghiệm thu cabin thang máy không trầy xước).',
       confidence: 0.942,
       matchedChunks: [
         {
           id: 1,
           docCode: 'Quy_che_van_hanh_thang_may_2024.pdf',
-          documentName: 'Quy chế Vận hành & Sử dụng thang máy hàng Sunshine Homes 2024',
+          documentName: 'Quy chế Vận hành & Sử dụng thang máy hàng Dwell 2024',
           title: 'Quy định vận chuyển hàng hóa cồng kềnh & chuyển nhà',
           chunkIndex: 1,
           category: 'ELEVATOR',
           content: 'Việc vận chuyển hàng hóa cồng kềnh (sofa, tủ lạnh lớn, bàn ghế ăn, vật liệu nội thất) bắt buộc phải đăng ký trước ít nhất 24 giờ với Ban Quản Lý và chỉ được thực hiện bằng thang máy hàng chuyên dụng (Service Lift SL-01). Khung giờ cho phép ngày cuối tuần (Thứ 7 & Chủ Nhật): Buổi sáng 08:30 - 11:30 và Buổi chiều 14:00 - 17:30 (Nghiêm cấm vận chuyển sau 18:00 và giờ nghỉ trưa 11:30 - 14:00). Cư dân đóng tiền ký quỹ bảo vệ thang hàng 1.000.000 VNĐ (hoàn trả ngay sau khi kết thúc nghiệm thu cabin không trầy xước).',
-          citation: 'Điều 8.2 Quy chế Vận chuyển & Sử dụng thang máy hàng Sunshine Homes 2024',
+          citation: 'Điều 8.2 Quy chế Vận chuyển & Sử dụng thang máy hàng Dwell 2024',
           createdAt: '2024-01-01',
           similarityScore: 0.942,
         },
@@ -456,7 +456,7 @@ export const RagChatbotPage: React.FC = () => {
 
           <Input
             label="Trích dẫn số điều / khoản"
-            placeholder="VD: Điều 3.2 Quy chế An ninh Trật tự Sunshine Homes"
+            placeholder="VD: Điều 3.2 Quy chế An ninh Trật tự Dwell"
             value={chunkCitation}
             onChange={(e) => setChunkCitation(e.target.value)}
           />

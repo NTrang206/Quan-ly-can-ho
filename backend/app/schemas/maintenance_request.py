@@ -13,8 +13,8 @@ from decimal import Decimal
 class MaintenanceCreate(BaseModel):
     apartment_id: int
 
-    reporter_name: str
-    phone: str
+    reporter_name: str | None = None
+    phone: str | None = None
 
     issue_description: str
 
@@ -45,7 +45,8 @@ class TenantMaintenanceCreate(BaseModel):
 # PHÂN CÔNG NHÂN VIÊN
 # =========================================================
 class AssignStaffRequest(BaseModel):
-    staff_id: int
+    staff_id: int | None = None
+    assigned_staff_id: int | None = None
 
 
 # =========================================================

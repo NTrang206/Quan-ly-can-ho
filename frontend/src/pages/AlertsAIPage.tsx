@@ -11,7 +11,6 @@ import {
   Mail,
   CheckCircle2,
   Filter,
-  Download,
   Shield,
   Settings,
   ArrowRight,
@@ -54,9 +53,84 @@ export const AlertsAIPage: React.FC = () => {
     return true;
   });
 
+  const handleExportReport = () => {
+    try {
+      if (filteredAlerts.length === 0) {
+        toast.info('Thông báo', 'Không có dữ liệu cảnh báo để xuất báo cáo.');
+        return;
+      }
+
+      const headers = [
+        'Mã Cảnh Báo',
+        'Phân Loại Rủi Ro',
+        'Căn Hộ',
+        'Tòa Nhà',
+        'Khách Thuê',
+        'Số Điện Thoại',
+        'Số Tiền Nợ (VNĐ)',
+        'Số Ngày Quá Hạn',
+        'Mức Độ Ưu Tiên',
+        'Trạng Thái Đôn Đốc',
+        'Kênh Đã Gửi',
+        'Thời Gian Phát Hiện',
+      ];
+
+      const rows = filteredAlerts.map((a) => {
+        const typeLabel =
+          a.alertType === 'OVERDUE_DEBT'
+            ? 'Quá hạn công nợ tiền phòng'
+            : 'Hợp đồng sắp hết hạn (30 ngày)';
+        const priorityLabel =
+          (a.priority as string) === 'HIGH' || (a.priority as string) === 'URGENT'
+            ? 'Khẩn cấp / Ưu tiên cao'
+            : 'Trung bình';
+        const sentStatus = a.isSent ? 'Đã gửi đôn đốc' : 'Chờ gửi đôn đốc';
+        const channels =
+          a.sentChannels && a.sentChannels.length > 0
+            ? a.sentChannels.join(', ')
+            : 'Chưa gửi';
+
+        return [
+          `"${a.alertCode || ''}"`,
+          `"${typeLabel}"`,
+          `"Căn ${a.roomNumber || ''}"`,
+          `"${a.buildingName && a.buildingName !== 'Sunshine Diamond Tower' && a.buildingName !== 'Sunshine Homes' ? a.buildingName : 'Dwell'}"`,
+          `"${a.targetName || ''}"`,
+          `"${a.targetPhone || ''}"`,
+          `"${a.amountDue || 0}"`,
+          `"${a.daysOverdue || 0}"`,
+          `"${priorityLabel}"`,
+          `"${sentStatus}"`,
+          `"${channels}"`,
+          `"${formatDate(a.createdAt)}"`,
+        ].join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `Bao_Cao_Cong_No_Canh_Bao_Dwell_${new Date().toISOString().slice(0, 10)}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(
+        'Xuất báo cáo thành công',
+        `Đã xuất file báo cáo gồm ${filteredAlerts.length} bản ghi cảnh báo rủi ro về máy!`
+      );
+    } catch {
+      toast.error('Lỗi xuất báo cáo', 'Không thể kết xuất dữ liệu báo cáo');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header Banner */}
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
@@ -72,15 +146,6 @@ export const AlertsAIPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Download className="w-3.5 h-3.5" />}
-            onClick={() => toast.info('Xuất báo cáo', 'Đang kết xuất danh sách công nợ đôn đốc PDF...')}
-          >
-            Xuất Báo Cáo
-          </Button>
-
           <Button
             variant="primary"
             size="sm"

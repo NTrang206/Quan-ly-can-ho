@@ -1,6 +1,6 @@
 import { useAppSelector, useAppDispatch } from './useRedux';
 import { setCredentials, switchRole, logout } from '../stores/authSlice';
-import { useLoginMutation, useLogoutBackendMutation } from '../stores/authApi';
+import { useLoginMutation, useRegisterMutation, useLogoutBackendMutation, IRegisterRequest } from '../stores/authApi';
 import { UserRole } from '../types';
 
 const ROLE_DEMO_CREDENTIALS: Record<Exclude<UserRole, 'GUEST'>, { username: string; password: string }> = {
@@ -14,6 +14,7 @@ export const useAuth = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated, activeRole, token } = useAppSelector((state) => state.auth);
   const [loginMutation, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [registerMutation, { isLoading: isRegistering }] = useRegisterMutation();
   const [logoutBackend] = useLogoutBackendMutation();
 
   const isAdmin = activeRole === 'ADMIN';
@@ -26,6 +27,12 @@ export const useAuth = () => {
 
   const handleLogin = async (username: string, password: string) => {
     const res = await loginMutation({ username, password }).unwrap();
+    dispatch(setCredentials({ user: res.user, token: res.access_token }));
+    return res;
+  };
+
+  const handleRegister = async (data: IRegisterRequest) => {
+    const res = await registerMutation(data).unwrap();
     dispatch(setCredentials({ user: res.user, token: res.access_token }));
     return res;
   };
@@ -54,6 +61,7 @@ export const useAuth = () => {
     isAuthenticated,
     isInitialized: true,
     isLoggingIn,
+    isRegistering,
     activeRole,
     isAdmin,
     isStaff,
@@ -62,6 +70,7 @@ export const useAuth = () => {
     isGuest,
     isManagement,
     login: handleLogin,
+    register: handleRegister,
     switchRole: handleRoleSwitch,
     logout: handleLogout,
   };

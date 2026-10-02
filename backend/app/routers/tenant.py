@@ -37,14 +37,21 @@ def create_tenant(
 ):
 
     existing = db.query(Tenant).filter(
-        Tenant.citizen_id == data.citizen_id
+        (Tenant.citizen_id == data.citizen_id) | (Tenant.phone == data.phone)
     ).first()
 
     if existing:
-        raise HTTPException(
-            status_code=400,
-            detail="CCCD đã tồn tại"
-        )
+        if data.full_name:
+            existing.full_name = data.full_name
+        if data.phone:
+            existing.phone = data.phone
+        if data.email:
+            existing.email = data.email
+        if data.hometown:
+            existing.hometown = data.hometown
+        db.commit()
+        db.refresh(existing)
+        return existing
 
     tenant = Tenant(
         full_name=data.full_name,

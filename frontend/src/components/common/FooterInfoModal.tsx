@@ -338,7 +338,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
                 <label className="block font-bold text-slate-700 mb-1">Mã căn hộ (nếu có)</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: P.402 Sunshine Tower"
+                  placeholder="Ví dụ: P.402 Tòa Dwell"
                   value={feedbackForm.roomCode}
                   onChange={(e) => setFeedbackForm({ ...feedbackForm, roomCode: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-[#00c5a0]"
@@ -399,7 +399,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
             <div className="space-y-3">
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span className="flex items-center"><Building2 className="w-4 h-4 text-brand-600 inline mr-2 shrink-0" /> Tòa Sunshine Tower A – Cầu Giấy / Nam Từ Liêm</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-brand-600 inline mr-2 shrink-0" /> Tòa Dwell Tower A – Cầu Giấy / Nam Từ Liêm</span>
                   <span className="text-xs text-brand-600 font-bold">25 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">
@@ -412,7 +412,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span className="flex items-center"><Building2 className="w-4 h-4 text-sky-600 inline mr-2 shrink-0" /> Tòa Sky Park Residence – Bình Thạnh, TP.HCM</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-sky-600 inline mr-2 shrink-0" /> Tòa Dwell – Số 16 Phạm Hùng, Nam Từ Liêm, Hà Nội</span>
                   <span className="text-xs text-sky-600">30 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">
@@ -425,7 +425,7 @@ export const FooterInfoModal: React.FC<FooterInfoModalProps> = ({
 
               <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center justify-between font-bold text-slate-900 text-sm">
-                  <span className="flex items-center"><Building2 className="w-4 h-4 text-amber-600 inline mr-2 shrink-0" /> Tòa Sunshine Golden River – Tây Hồ, Hà Nội</span>
+                  <span className="flex items-center"><Building2 className="w-4 h-4 text-amber-600 inline mr-2 shrink-0" /> Tòa Dwell Golden River – Tây Hồ, Hà Nội</span>
                   <span className="text-xs text-amber-600">28 Tầng</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[11px] text-slate-500">

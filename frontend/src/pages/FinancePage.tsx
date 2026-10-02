@@ -20,6 +20,7 @@ import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { VietQRModal } from '../components/common/VietQRModal';
+import { ReceiptModal } from '../components/common/ReceiptModal';
 import { Pagination } from '../components/common/Pagination';
 import {
   useGetReceivablesQuery,
@@ -31,7 +32,7 @@ import {
 import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetTenantsQuery } from '../modules/tenants/services/tenantApi';
 import { useGetContractsQuery } from '../modules/contracts/services/contractApi';
-import { IReceivable, ReceivableStatus } from '../types';
+import { IReceivable, ReceivableStatus, IPayment } from '../types';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { parseApiError } from '../utils/errorHandler';
@@ -52,6 +53,7 @@ export const FinancePage: React.FC = () => {
   const [cashAmount, setCashAmount] = useState<number>(0);
   const [cashNote, setCashNote] = useState('');
   const [cashErrors, setCashErrors] = useState<Record<string, string>>({});
+  const [selectedPaymentForReceipt, setSelectedPaymentForReceipt] = useState<IPayment | null>(null);
 
   const { data: receivables = [], isLoading: isRecLoading } = useGetReceivablesQuery({
     month: billingMonth > 0 ? billingMonth : undefined,
@@ -118,8 +120,8 @@ export const FinancePage: React.FC = () => {
     }
   };
 
-  const handlePrintReceipt = (paymentId: number) => {
-    toast.info('In phiếu thu', `Đang mở trình xem & in biên lai điện tử #${paymentId}...`);
+  const handlePrintReceipt = (payment: IPayment) => {
+    setSelectedPaymentForReceipt(payment);
   };
 
   const filteredReceivables = receivables.filter((r) => {
@@ -239,7 +241,6 @@ export const FinancePage: React.FC = () => {
               {[
                 { id: undefined, label: 'Tất cả' },
                 { id: 'UNPAID', label: 'Chưa nộp' },
-                { id: 'PARTIAL', label: 'Nộp 1 phần' },
                 { id: 'PAID', label: 'Đã thanh toán' },
                 { id: 'OVERDUE', label: 'Quá hạn nộp' },
               ].map((st) => (
@@ -306,9 +307,9 @@ export const FinancePage: React.FC = () => {
 
                     const tenantDisplayPhone = r.tenantPhone || matchedTenant?.phone || matchedContract?.tenantPhone || '';
 
-                    const buildingDisplayName = (r.buildingName && r.buildingName !== 'Sunshine Homes')
+                    const buildingDisplayName = (r.buildingName && r.buildingName !== 'Sunshine Homes' && r.buildingName !== 'Sunshine Diamond Tower')
                       ? r.buildingName
-                      : matchedApt?.buildingName || matchedContract?.buildingName || 'Sunshine Diamond Tower';
+                      : matchedApt?.buildingName || matchedContract?.buildingName || 'Dwell';
 
                     return (
                       <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
@@ -379,9 +380,26 @@ export const FinancePage: React.FC = () => {
                             )}
 
                             {r.status === 'PAID' && (
-                              <span className="text-emerald-600 text-xs font-bold flex items-center gap-1">
-                                <CheckCircle2 className="w-4 h-4" /> Đã hoàn tất
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-emerald-600 text-xs font-bold flex items-center gap-1">
+                                  <CheckCircle2 className="w-4 h-4" /> Đã hoàn tất
+                                </span>
+                                {(() => {
+                                  const pay = payments.find((p) => p.receivableId === r.id);
+                                  if (pay) {
+                                    return (
+                                      <button
+                                        onClick={() => handlePrintReceipt(pay)}
+                                        className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors border border-slate-200"
+                                        title="Xem & in biên lai điện tử"
+                                      >
+                                        <Printer className="w-3.5 h-3.5" />
+                                      </button>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
                             )}
                           </div>
                         </td>
@@ -436,9 +454,9 @@ export const FinancePage: React.FC = () => {
                     ? d.roomNumber
                     : matchedContract?.roomNumber || matchedApt?.roomNumber || (matchedTenant?.currentRoomNumber || 'Chưa nhận phòng');
 
-                  const buildingDisplayName = (d.buildingName && d.buildingName !== 'Sunshine Homes')
+                  const buildingDisplayName = (d.buildingName && d.buildingName !== 'Sunshine Homes' && d.buildingName !== 'Sunshine Diamond Tower')
                     ? d.buildingName
-                    : matchedApt?.buildingName || matchedContract?.buildingName || 'Sunshine Diamond Tower';
+                    : matchedApt?.buildingName || matchedContract?.buildingName || 'Dwell';
 
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
@@ -518,9 +536,9 @@ export const FinancePage: React.FC = () => {
                     <td className="px-5 py-4 text-slate-500">{p.paymentDate}</td>
                     <td className="px-5 py-4 text-right">
                       <button
-                        onClick={() => handlePrintReceipt(p.id)}
-                        className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-                        title="In biên lai thu tiền"
+                        onClick={() => handlePrintReceipt(p)}
+                        className="p-1.5 text-slate-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg border border-slate-200 hover:border-brand-300 transition-colors shadow-xs"
+                        title="In biên lai thu tiền điện tử"
                       >
                         <Printer className="w-4 h-4" />
                       </button>
@@ -611,6 +629,31 @@ export const FinancePage: React.FC = () => {
             />
           </div>
         </Modal>
+      )}
+
+      {/* Electronic Receipt Print Modal */}
+      {selectedPaymentForReceipt && (
+        <ReceiptModal
+          isOpen={!!selectedPaymentForReceipt}
+          onClose={() => setSelectedPaymentForReceipt(null)}
+          payment={selectedPaymentForReceipt}
+          receivable={receivables.find((r) => r.id === selectedPaymentForReceipt.receivableId)}
+          contract={contracts.find(
+            (c) =>
+              c.id === selectedPaymentForReceipt.contractId ||
+              c.id === receivables.find((r) => r.id === selectedPaymentForReceipt.receivableId)?.contractId
+          )}
+          tenant={tenants.find(
+            (t) =>
+              t.fullName === selectedPaymentForReceipt.payerName ||
+              t.id === receivables.find((r) => r.id === selectedPaymentForReceipt.receivableId)?.tenantId
+          )}
+          apartment={apartments.find(
+            (a) =>
+              a.roomNumber === selectedPaymentForReceipt.roomNumber ||
+              a.id === receivables.find((r) => r.id === selectedPaymentForReceipt.receivableId)?.apartmentId
+          )}
+        />
       )}
     </div>
   );

@@ -51,7 +51,7 @@ export const TenantSidebar: React.FC = () => {
     (m) => m.roomNumber === activeApartment?.roomNumber && m.status === 'IN_PROGRESS'
   );
 
-  // Exact 5 Essential Menu Items for Tenants - Short, clear labels that never truncate
+  // Essential Menu Items for Tenants - Short, clear labels that never truncate
   const navItems = [
     {
       id: 'overview',
@@ -62,7 +62,7 @@ export const TenantSidebar: React.FC = () => {
     {
       id: 'apartment',
       to: '/tenant-portal?tab=apartment',
-      label: 'Căn hộ & Thiết bị',
+      label: 'Căn hộ của tôi',
       icon: <Building2 className="w-[18px] h-[18px]" />,
       badge: activeApartment?.roomNumber || 'P101',
     },

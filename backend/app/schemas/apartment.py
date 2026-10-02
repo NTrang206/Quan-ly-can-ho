@@ -14,6 +14,12 @@ class ApartmentCreate(BaseModel):
     price: Decimal
     max_occupants: int = 2
     status: str = "AVAILABLE"
+    bedrooms: int = 1
+    bathrooms: int = 1
+    image_url: str | None = None
+    description: str | None = None
+    deposit_default: Decimal | None = None
+    view_direction: str | None = "Đông Nam"
 
 
 class ApartmentUpdate(BaseModel):
@@ -24,6 +30,12 @@ class ApartmentUpdate(BaseModel):
     price: Decimal
     max_occupants: int
     status: str
+    bedrooms: int = 1
+    bathrooms: int = 1
+    image_url: str | None = None
+    description: str | None = None
+    deposit_default: Decimal | None = None
+    view_direction: str | None = "Đông Nam"
 
 
 class ApartmentStatusUpdate(BaseModel):
@@ -39,6 +51,12 @@ class ApartmentResponse(BaseModel):
     price: Decimal
     max_occupants: int
     status: str
+    bedrooms: int = 1
+    bathrooms: int = 1
+    image_url: str | None = None
+    description: str | None = None
+    deposit_default: Decimal | None = None
+    view_direction: str | None = "Đông Nam"
     created_at: datetime
 
     model_config = ConfigDict(

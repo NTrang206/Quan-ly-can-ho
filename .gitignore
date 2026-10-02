@@ -43,6 +43,7 @@ backend/.env
 frontend/.env
 *.db
 backend/*.db
+data/
 
 # Node
 node_modules/

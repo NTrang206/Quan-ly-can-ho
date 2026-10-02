@@ -129,17 +129,16 @@ export const financeApi = baseApi.injectEndpoints({
       { month: number; year: number; defaultServiceFee?: number }
     >({
       query: ({ month, year, defaultServiceFee }) => ({
-        url: '/billing/generate-monthly',
+        url: '/receivables/generate-monthly',
         method: 'POST',
         body: {
           billing_month: month,
           billing_year: year,
-          due_day: 10,
-          default_service_fee: defaultServiceFee || 1500000,
+          service_amount: defaultServiceFee || 1500000,
         },
       }),
       transformResponse: (res: any) => ({
-        count: res.generated_count || 0,
+        count: res.generated_count || res.count || 0,
         totalAmount: Number(res.total_amount || 0),
       }),
       invalidatesTags: [

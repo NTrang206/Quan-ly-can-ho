@@ -19,3 +19,11 @@ class TenantRegisterRequest(BaseModel):
     password: str = Field(min_length=6, max_length=128)
 
     email: str | None = None
+
+
+class RegisterRequest(BaseModel):
+    full_name: str = Field(min_length=2, max_length=100)
+    phone: str = Field(min_length=8, max_length=20)
+    email: str | None = None
+    username: str | None = None
+    password: str = Field(min_length=6, max_length=128)

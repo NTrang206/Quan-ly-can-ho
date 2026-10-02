@@ -3,10 +3,9 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    DateTime
+    DateTime,
+    JSON
 )
-
-from pgvector.sqlalchemy import Vector
 
 from datetime import datetime
 
@@ -38,7 +37,7 @@ class DocumentChunk(Base):
     )
 
     embedding_vector = Column(
-        Vector(768),
+        JSON,
         nullable=False
     )
 

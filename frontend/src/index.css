@@ -1,10 +1,23 @@
+@import '@fontsource/be-vietnam-pro/300.css';
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/be-vietnam-pro/700.css';
+@import '@fontsource/be-vietnam-pro/800.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
   body {
-    @apply bg-slate-50 text-slate-900 selection:bg-brand-500 selection:text-white;
+    @apply bg-slate-50 text-slate-900 selection:bg-brand-500 selection:text-white font-sans;
   }
 }
 
@@ -69,3 +82,58 @@
   animation: shimmer 2s infinite;
   content: '';
 }
+
+/* ==========================================================================
+   PRINT STYLES FOR ELECTRONIC RECEIPT & INVOICE PRINTING
+   ========================================================================== */
+@media print {
+  /* Hide the rest of the application, navbars, sidebars, modals backdrop */
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 12pt !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make the receipt and contract printable areas visible */
+  #dwell-printable-receipt,
+  #dwell-printable-receipt *,
+  #dwell-printable-contract,
+  #dwell-printable-contract * {
+    visibility: visible;
+  }
+
+  #dwell-printable-receipt,
+  #dwell-printable-contract {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 15mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    z-index: 9999999 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely remove no-print elements from document flow */
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}
+

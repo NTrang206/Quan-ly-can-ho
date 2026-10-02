@@ -79,3 +79,55 @@ export const getDaysRemaining = (targetDate: string): number => {
   const diffDays = Math.ceil((target - today) / (1000 * 60 * 60 * 24));
   return diffDays;
 };
+
+// Chuyển đổi số tiền thành chữ tiếng Việt chuẩn xác (VD: 11500000 -> Mười một triệu năm trăm nghìn đồng chẵn)
+export const numberToVietnameseWords = (amount: number): string => {
+  if (!amount || amount === 0) return 'Không đồng chẵn';
+  const digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+  const units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ'];
+
+  const readThreeDigits = (num: number, showZeroHundred: boolean): string => {
+    let res = '';
+    const h = Math.floor(num / 100);
+    const t = Math.floor((num % 100) / 10);
+    const u = num % 10;
+
+    if (h > 0 || showZeroHundred) {
+      res += `${digits[h]} trăm `;
+    }
+    if (t > 1) {
+      res += `${digits[t]} mươi `;
+      if (u === 1) res += 'mốt ';
+      else if (u === 5) res += 'lăm ';
+      else if (u > 0) res += `${digits[u]} `;
+    } else if (t === 1) {
+      res += 'mười ';
+      if (u === 5) res += 'lăm ';
+      else if (u > 0) res += `${digits[u]} `;
+    } else if (showZeroHundred && u > 0) {
+      res += `lẻ ${digits[u]} `;
+    } else if (u > 0) {
+      res += `${digits[u]} `;
+    }
+    return res.trim();
+  };
+
+  let str = '';
+  let groupIndex = 0;
+  let remaining = Math.abs(Math.round(amount));
+
+  while (remaining > 0) {
+    const chunk = remaining % 1000;
+    if (chunk > 0) {
+      const chunkStr = readThreeDigits(chunk, remaining >= 1000);
+      str = `${chunkStr} ${units[groupIndex]} ${str}`.trim();
+    }
+    remaining = Math.floor(remaining / 1000);
+    groupIndex++;
+  }
+
+  str = str.replace(/\s+/g, ' ').trim();
+  if (!str) return 'Không đồng chẵn';
+  const capitalized = str.charAt(0).toUpperCase() + str.slice(1);
+  return `${capitalized} đồng chẵn.`;
+};

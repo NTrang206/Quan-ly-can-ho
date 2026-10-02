@@ -28,6 +28,8 @@ export const RoleSwitcher: React.FC = () => {
                 window.location.href = '/tenant-portal';
               } else if (r.code === 'ACCOUNTANT') {
                 window.location.href = '/admin/finance';
+              } else if (r.code === 'STAFF') {
+                window.location.href = '/admin/buildings';
               } else if (r.code === 'GUEST') {
                 window.location.href = '/explore';
               } else {

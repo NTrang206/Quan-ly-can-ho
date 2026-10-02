@@ -57,7 +57,7 @@ export const generateAIDunningDraft = (options: IDunningPromptOptions) => {
         `Để tránh bị tạm khóa các dịch vụ tiện ích và ảnh hưởng điểm uy tín cư dân, đề nghị Anh/Chị hoàn tất thanh toán trước 18:00 ngày mai thông qua mã VietQR trong Cổng Dịch Vụ Cư Dân.\n\n` +
         `Trân trọng,\nBan Quản Lý Tòa Nhà.`;
     } else if (tone === 'CONCISE_SMS') {
-      body = `[SUNSHINE HOMES] TB: Can ${roomNumber} qua han ${daysOverdue} ngay tong ${formatCurrency(amountDue)}. Vui long quet VietQR tai app de hoan tat truoc 18h. Hotline: 1900 8899.`;
+      body = `[DWELL] TB: Can ${roomNumber} qua han ${daysOverdue} ngay tong ${formatCurrency(amountDue)}. Vui long quet VietQR tai app de hoan tat truoc 18h. Hotline: 1900 8899.`;
     } else {
       // EMPATHETIC (Default)
       body = `Kính gửi Anh/Chị ${customerName} (Căn ${roomNumber} - ${buildingName}),\n\n` +
@@ -66,7 +66,7 @@ export const generateAIDunningDraft = (options: IDunningPromptOptions) => {
         `*Nếu Anh/Chị đã thanh toán trong 2 giờ qua, xin vui lòng bỏ qua thông báo này. Chúc Anh/Chị một ngày làm việc tràn đầy năng lượng!`;
     }
   } else if (scenario === 'CONTRACT_RENEWAL') {
-    subject = `Đề xuất gia hạn hợp đồng thuê căn hộ ${roomNumber} – Sunshine Homes`;
+    subject = `Đề xuất gia hạn hợp đồng thuê căn hộ ${roomNumber} – Dwell`;
     body = `Kính gửi Quý cư dân ${customerName} (${roomNumber}),\n\n` +
       `Hợp đồng thuê căn hộ của Anh/Chị sẽ hết hạn trong ${daysUntilExpiry} ngày tới. Ban Quản Lý rất vinh hạnh được đồng hành cùng Anh/Chị trong suốt thời gian qua.\n\n` +
       `BQL trân trọng gửi tới Anh/Chị chính sách ưu đãi Tái ký Hợp đồng: Giữ nguyên mức giá thuê ưu đãi 12 tháng tiếp theo và tặng gói bảo dưỡng điều hòa miễn phí.\n\n` +
@@ -112,7 +112,7 @@ export const queryKnowledgeBaseRAG = (
   const outOfDomainKeywords = ['hack', 'bitcoin', 'chính trị', 'đánh bạc', 'xổ số', 'thời tiết sa mạc'];
   if (outOfDomainKeywords.some(k => queryLower.includes(k))) {
     return {
-      answer: 'Hệ thống Trợ lý Sunshine Homes chỉ hỗ trợ giải đáp các câu hỏi liên quan đến Nội quy tòa nhà, Quy định cư dân, Hợp đồng thuê và Tiện ích căn hộ. Yêu cầu của bạn nằm ngoài phạm vi hỗ trợ.',
+      answer: 'Hệ thống Trợ lý Dwell chỉ hỗ trợ giải đáp các câu hỏi liên quan đến Nội quy tòa nhà, Quy định cư dân, Hợp đồng thuê và Tiện ích căn hộ. Yêu cầu của bạn nằm ngoài phạm vi hỗ trợ.',
       confidence: 0,
       matchedChunks: [],
       guardrailStatus: 'REFUSED_OUT_OF_DOMAIN',
