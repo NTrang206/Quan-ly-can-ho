@@ -248,13 +248,32 @@ export const ContractsPage: React.FC = () => {
     setContractErrors({});
     try {
       if (tenantMode === 'NEW') {
-        const createdT = await createTenant({
-          fullName: tenantName.trim(),
-          citizenId: tenantCitizenId.trim(),
-          phone: tenantPhone.trim(),
-          email: tenantEmail.trim() || undefined,
-        }).unwrap();
-        finalTenantId = createdT.id;
+        const existingTenant = tenants.find(
+          (t) => t.citizenId === tenantCitizenId.trim() || t.phone === tenantPhone.trim()
+        );
+
+        if (existingTenant) {
+          finalTenantId = existingTenant.id;
+        } else {
+          try {
+            const createdT = await createTenant({
+              fullName: tenantName.trim(),
+              citizenId: tenantCitizenId.trim(),
+              phone: tenantPhone.trim(),
+              email: tenantEmail.trim() || undefined,
+            }).unwrap();
+            finalTenantId = createdT.id;
+          } catch (tenantErr: any) {
+            const matched = tenants.find(
+              (t) => t.citizenId === tenantCitizenId.trim() || t.phone === tenantPhone.trim()
+            );
+            if (matched) {
+              finalTenantId = matched.id;
+            } else {
+              throw tenantErr;
+            }
+          }
+        }
       }
 
       if (!finalTenantId) {

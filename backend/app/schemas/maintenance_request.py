@@ -45,7 +45,8 @@ class TenantMaintenanceCreate(BaseModel):
 # PHÂN CÔNG NHÂN VIÊN
 # =========================================================
 class AssignStaffRequest(BaseModel):
-    staff_id: int
+    staff_id: int | None = None
+    assigned_staff_id: int | None = None
 
 
 # =========================================================

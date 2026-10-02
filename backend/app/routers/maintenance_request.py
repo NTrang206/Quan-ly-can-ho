@@ -610,9 +610,17 @@ def assign_staff(
     # -----------------------------------------------------
     # Kiểm tra User được phân công
     # -----------------------------------------------------
+    target_staff_id = data.staff_id or data.assigned_staff_id or 2
+
     staff = db.query(User).filter(
-        User.id == data.staff_id
+        User.id == target_staff_id
     ).first()
+
+    if staff is None:
+        staff = db.query(User).join(Role).filter(
+            Role.role_code == "STAFF",
+            User.is_active == True
+        ).first()
 
     if staff is None:
         raise HTTPException(
@@ -922,7 +930,8 @@ def get_maintenance_request(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
@@ -939,5 +948,24 @@ def get_maintenance_request(
             status_code=404,
             detail="Không tìm thấy phiếu bảo trì"
         )
+
+    role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if role and role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(Tenant.user_id == current_user.id).first()
+        if tenant is None:
+            tenant = db.query(Tenant).filter(
+                (Tenant.phone == current_user.phone) | (Tenant.full_name == current_user.full_name)
+            ).first()
+
+        tenant_apt_ids = [
+            c.apartment_id
+            for c in db.query(Contract).filter(Contract.tenant_id == tenant.id).all()
+        ] if tenant else []
+
+        if not tenant or (maintenance.tenant_id != tenant.id and maintenance.apartment_id not in tenant_apt_ids):
+            raise HTTPException(
+                status_code=403,
+                detail="Bạn không có quyền truy cập phiếu bảo trì này"
+            )
 
     return maintenance

@@ -88,9 +88,14 @@ export const ResidentPortalPage: React.FC = () => {
   const activeBill = receivables.find((r) => (r.contractId === activeContract?.id || r.tenantId === currentTenant?.id || r.roomNumber === activeApartment?.roomNumber) && r.status !== 'PAID')
     || receivables.find((r) => r.contractId === activeContract?.id || r.tenantId === currentTenant?.id || r.roomNumber === activeApartment?.roomNumber)
     || receivables[0];
-  const activeTicket = maintenanceList.find((m) => (m.apartmentId === activeApartment?.id || m.roomNumber === activeApartment?.roomNumber) && m.status === 'IN_PROGRESS')
-    || maintenanceList.find((m) => m.apartmentId === activeApartment?.id || m.roomNumber === activeApartment?.roomNumber)
-    || maintenanceList[0];
+  const myTickets = maintenanceList.filter((m) =>
+    m.apartmentId === activeApartment?.id ||
+    m.roomNumber === activeApartment?.roomNumber ||
+    (currentTenant?.id && m.tenantId === currentTenant?.id)
+  );
+  const activeTicket = myTickets.find((m) => m.status === 'IN_PROGRESS')
+    || myTickets.find((m) => m.status === 'PENDING')
+    || myTickets[0];
 
   // Tab State with URL query synchronization
   const rawParamTab = searchParams.get('tab');
@@ -157,12 +162,13 @@ export const ResidentPortalPage: React.FC = () => {
         issueDescription: newDesc,
         category: newCategory,
         priority: newPriority,
+        tenantId: currentTenant?.id,
       }).unwrap();
 
       toast.success('Đã gửi yêu cầu', 'Bộ phận kỹ thuật tòa nhà đã tiếp nhận và sẽ liên hệ xử lý!');
       setNewDesc('');
-    } catch {
-      toast.error('Lỗi', 'Không thể gửi yêu cầu lúc này');
+    } catch (err: any) {
+      toast.error('Lỗi', err?.data?.detail || err?.message || 'Không thể gửi yêu cầu lúc này');
     }
   };
 
@@ -1100,45 +1106,59 @@ export const ResidentPortalPage: React.FC = () => {
               </div>
 
               {/* Active Ticket Tracking */}
-              {activeTicket && activeTicket.status === 'IN_PROGRESS' && (
-                <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-3">
+              {activeTicket && (activeTicket.status === 'IN_PROGRESS' || activeTicket.status === 'PENDING') && (
+                <div className={`border rounded-2xl p-5 space-y-3 ${
+                  activeTicket.status === 'IN_PROGRESS'
+                    ? 'bg-amber-50/70 border-amber-200'
+                    : 'bg-sky-50/70 border-sky-200'
+                }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-1 bg-amber-500 text-white rounded-lg text-xs font-bold">
-                        ĐANG XỬ LÝ
+                      <span className={`px-2.5 py-1 text-white rounded-lg text-xs font-bold ${
+                        activeTicket.status === 'IN_PROGRESS' ? 'bg-amber-500' : 'bg-sky-600'
+                      }`}>
+                        {activeTicket.status === 'IN_PROGRESS' ? 'ĐANG XỬ LÝ' : 'CHỜ TIẾP NHẬN'}
                       </span>
                       <span className="font-mono text-xs font-bold text-slate-800">
                         Phiếu #{activeTicket.ticketCode}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-500">Dự kiến xong: Hôm nay</span>
+                    <span className="text-xs text-slate-500">
+                      {activeTicket.status === 'IN_PROGRESS' ? 'Dự kiến xong: Hôm nay' : 'SLA: 15-30 phút'}
+                    </span>
                   </div>
 
                   <div className="text-sm text-slate-800 font-semibold flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-amber-600 shrink-0" />
+                    <Wrench className={`w-4 h-4 shrink-0 ${activeTicket.status === 'IN_PROGRESS' ? 'text-amber-600' : 'text-sky-600'}`} />
                     <span>Hiện trạng: {activeTicket.issueDescription}</span>
                   </div>
 
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs shrink-0">
-                        KT
+                  {activeTicket.status === 'IN_PROGRESS' ? (
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs shrink-0">
+                          KT
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 text-sm">{activeTicket.technicianName || 'Kỹ thuật viên tòa nhà'}</div>
+                          <div className="text-xs text-slate-500">Bộ phận Cơ - Điện • ĐT: {activeTicket.technicianPhone || '0912 345 678'}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-900 text-sm">{activeTicket.technicianName || 'Kỹ thuật viên tòa nhà'}</div>
-                        <div className="text-xs text-slate-500">Bộ phận Cơ - Điện • ĐT: {activeTicket.technicianPhone || '0912 345 678'}</div>
-                      </div>
-                    </div>
 
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={() => setIsInspectModalOpen(true)}
-                      className="self-start sm:self-auto"
-                    >
-                      Nghiệm Thu & Đóng Phiếu
-                    </Button>
-                  </div>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        onClick={() => setIsInspectModalOpen(true)}
+                        className="self-start sm:self-auto"
+                      >
+                        Nghiệm Thu & Đóng Phiếu
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="bg-white/80 p-3 rounded-xl border border-sky-200 text-xs text-sky-900 flex items-center justify-between">
+                      <span>Phiếu báo hỏng đã được ghi nhận. Bộ phận kỹ thuật tòa nhà sẽ liên hệ qua SĐT <strong className="font-semibold">{activeTicket.phone || currentTenant.phone}</strong> trong vòng 15-30 phút.</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1223,6 +1243,66 @@ export const ResidentPortalPage: React.FC = () => {
                   </Button>
                 </div>
               </form>
+
+              {/* Ticket History */}
+              {myTickets.length > 0 && (
+                <div className="pt-5 border-t border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">
+                      Lịch Sử Phiếu Bảo Trì & Sửa Chữa ({myTickets.length})
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      Căn hộ {activeApartment?.roomNumber || 'P101'}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {myTickets.map((t) => (
+                      <div
+                        key={t.id}
+                        className="p-3 bg-slate-50/80 hover:bg-slate-100/70 border border-slate-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs transition-colors"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-900">{t.ticketCode}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              t.status === 'COMPLETED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : t.status === 'IN_PROGRESS'
+                                ? 'bg-amber-100 text-amber-800'
+                                : t.status === 'CANCELLED'
+                                ? 'bg-slate-200 text-slate-600'
+                                : 'bg-sky-100 text-sky-800'
+                            }`}>
+                              {t.status === 'COMPLETED' ? 'Đã hoàn thành' : t.status === 'IN_PROGRESS' ? 'Đang xử lý' : t.status === 'CANCELLED' ? 'Đã hủy' : 'Chờ tiếp nhận'}
+                            </span>
+                            {t.priority === 'URGENT' && (
+                              <span className="px-1.5 py-0.5 bg-rose-100 text-rose-700 rounded text-[9px] font-bold">
+                                Khẩn cấp
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-slate-700 font-medium">{t.issueDescription}</div>
+                          <div className="text-[11px] text-slate-400">
+                            Ngày gửi: {formatDate(t.createdAt)} {t.repairCost > 0 ? `• Chi phí: ${formatCurrency(t.repairCost)}` : ''}
+                          </div>
+                        </div>
+
+                        {t.status === 'IN_PROGRESS' && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => setIsInspectModalOpen(true)}
+                            className="self-start sm:self-auto shrink-0 text-xs"
+                          >
+                            Nghiệm thu
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

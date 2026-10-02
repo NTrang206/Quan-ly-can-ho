@@ -96,6 +96,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
         url: `/maintenance-requests/${ticketId}/assign`,
         method: 'PATCH',
         body: {
+          staff_id: assignedStaffId || 2,
           assigned_staff_id: assignedStaffId || 2,
         },
       }),

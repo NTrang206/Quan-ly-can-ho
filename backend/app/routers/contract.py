@@ -198,13 +198,13 @@ def create_contract_direct(
             detail="Không tìm thấy căn hộ"
         )
 
-    # Lập trực tiếp chỉ khi AVAILABLE
-    if apartment.status != "AVAILABLE":
+    # Lập hợp đồng cho căn hộ AVAILABLE hoặc RESERVED (Đang giữ chỗ)
+    if apartment.status not in ["AVAILABLE", "RESERVED"]:
         raise HTTPException(
             status_code=400,
             detail=(
-                "Chỉ căn hộ AVAILABLE mới được "
-                "lập hợp đồng trực tiếp"
+                "Chỉ căn hộ AVAILABLE hoặc ĐANG GIỮ CHỖ (RESERVED) "
+                "mới được lập hợp đồng trực tiếp"
             )
         )
 
@@ -238,6 +238,16 @@ def create_contract_direct(
             detail="Căn hộ bị trùng lịch thuê"
         )
 
+    # Nếu căn hộ có booking liên quan, tự động liên kết và chuyển đổi
+    from app.models.booking import Booking
+    booking = db.query(Booking).filter(
+        Booking.apartment_id == apartment.id,
+        Booking.status.in_(["PENDING", "CONFIRMED"])
+    ).first()
+    booking_id = booking.id if booking else None
+    if booking:
+        booking.status = "CONVERTED"
+
     contract = create_contract_and_deposit(
         db=db,
 
@@ -252,8 +262,10 @@ def create_contract_direct(
 
         created_by=current_user.id,
 
-        booking_id=None
+        booking_id=booking_id
     )
+
+    apartment.status = "RESERVED"
 
     db.commit()
     db.refresh(contract)
