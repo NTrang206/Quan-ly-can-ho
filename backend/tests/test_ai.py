@@ -31,8 +31,9 @@ def test_contract_summary_prompt_is_reviewable(monkeypatch):
     )
 
     assert result == "Bản nháp tóm tắt"
-    assert "Không tự suy đoán" in captured["prompt"]
-    assert "NỘI DUNG HỢP ĐỒNG" in captured["prompt"]
+    assert "không tư vấn pháp lý" in captured["prompt"]
+    assert "Hợp đồng:" in captured["prompt"]
+    assert "thời hạn, tiền thuê, tiền cọc, nghĩa vụ thanh toán, điều kiện chấm dứt" in captured["prompt"]
 
 
 def test_rag_answer_prompt_is_context_bound(monkeypatch):

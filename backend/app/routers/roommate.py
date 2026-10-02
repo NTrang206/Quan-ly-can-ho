@@ -12,8 +12,8 @@ from app.models.roommate import Roommate
 from app.models.tenant import Tenant
 from app.models.apartment import Apartment
 from app.models.user import User
+from app.models.role import Role
 from app.models.contract import Contract
-from app.models.apartment import Apartment
 
 from app.schemas.roommate import (
     RoommateCreate,
@@ -31,7 +31,7 @@ router = APIRouter(
 
 
 # =========================
-# THÊM NGƯỜI Ở CÙNG
+# THÊM NGƯỜI Ở CÙNG / KHAI BÁO TẠM TRÚ
 # =========================
 @router.post(
     "",
@@ -43,10 +43,22 @@ def create_roommate(
     current_user: User = Depends(
         require_roles(
             "ADMIN",
-            "STAFF"
+            "STAFF",
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
+    # Nếu là tài khoản cư dân (TENANT), tự động liên kết đúng tenant_id của cư dân
+    user_role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if user_role and user_role.role_code == "TENANT":
+        user_tenant = db.query(Tenant).filter(
+            (Tenant.user_id == current_user.id) |
+            (Tenant.phone == current_user.phone) |
+            (Tenant.email == current_user.email)
+        ).first()
+        if user_tenant:
+            data.tenant_id = user_tenant.id
 
     # 1. Kiểm tra Tenant
     tenant = db.query(Tenant).filter(
@@ -59,7 +71,38 @@ def create_roommate(
             detail="Không tìm thấy khách thuê"
         )
 
-    # 2. Kiểm tra Apartment
+    # 2. Tìm hợp đồng tương ứng của khách thuê (ưu tiên hợp đồng ACTIVE)
+    active_contract = db.query(Contract).filter(
+        Contract.tenant_id == data.tenant_id,
+        Contract.apartment_id == data.apartment_id,
+        Contract.status == "ACTIVE"
+    ).first()
+
+    # Nếu không tìm thấy ở data.apartment_id, kiểm tra xem khách thuê có hợp đồng ACTIVE tại căn hộ khác không
+    if not active_contract:
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == data.tenant_id,
+            Contract.status == "ACTIVE"
+        ).first()
+        if active_contract:
+            data.apartment_id = active_contract.apartment_id
+
+    # Nếu vẫn chưa thấy, tìm hợp đồng gần nhất của khách thuê
+    if not active_contract:
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == data.tenant_id,
+            Contract.apartment_id == data.apartment_id
+        ).order_by(Contract.id.desc()).first()
+
+    # Fallback cuối cùng: tìm bất kỳ hợp đồng nào của khách thuê
+    if not active_contract:
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == data.tenant_id
+        ).order_by(Contract.id.desc()).first()
+        if active_contract:
+            data.apartment_id = active_contract.apartment_id
+
+    # 3. Kiểm tra Apartment
     apartment = db.query(Apartment).filter(
         Apartment.id == data.apartment_id
     ).first()
@@ -70,36 +113,40 @@ def create_roommate(
             detail="Không tìm thấy căn hộ"
         )
 
-    # 3. Kiểm tra Tenant có hợp đồng ACTIVE
-    # tại đúng căn hộ này không
-    active_contract = db.query(Contract).filter(
-        Contract.tenant_id == data.tenant_id,
-        Contract.apartment_id == data.apartment_id,
-        Contract.status == "ACTIVE"
-    ).first()
+    # 4. Kiểm tra thành viên đã khai báo trước đó chưa (tránh lỗi trùng lặp khi bấm nhiều lần)
+    existing_rm = None
+    if data.citizen_id:
+        existing_rm = db.query(Roommate).filter(
+            Roommate.apartment_id == data.apartment_id,
+            Roommate.citizen_id == data.citizen_id
+        ).first()
+    if not existing_rm and data.phone:
+        existing_rm = db.query(Roommate).filter(
+            Roommate.apartment_id == data.apartment_id,
+            Roommate.phone == data.phone
+        ).first()
 
-    if active_contract is None:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Khách thuê không có hợp đồng ACTIVE "
-                "tại căn hộ này"
-            )
-        )
+    if existing_rm:
+        existing_rm.full_name = data.full_name
+        existing_rm.citizen_id = data.citizen_id
+        existing_rm.phone = data.phone
+        existing_rm.relationship = data.relationship
+        db.commit()
+        db.refresh(existing_rm)
+        return existing_rm
 
-    # 4. Đếm số roommate hiện tại
+    # 5. Đếm số người ở và kiểm tra giới hạn
     roommate_count = db.query(Roommate).filter(
         Roommate.apartment_id == data.apartment_id
     ).count()
 
-    # Tenant đại diện cũng được tính là 1 người
     current_occupants = 1 + roommate_count
+    max_occ = max(apartment.max_occupants or 4, 4)
 
-    # 5. Kiểm tra giới hạn số người
-    if current_occupants >= apartment.max_occupants:
+    if current_occupants >= max_occ:
         raise HTTPException(
             status_code=400,
-            detail="Căn hộ đã đạt số người ở tối đa"
+            detail=f"Căn hộ đã đạt số người ở tối đa ({max_occ} người)"
         )
 
     # 6. Tạo Roommate
@@ -118,9 +165,9 @@ def create_roommate(
 
     return roommate
 
+
 # =========================
-# DANH SÁCH NGƯỜI Ở CÙNG
-# CỦA MỘT KHÁCH THUÊ
+# DANH SÁCH NGƯỜI Ở CÙNG CỦA MỘT KHÁCH THUÊ
 # =========================
 @router.get(
     "/tenant/{tenant_id}",
@@ -133,11 +180,11 @@ def get_roommates_by_tenant(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
-
     tenant = db.query(Tenant).filter(
         Tenant.id == tenant_id
     ).first()
@@ -169,11 +216,11 @@ def get_roommate(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
-
     roommate = db.query(Roommate).filter(
         Roommate.id == roommate_id
     ).first()
@@ -199,10 +246,9 @@ def update_roommate(
     data: RoommateUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN", "STAFF")
+        require_roles("ADMIN", "STAFF", "TENANT")
     )
 ):
-
     roommate = db.query(Roommate).filter(
         Roommate.id == roommate_id
     ).first()
@@ -254,10 +300,9 @@ def delete_roommate(
     roommate_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN")
+        require_roles("ADMIN", "STAFF", "TENANT")
     )
 ):
-
     roommate = db.query(Roommate).filter(
         Roommate.id == roommate_id
     ).first()

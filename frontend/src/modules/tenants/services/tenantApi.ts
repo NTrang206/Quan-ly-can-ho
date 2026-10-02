@@ -126,6 +126,14 @@ export const tenantApi = baseApi.injectEndpoints({
         { type: 'Tenant', id: 'LIST' },
       ],
     }),
+
+    deleteTenant: builder.mutation<{ message: string }, number>({
+      query: (id) => ({
+        url: `/tenants/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Tenant', id: 'LIST' }],
+    }),
   }),
   overrideExisting: true,
 });
@@ -139,4 +147,6 @@ export const {
   useUpdateTenantMutation,
   useAddRoommateMutation,
   useAddEmergencyContactMutation,
+  useDeleteTenantMutation,
 } = tenantApi;
+

@@ -59,8 +59,9 @@ class ContractResponse(BaseModel):
     approved_by: int | None
 
     booking_id: int | None
-
     created_at: datetime
+    room_number: str | None = None
+    tenant_name: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True

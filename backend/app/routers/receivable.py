@@ -248,12 +248,26 @@ def get_receivables(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
 
     query = db.query(Receivable)
+
+    user_role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if user_role and user_role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(
+            (Tenant.user_id == current_user.id) |
+            (Tenant.phone == current_user.phone) |
+            (Tenant.email == current_user.email)
+        ).first()
+        if tenant:
+            contract_ids = [c.id for c in db.query(Contract).filter(Contract.tenant_id == tenant.id).all()]
+            query = query.filter(Receivable.contract_id.in_(contract_ids))
+        else:
+            return []
 
     if billing_month is not None:
         query = query.filter(

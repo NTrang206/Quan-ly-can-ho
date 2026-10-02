@@ -136,6 +136,20 @@ export const contractApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
     }),
+
+    receiveDeposit: builder.mutation<IDeposit, { contractId: number; amount: number }>({
+      query: ({ contractId, amount }) => ({
+        url: `/deposits/contract/${contractId}/receive`,
+        method: 'PATCH',
+        body: { amount },
+      }),
+      transformResponse: (res: any) => adaptDeposit(res),
+      invalidatesTags: [
+        { type: 'Contract', id: 'LIST' },
+        { type: 'Deposit', id: 'LIST' },
+        { type: 'Dashboard', id: 'STATS' },
+      ],
+    }),
   }),
   overrideExisting: true,
 });
@@ -151,4 +165,6 @@ export const {
   useRenewContractMutation,
   useTerminateAndSettleContractMutation,
   useSummarizeContractAIMutation,
+  useReceiveDepositMutation,
 } = contractApi;
+

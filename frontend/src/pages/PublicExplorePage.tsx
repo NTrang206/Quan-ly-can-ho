@@ -29,7 +29,7 @@ export const PublicExplorePage: React.FC = () => {
     isLoading: isApartmentsLoading, 
     isError: isApartmentsError, 
     refetch: refetchApartments 
-  } = useGetApartmentsQuery({});
+  } = useGetApartmentsQuery({ status: 'AVAILABLE' });
   const [createBooking, { isLoading: isBookingLoading }] = useCreateBookingMutation();
 
   // Search & Filter state
@@ -159,10 +159,13 @@ export const PublicExplorePage: React.FC = () => {
     }
   };
 
-  // Filter logic
+  // Filter logic - Chỉ cho phép căn hộ còn trống (AVAILABLE) xuất hiện ở phía khách vãng lai
   const filteredApartments = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return apartments.filter(apt => {
+      // Chỉ hiển thị căn hộ còn trống
+      if (apt.status !== 'AVAILABLE') return false;
+
       const matchesSearch = !term ||
                             (apt.roomNumber || '').toLowerCase().includes(term) ||
                             (apt.description || '').toLowerCase().includes(term) ||
@@ -186,7 +189,7 @@ export const PublicExplorePage: React.FC = () => {
     if (sortBy === 'PRICE_ASC') return list.sort((a, b) => a.price - b.price);
     if (sortBy === 'PRICE_DESC') return list.sort((a, b) => b.price - a.price);
     if (sortBy === 'AREA_DESC') return list.sort((a, b) => b.areaSqm - a.areaSqm);
-    return list.sort((a, b) => b.id - a.id);
+    return list.sort((a, b) => (a.roomNumber || '').localeCompare(b.roomNumber || '', undefined, { numeric: true }));
   }, [filteredApartments, sortBy]);
 
   // Hiển thị toàn bộ căn hộ, kéo cuộn từ trên xuống dưới (không phân trang)
@@ -389,10 +392,10 @@ export const PublicExplorePage: React.FC = () => {
                     <strong className="text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md font-bold">
                       {sortedApartments.length}
                     </strong>
-                    <span>căn hộ cho thuê</span>
+                    <span>căn hộ trống cho thuê</span>
                   </>
                 ) : (
-                  <span className="text-rose-600 font-medium">Không tìm thấy căn hộ phù hợp</span>
+                  <span className="text-rose-600 font-medium">Không tìm thấy căn hộ trống phù hợp</span>
                 )}
               </div>
 
@@ -498,15 +501,10 @@ export const PublicExplorePage: React.FC = () => {
                           loading="lazy"
                         />
 
-                        {/* Top Status Badge */}
-                        <div className="absolute top-2 left-2">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold shadow-2xs ${
-                            isAvailable 
-                              ? 'bg-emerald-600 text-white' 
-                              : 'bg-amber-600 text-white'
-                          }`}>
-                            {isAvailable ? 'Sẵn sàng dọn vào' : 'Đang thuê'}
-                          </span>
+                        {/* Status Badge: Căn hộ còn trống */}
+                        <div className="absolute top-2 left-2 bg-emerald-600/90 text-white text-[10px] px-2 py-0.5 rounded-full font-semibold flex items-center gap-1 backdrop-blur-xs shadow-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse" />
+                          <span>Còn trống</span>
                         </div>
 
                         {/* Bottom Photo Count Badge */}
@@ -521,7 +519,7 @@ export const PublicExplorePage: React.FC = () => {
                         <div>
                           {/* Title */}
                           <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1 leading-snug">
-                            Căn hộ P.{apt.roomNumber} - {buildingName}
+                            Căn hộ {apt.roomNumber?.startsWith('P') ? apt.roomNumber : `P${apt.roomNumber}`} - {buildingName}
                           </h2>
 
                           {/* Location */}
@@ -593,21 +591,19 @@ export const PublicExplorePage: React.FC = () => {
                           }}
                           alt={apt.roomNumber}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                        <div className="absolute top-1 left-1">
-                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                            isAvailable ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'
-                          }`}>
-                            {isAvailable ? 'Trống' : 'Thuê'}
-                          </span>
+                          />
+
+                        {/* Status Badge: Căn hộ còn trống */}
+                        <div className="absolute top-1 left-1 bg-emerald-600/90 text-white text-[9px] px-1.5 py-0.2 rounded-full font-semibold flex items-center gap-0.5 backdrop-blur-xs shadow-xs">
+                          <span className="w-1 h-1 rounded-full bg-emerald-200 animate-pulse" />
+                          <span>Còn trống</span>
                         </div>
                       </div>
 
                       {/* Middle: Details */}
                       <div className="flex-1 min-w-0">
                         <h2 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors truncate">
-                          P.{apt.roomNumber} - {buildingName}
+                          {apt.roomNumber?.startsWith('P') ? apt.roomNumber : `P${apt.roomNumber}`} - {buildingName}
                         </h2>
                         <div className="text-slate-500 text-[11px] flex items-center gap-1 mt-0.5 truncate">
                           <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
@@ -811,12 +807,9 @@ export const PublicExplorePage: React.FC = () => {
 
 
 
-        {/* Bottom Copyright & Tech Stack */}
+        {/* Bottom Tech Stack */}
         <div className="border-t border-slate-200 bg-slate-100/60 py-4 text-center text-xs text-slate-500">
-          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div>
-              © 2026 Dwell Living. Bản quyền thuộc về <strong className="text-slate-700 font-semibold">Đề tài 12 – Hệ Thống Quản Lý Căn Hộ Cho Thuê Thông Minh & Hợp Đồng Điện Tử AI</strong>.
-            </div>
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-center">
             <div className="flex items-center space-x-3 text-[11px] text-slate-400">
               <span>Hỗ trợ RAG AI Copilot</span>
               <span>•</span>
@@ -860,7 +853,7 @@ export const PublicExplorePage: React.FC = () => {
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-slate-800 truncate">
-                    Căn hộ P.{authRequiredModalApartment.roomNumber} - {authRequiredModalApartment.buildingName}
+                    Căn hộ {authRequiredModalApartment.roomNumber?.startsWith('P') ? authRequiredModalApartment.roomNumber : `P${authRequiredModalApartment.roomNumber}`} - {authRequiredModalApartment.buildingName}
                   </h4>
                   <p className="text-xs font-semibold text-brand-700 mt-0.5">
                     {formatPriceVND(authRequiredModalApartment.price)} / tháng

@@ -16,6 +16,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from app.models.contract import Contract
+from app.models.role import Role
 from app.services.debt_service import recalculate_debt
 from app.schemas.payment import (
     PaymentCreate,
@@ -42,10 +43,25 @@ def get_payments(
     receivable_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN", "STAFF", "ACCOUNTANT")
+        require_roles("ADMIN", "STAFF", "ACCOUNTANT", "TENANT")
     )
 ):
     query = db.query(Payment)
+
+    user_role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if user_role and user_role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(
+            (Tenant.user_id == current_user.id) |
+            (Tenant.phone == current_user.phone) |
+            (Tenant.email == current_user.email)
+        ).first()
+        if tenant:
+            contract_ids = [c.id for c in db.query(Contract).filter(Contract.tenant_id == tenant.id).all()]
+            receivable_ids = [r.id for r in db.query(Receivable).filter(Receivable.contract_id.in_(contract_ids)).all()]
+            query = query.filter(Payment.receivable_id.in_(receivable_ids))
+        else:
+            return []
+
     if receivable_id is not None:
         query = query.filter(Payment.receivable_id == receivable_id)
     return query.order_by(Payment.payment_date.desc()).all()

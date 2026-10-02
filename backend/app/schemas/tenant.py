@@ -19,6 +19,32 @@ class TenantUpdate(BaseModel):
     is_bad_debt: bool = False
 
 
+class RoommateItem(BaseModel):
+    id: int
+    tenant_id: int
+    apartment_id: int
+    full_name: str
+    citizen_id: str
+    phone: str | None = None
+    relationship: str | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class EmergencyContactItem(BaseModel):
+    id: int
+    tenant_id: int
+    full_name: str
+    phone: str
+    relationship: str
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
 class TenantResponse(BaseModel):
     id: int
     full_name: str
@@ -29,6 +55,8 @@ class TenantResponse(BaseModel):
     is_bad_debt: bool
     user_id: int | None
     created_at: datetime
+    roommates: list[RoommateItem] = []
+    emergency_contacts: list[EmergencyContactItem] = []
 
     model_config = ConfigDict(
         from_attributes=True

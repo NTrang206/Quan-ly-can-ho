@@ -4,6 +4,7 @@ from sqlalchemy import (
     String,
     ForeignKey
 )
+from sqlalchemy.orm import relationship as sa_relationship
 
 from app.database import Base
 
@@ -36,4 +37,9 @@ class EmergencyContact(Base):
     relationship = Column(
         String(50),
         nullable=False
+    )
+
+    tenant = sa_relationship(
+        "Tenant",
+        back_populates="emergency_contacts"
     )

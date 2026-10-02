@@ -6,7 +6,7 @@ import {
   FileText,
   CreditCard,
   Wrench,
-  Phone,
+  LogOut,
   ShieldCheck,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
@@ -22,7 +22,7 @@ import clsx from 'clsx';
 export const TenantSidebar: React.FC = () => {
   const dispatch = useAppDispatch();
   const { sidebarOpen } = useAppSelector((state) => state.global);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab') || 'overview';
 
@@ -181,23 +181,17 @@ export const TenantSidebar: React.FC = () => {
           })}
         </nav>
 
-        {/* 24/7 Hotline Support Card */}
+        {/* Logout Button */}
         <div className="pt-2 border-t border-slate-100 mt-auto">
-          <div className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1 text-xs">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
-              <span className="flex items-center gap-1 text-brand-600">
-                <Phone className="w-3 h-3" />
-                <span>Hotline BQL:</span>
-              </span>
-              <a href="tel:19008899" className="text-brand-700 font-mono font-bold hover:underline">
-                1900 8899
-              </a>
-            </div>
-            <div className="text-[10px] text-slate-500 flex justify-between">
-              <span>Kỹ thuật trực:</span>
-              <span className="text-slate-700 font-mono font-semibold">0912 345 678</span>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50/80 rounded-xl transition-all duration-150 group cursor-pointer"
+            title="Đăng xuất khỏi hệ thống"
+          >
+            <LogOut className="w-4 h-4 text-rose-500 group-hover:text-rose-600 transition-colors shrink-0" />
+            <span className="text-[13px] font-bold">Đăng Xuất</span>
+          </button>
         </div>
       </div>
     </aside>

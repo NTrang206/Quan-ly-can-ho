@@ -72,9 +72,9 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl my-auto bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         {/* Top Control Bar (Hidden when printing) */}
-        <div className="no-print bg-slate-900 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800">
+        <div className="no-print bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white px-6 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-sky-500/20 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-400/30 flex items-center justify-center text-brand-400">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs border border-white/25 flex items-center justify-center text-white shadow-soft">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -82,12 +82,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 <h3 className="text-base font-bold text-white tracking-wide">
                   Xem Trước & In Biên Lai Thu Tiền
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Đã xác nhận
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 flex items-center gap-1 backdrop-blur-xs shadow-xs">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-300" /> Đã xác nhận
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Mã chứng từ: <span className="font-mono text-brand-300 font-bold">{payment.receiptNumber}</span> • {payment.transactionCode}
+              <p className="text-xs text-sky-100/90 mt-0.5">
+                Mã chứng từ: <span className="font-mono text-white font-bold bg-white/15 px-1.5 py-0.5 rounded border border-white/20">{payment.receiptNumber}</span> • <span className="text-sky-100/80">{payment.transactionCode}</span>
               </p>
             </div>
           </div>
@@ -95,14 +95,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
           <div className="flex items-center gap-2.5">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 bg-gradient-to-r from-brand-600 to-sky-600 hover:from-brand-500 hover:to-sky-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all transform active:scale-95"
+              className="flex items-center gap-2 bg-white text-sky-700 hover:bg-sky-50 hover:text-sky-800 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all transform active:scale-95 border border-white/40"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-sky-600" />
               <span>In Biên Lai (Print / PDF)</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+              className="p-2 text-white/80 hover:text-white hover:bg-white/15 rounded-xl transition-colors"
               title="Đóng cửa sổ"
             >
               <X className="w-5 h-5" />

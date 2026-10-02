@@ -139,9 +139,6 @@ export const RealEstateFooter: React.FC = () => {
             <div>
               Giấy phép Trang thông tin số 03/GP-TTĐT do Sở Thông tin và Truyền thông cấp.
             </div>
-            <div className="text-[9.5px] text-slate-400 font-mono pt-0.5">
-              Đề tài 12: Hệ Thống Quản Lý Căn Hộ Cho Thuê Thông Minh (Dwell) • Phiên bản v2.4
-            </div>
           </div>
         </div>
       </div>

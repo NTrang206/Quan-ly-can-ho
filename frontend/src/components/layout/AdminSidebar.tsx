@@ -8,6 +8,7 @@ import {
   CreditCard,
   Wrench,
   CalendarCheck,
+  AlertTriangle,
   LogOut,
 } from 'lucide-react';
 import { useAppSelector } from '../../hooks/useRedux';
@@ -50,6 +51,11 @@ export const AdminSidebar: React.FC = () => {
           label: 'Khách thuê & Sổ nợ',
           icon: <Users className="w-[18px] h-[18px]" />,
         },
+        {
+          to: '/admin/alerts',
+          label: 'Cảnh báo nợ quá hạn',
+          icon: <AlertTriangle className="w-[18px] h-[18px]" />,
+        },
       ]
     : isStaff
     ? [
@@ -77,6 +83,11 @@ export const AdminSidebar: React.FC = () => {
           to: '/admin/maintenance',
           label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
+        },
+        {
+          to: '/admin/alerts',
+          label: 'Cảnh báo hết hạn HĐ',
+          icon: <AlertTriangle className="w-[18px] h-[18px]" />,
         },
       ]
     : [
@@ -114,6 +125,11 @@ export const AdminSidebar: React.FC = () => {
           to: '/admin/maintenance',
           label: 'Yêu cầu bảo trì',
           icon: <Wrench className="w-[18px] h-[18px]" />,
+        },
+        {
+          to: '/admin/alerts',
+          label: 'Cảnh báo quá hạn & HĐ',
+          icon: <AlertTriangle className="w-[18px] h-[18px]" />,
         },
       ];
 

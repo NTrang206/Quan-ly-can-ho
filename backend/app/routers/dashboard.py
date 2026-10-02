@@ -339,9 +339,9 @@ def export_revenue_csv(
     ]
     for p in payments:
         p_date = p.payment_date.strftime("%Y-%m-%d %H:%M") if p.payment_date else ""
-        tx_id = str(p.transaction_id or p.id)
-        cid = str(p.contract_id or "")
-        notes = str(p.notes or "").replace('"', '""')
+        tx_id = str(p.transaction_code or p.id)
+        cid = str(p.receivable_id or "")
+        notes = str(p.note or "").replace('"', '""')
         csv_rows.append(
             f'"{tx_id}","{p.receivable_id}","{cid}","{p.amount}","{p.payment_method}","{p_date}","{notes}"'
         )

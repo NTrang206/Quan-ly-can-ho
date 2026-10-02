@@ -120,3 +120,11 @@ class Contract(Base):
         "User",
         foreign_keys=[approved_by]
     )
+
+    @property
+    def room_number(self) -> str | None:
+        return self.apartment.room_number if self.apartment else None
+
+    @property
+    def tenant_name(self) -> str | None:
+        return self.tenant.full_name if self.tenant else None

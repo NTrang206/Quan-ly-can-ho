@@ -11,6 +11,7 @@ from app.database import get_db
 from app.models.emergency_contact import EmergencyContact
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.role import Role
 
 from app.schemas.emergency_contact import (
     EmergencyContactCreate,
@@ -38,9 +39,18 @@ def create_emergency_contact(
     data: EmergencyContactCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN", "STAFF")
+        require_roles("ADMIN", "STAFF", "ACCOUNTANT", "TENANT")
     )
 ):
+    user_role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if user_role and user_role.role_code == "TENANT":
+        user_tenant = db.query(Tenant).filter(
+            (Tenant.user_id == current_user.id) |
+            (Tenant.phone == current_user.phone) |
+            (Tenant.email == current_user.email)
+        ).first()
+        if user_tenant:
+            data.tenant_id = user_tenant.id
 
     tenant = db.query(Tenant).filter(
         Tenant.id == data.tenant_id
@@ -51,6 +61,19 @@ def create_emergency_contact(
             status_code=404,
             detail="Khách thuê không tồn tại"
         )
+
+    # Tránh trùng lặp nếu cùng tenant và số điện thoại
+    existing = db.query(EmergencyContact).filter(
+        EmergencyContact.tenant_id == data.tenant_id,
+        EmergencyContact.phone == data.phone
+    ).first()
+
+    if existing:
+        existing.full_name = data.full_name
+        existing.relationship = data.relationship
+        db.commit()
+        db.refresh(existing)
+        return existing
 
     contact = EmergencyContact(
         tenant_id=data.tenant_id,
@@ -80,11 +103,11 @@ def get_contacts_by_tenant(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
-
     tenant = db.query(Tenant).filter(
         Tenant.id == tenant_id
     ).first()
@@ -116,11 +139,11 @@ def get_emergency_contact(
         require_roles(
             "ADMIN",
             "STAFF",
-            "ACCOUNTANT"
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
-
     contact = db.query(EmergencyContact).filter(
         EmergencyContact.id == contact_id
     ).first()
@@ -146,10 +169,9 @@ def update_emergency_contact(
     data: EmergencyContactUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN", "STAFF")
+        require_roles("ADMIN", "STAFF", "TENANT")
     )
 ):
-
     contact = db.query(EmergencyContact).filter(
         EmergencyContact.id == contact_id
     ).first()
@@ -178,10 +200,9 @@ def delete_emergency_contact(
     contact_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles("ADMIN")
+        require_roles("ADMIN", "STAFF", "TENANT")
     )
 ):
-
     contact = db.query(EmergencyContact).filter(
         EmergencyContact.id == contact_id
     ).first()
