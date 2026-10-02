@@ -13,8 +13,8 @@ from decimal import Decimal
 class MaintenanceCreate(BaseModel):
     apartment_id: int
 
-    reporter_name: str
-    phone: str
+    reporter_name: str | None = None
+    phone: str | None = None
 
     issue_description: str
 

@@ -13,6 +13,14 @@ export interface ILoginResponse {
   user: IUser;
 }
 
+export interface IRegisterRequest {
+  full_name: string;
+  phone: string;
+  email?: string;
+  username?: string;
+  password: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<ILoginResponse, ILoginRequest>({
@@ -27,6 +35,20 @@ export const authApi = baseApi.injectEndpoints({
         user: adaptUser(response.user),
       }),
       invalidatesTags: ['Auth', 'User'],
+    }),
+
+    register: builder.mutation<ILoginResponse, IRegisterRequest>({
+      query: (data) => ({
+        url: '/auth/register',
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: any) => ({
+        access_token: response.access_token,
+        token_type: response.token_type,
+        user: adaptUser(response.user),
+      }),
+      invalidatesTags: ['Auth', 'User', 'Tenant'],
     }),
 
     getMe: builder.query<IUser, void>({
@@ -64,6 +86,7 @@ export const authApi = baseApi.injectEndpoints({
 
 export const {
   useLoginMutation,
+  useRegisterMutation,
   useGetMeQuery,
   useRegisterTenantMutation,
   useChangePasswordMutation,

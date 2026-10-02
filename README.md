@@ -1,4 +1,4 @@
-# Đề Tài 12: Hệ Thống Quản Lý Thuê Căn Hộ Tích Hợp AI (Sunshine Homes)
+# Đề Tài 12: Hệ Thống Quản Lý Thuê Căn Hộ Tích Hợp AI (Dwell Living)
 
 Hệ thống quản lý chuỗi căn hộ dịch vụ và chung cư cao cấp khép kín, tích hợp Trí tuệ nhân tạo (GenAI & Hybrid RAG) hỗ trợ vận hành tòa nhà, tự động tóm tắt hợp đồng pháp lý, sinh thông báo đôn đốc công nợ đa kênh và trợ lý hỏi đáp nội quy 24/7.
 

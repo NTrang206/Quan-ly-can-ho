@@ -31,7 +31,7 @@ export const FloatingAIChatbot: React.FC = () => {
     {
       id: '1',
       sender: 'ai',
-      text: 'Chào Quý cư dân! Tôi là Trợ Lý AI Sunshine Homes (RAG 24/7). Tôi có thể giúp bạn giải đáp quy định tòa nhà, giờ giấc chuyển đồ, đăng ký nuôi thú cưng, biểu phí gửi xe và thủ tục tạm trú.',
+      text: 'Chào Quý cư dân! Tôi là Trợ lý AI. Tôi có thể hỗ trợ giải đáp mọi thắc mắc của bạn về đời sống, nội quy tòa nhà, giờ giấc chuyển đồ, biểu phí và các tiện ích sinh hoạt thường ngày.',
       timestamp: 'Vừa xong',
     },
   ]);
@@ -86,7 +86,7 @@ export const FloatingAIChatbot: React.FC = () => {
         {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
-          text: 'Xin lỗi, hiện tại tôi đang gặp chút sự cố kết nối tới máy chủ RAG. Vui lòng thử lại sau giây lát hoặc liên hệ Lễ tân qua hotline 1900 8899.',
+          text: 'Xin lỗi, hiện tại tôi đang gặp chút gián đoạn kết nối. Bạn vui lòng thử lại sau giây lát hoặc liên hệ Ban Quản Lý nhé.',
           timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -106,12 +106,12 @@ export const FloatingAIChatbot: React.FC = () => {
         <button
           onClick={() => setIsOpen(true)}
           className="group relative flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white px-3.5 py-2.5 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl border border-white/20 active:scale-95"
-          title="Trợ Lý AI 24/7 (Hỏi đáp nội quy)"
+          title="Trợ lý AI (Hỏi đáp 24/7)"
         >
           <div className="relative">
             <AIBotLogo size="sm" badge showStatusDot statusColor="bg-emerald-400" />
           </div>
-          <span className="text-xs font-semibold">Trợ Lý AI</span>
+          <span className="text-xs font-semibold">Trợ lý AI</span>
         </button>
       )}
 
@@ -119,16 +119,12 @@ export const FloatingAIChatbot: React.FC = () => {
         <div className="w-[360px] sm:w-[400px] h-[540px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
           <div className="bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white px-4 py-3 flex items-center justify-between border-b border-sky-500/30 shadow-xs">
-            <div className="flex items-center gap-3">
-              <AIBotLogo size="lg" badge />
+            <div className="flex items-center gap-2.5">
+              <AIBotLogo size="md" />
               <div>
-                <h4 className="text-sm font-bold flex items-center gap-1.5">
-                  <span>Trợ Lý AI Dwell Copilot</span>
-                  <span className="px-1.5 py-0.2 text-[9px] font-semibold bg-white/20 text-white border border-white/30 rounded-full">
-                    RAG v2.4
-                  </span>
+                <h4 className="text-sm font-bold text-white tracking-wide">
+                  Trợ lý AI
                 </h4>
-                <p className="text-[11px] text-sky-100">Truy xuất 100% tài liệu nội quy chuẩn</p>
               </div>
             </div>
 
@@ -139,7 +135,7 @@ export const FloatingAIChatbot: React.FC = () => {
                     {
                       id: '1',
                       sender: 'ai',
-                      text: 'Hộp thoại đã được làm mới. Tôi có thể giúp gì thêm cho bạn?',
+                      text: 'Hộp thoại đã được làm mới. Tôi là Trợ lý AI, tôi có thể hỗ trợ gì thêm cho bạn?',
                       timestamp: 'Vừa xong',
                     },
                   ])
@@ -233,7 +229,7 @@ export const FloatingAIChatbot: React.FC = () => {
                   <span className="w-2 h-2 rounded-full bg-brand-500 animate-bounce" />
                   <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]" />
                   <span className="w-2 h-2 rounded-full bg-sky-500 animate-bounce [animation-delay:0.4s]" />
-                  <span className="text-[11px] text-slate-400">Đang truy xuất vector nội quy...</span>
+                  <span className="text-[11px] text-slate-400">Trợ lý AI đang trả lời...</span>
                 </div>
               </div>
             )}

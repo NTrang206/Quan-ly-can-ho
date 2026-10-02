@@ -1,6 +1,7 @@
 from fastapi import (
     APIRouter,
-    Depends
+    Depends,
+    Response
 )
 
 from sqlalchemy.orm import Session
@@ -319,3 +320,37 @@ def overdue_report(
         })
 
     return result
+
+
+# =========================================================
+# XUẤT BÁO CÁO DOANH THU (CSV)
+# =========================================================
+@router.get("/export-revenue")
+def export_revenue_csv(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles("ADMIN", "STAFF", "ACCOUNTANT")
+    )
+):
+    payments = db.query(Payment).order_by(Payment.payment_date.desc()).all()
+
+    csv_rows = [
+        "Mã Giao Dịch,Mã Khoản Thu,Hợp Đồng,Số Tiền (VNĐ),Phương Thức,Ngày Thanh Toán,Ghi Chú"
+    ]
+    for p in payments:
+        p_date = p.payment_date.strftime("%Y-%m-%d %H:%M") if p.payment_date else ""
+        tx_id = str(p.transaction_id or p.id)
+        cid = str(p.contract_id or "")
+        notes = str(p.notes or "").replace('"', '""')
+        csv_rows.append(
+            f'"{tx_id}","{p.receivable_id}","{cid}","{p.amount}","{p.payment_method}","{p_date}","{notes}"'
+        )
+
+    csv_content = "\ufeff" + "\r\n".join(csv_rows)
+    return Response(
+        content=csv_content.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f"attachment; filename=bao_cao_doanh_thu_{date.today().isoformat()}.csv"
+        }
+    )

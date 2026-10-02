@@ -22,6 +22,14 @@ import { TenantsPage } from '../pages/TenantsPage';
 import { ResidentPortalPage } from '../pages/ResidentPortalPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { UnauthorizedPage } from '../pages/UnauthorizedPage';
+import { useAuth } from '../hooks/useAuth';
+
+const AdminIndexRedirect: React.FC = () => {
+  const { isStaff, isAccountant } = useAuth();
+  if (isStaff) return <Navigate to="/admin/buildings" replace />;
+  if (isAccountant) return <Navigate to="/admin/finance" replace />;
+  return <Navigate to="/admin/dashboard" replace />;
+};
 
 export const AppRouter: React.FC = () => {
   return (
@@ -56,7 +64,7 @@ export const AppRouter: React.FC = () => {
           </PrivateRoute>
         }
       >
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route index element={<AdminIndexRedirect />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route
           path="buildings"

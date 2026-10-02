@@ -4,9 +4,6 @@ import {
   Building,
   DollarSign,
   AlertTriangle,
-  Star,
-  Sparkles,
-  Download,
   Filter,
   RefreshCw,
   Clock,
@@ -16,14 +13,12 @@ import {
   Zap,
   BarChart3,
   PieChart,
-  ChevronRight,
   CheckCircle2,
 } from 'lucide-react';
 import { StatCard } from '../components/common/StatCard';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { useGetDashboardStatsQuery } from '../modules/dashboard/services/dashboardApi';
-import { useGetBuildingsQuery } from '../modules/buildings/services/buildingApi';
 import { formatCurrency, formatCompactCurrency } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
@@ -38,7 +33,6 @@ export const AdminDashboardPage: React.FC = () => {
   const { isAccountant, isStaff, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { data: stats, refetch, isFetching } = useGetDashboardStatsQuery({});
-  const { data: buildings = [] } = useGetBuildingsQuery();
   const toast = useToast();
 
   const handleExportReport = async (_type?: string) => {
@@ -70,22 +64,91 @@ export const AdminDashboardPage: React.FC = () => {
     }
   };
 
-  // Dynamic monthly trend based on live revenue stats from API
-  const rawRev = stats?.totalRevenueMonth || 15725000;
-  const isBillion = rawRev >= 1000000000;
-  const baseRev = isBillion ? Number((rawRev / 1000000000).toFixed(2)) : Number((rawRev / 1000000).toFixed(1));
+  // Dynamic monthly and quarterly trend based on live revenue stats from API
+  const rawRev = stats?.totalRevenueMonth || 58500000;
+  const effectiveRev = rawRev > 0 ? rawRev : 58500000;
+  const isBillion = effectiveRev >= 1000000000;
+  const baseRev = isBillion ? Number((effectiveRev / 1000000000).toFixed(2)) : Number((effectiveRev / 1000000).toFixed(1));
   const unitLabel = isBillion ? 'Tỷ' : 'Tr';
 
   const monthlyTrends = [
-    { month: 'T05/26', rev: Number((baseRev * 0.72).toFixed(1)), target: Number((baseRev * 0.85).toFixed(1)), opex: Number((baseRev * 0.22).toFixed(1)) },
-    { month: 'T06/26', rev: Number((baseRev * 0.78).toFixed(1)), target: Number((baseRev * 0.88).toFixed(1)), opex: Number((baseRev * 0.24).toFixed(1)) },
-    { month: 'T07/26', rev: Number((baseRev * 0.84).toFixed(1)), target: Number((baseRev * 0.90).toFixed(1)), opex: Number((baseRev * 0.25).toFixed(1)) },
-    { month: 'T08/26', rev: Number((baseRev * 0.89).toFixed(1)), target: Number((baseRev * 0.93).toFixed(1)), opex: Number((baseRev * 0.26).toFixed(1)) },
-    { month: 'T09/26', rev: Number((baseRev * 0.94).toFixed(1)), target: Number((baseRev * 0.97).toFixed(1)), opex: Number((baseRev * 0.28).toFixed(1)) },
-    { month: 'T10/26', rev: Number(baseRev.toFixed(1)), target: Number((baseRev * 1.05).toFixed(1)), opex: Number((baseRev * 0.30).toFixed(1)) },
+    {
+      period: 'T05/26',
+      rent: Number((baseRev * 0.72 * 0.8).toFixed(1)),
+      service: Number((baseRev * 0.72 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 0.72 * 0.26).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'T06/26',
+      rent: Number((baseRev * 0.78 * 0.8).toFixed(1)),
+      service: Number((baseRev * 0.78 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 0.78 * 0.25).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'T07/26',
+      rent: Number((baseRev * 0.84 * 0.8).toFixed(1)),
+      service: Number((baseRev * 0.84 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 0.84 * 0.26).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'T08/26',
+      rent: Number((baseRev * 0.89 * 0.81).toFixed(1)),
+      service: Number((baseRev * 0.89 * 0.19).toFixed(1)),
+      opex: Number((baseRev * 0.89 * 0.25).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'T09/26',
+      rent: Number((baseRev * 0.94 * 0.8).toFixed(1)),
+      service: Number((baseRev * 0.94 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 0.94 * 0.27).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'T10/26',
+      rent: Number((baseRev * 0.81).toFixed(1)),
+      service: Number((baseRev * 0.19).toFixed(1)),
+      opex: Number((baseRev * 0.26).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
   ];
 
-  const maxRev = Math.max(...monthlyTrends.map((t) => t.rev), 1);
+  const quarterlyTrends = [
+    {
+      period: 'Q1/26',
+      rent: Number((baseRev * 2.1 * 0.8).toFixed(1)),
+      service: Number((baseRev * 2.1 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 2.1 * 0.26).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'Q2/26',
+      rent: Number((baseRev * 2.4 * 0.8).toFixed(1)),
+      service: Number((baseRev * 2.4 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 2.4 * 0.25).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'Q3/26',
+      rent: Number((baseRev * 2.7 * 0.8).toFixed(1)),
+      service: Number((baseRev * 2.7 * 0.2).toFixed(1)),
+      opex: Number((baseRev * 2.7 * 0.26).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+    {
+      period: 'Q4/26 (Dự kiến)',
+      rent: Number((baseRev * 3.0 * 0.81).toFixed(1)),
+      service: Number((baseRev * 3.0 * 0.19).toFixed(1)),
+      opex: Number((baseRev * 3.0 * 0.25).toFixed(1)),
+      get total() { return Number((this.rent + this.service).toFixed(1)); },
+    },
+  ];
+
+  const chartData = selectedView === 'quarter' ? quarterlyTrends : monthlyTrends;
+  const maxVal = Math.max(...chartData.map((d) => d.total), 1);
 
 
   return (
@@ -154,21 +217,11 @@ export const AdminDashboardPage: React.FC = () => {
               </Button>
             </>
           )}
-          {!isStaff && (
-            <Button
-              variant="outline"
-              size="sm"
-              leftIcon={<Download className="w-3.5 h-3.5" />}
-              onClick={() => handleExportReport('EXCEL')}
-            >
-              {isAccountant ? 'Xuất Sổ Kế Toán (Excel)' : 'Xuất Báo Cáo'}
-            </Button>
-          )}
         </div>
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           title="Doanh thu thực thu"
           value={formatCompactCurrency(stats?.totalRevenueMonth || 4850000000)}
@@ -208,15 +261,6 @@ export const AdminDashboardPage: React.FC = () => {
           icon={<AlertTriangle className="w-4 h-4 text-amber-600" />}
           iconBgColor="bg-amber-50"
         />
-
-        <StatCard
-          title="CSAT & SLA bảo trì"
-          value={`${stats?.csatScore || 4.82}/5.0`}
-          subValue="98.2%"
-          badge={`TB: ${stats?.avgMaintenanceSlaHours || 3.4}h`}
-          icon={<Star className="w-4 h-4 text-emerald-600" />}
-          iconBgColor="bg-emerald-50"
-        />
       </div>
 
       {/* Main Grid: Cashflow chart + AI Predictive Insights */}
@@ -254,35 +298,75 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Bar Chart Simulation */}
+          {/* Cashflow & Revenue Bar Chart */}
           <div className="pt-2">
-            <div className="h-60 flex items-end justify-between gap-3 pt-6 px-2 border-b border-slate-200">
-              {monthlyTrends.map((item, idx) => {
-                const heightPercent = Math.min(100, Math.max(14, Math.round((item.rev / (maxRev * 1.25)) * 100)));
-                const isCurrent = idx === monthlyTrends.length - 1;
+            <div className="h-60 flex items-end justify-between gap-2 sm:gap-4 pt-6 px-2 border-b border-slate-200">
+              {chartData.map((item, idx) => {
+                const heightTotalPercent = Math.min(100, Math.max(18, Math.round((item.total / (maxVal * 1.15)) * 100)));
+                const heightOpexPercent = Math.min(100, Math.max(12, Math.round((item.opex / (maxVal * 1.15)) * 100)));
+                const rentPercent = Math.round((item.rent / (item.total || 1)) * 100);
+                const servicePercent = 100 - rentPercent;
+                const isCurrent = idx === chartData.length - 1;
+
                 return (
-                  <div key={item.month} className="flex-1 flex flex-col items-center gap-1.5 group relative">
-                    {/* Tooltip on hover */}
-                    <div className="absolute -top-9 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-medium px-2 py-0.5 rounded shadow pointer-events-none z-20 whitespace-nowrap">
-                      {item.month}: {item.rev} {unitLabel}
+                  <div key={item.period} className="flex-1 flex flex-col items-center gap-1.5 group relative">
+                    {/* Rich Floating Tooltip */}
+                    <div className="absolute -top-20 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/95 backdrop-blur-xs text-white text-[10px] p-2.5 rounded-lg shadow-xl pointer-events-none z-30 whitespace-nowrap min-w-[145px] border border-slate-700">
+                      <div className="font-bold text-white mb-1.5 border-b border-slate-700 pb-1 flex justify-between">
+                        <span>{item.period}</span>
+                        <span className="text-emerald-400 font-semibold">NOI: {(item.total - item.opex).toFixed(1)} {unitLabel}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-slate-300">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-xs bg-brand-600 inline-block"></span>Tiền thuê:</span>
+                          <strong className="text-white font-medium">{item.rent} {unitLabel}</strong>
+                        </div>
+                        <div className="flex justify-between text-slate-300">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-xs bg-sky-400 inline-block"></span>Dịch vụ:</span>
+                          <strong className="text-white font-medium">{item.service} {unitLabel}</strong>
+                        </div>
+                        <div className="flex justify-between text-slate-300 border-t border-slate-800 pt-0.5">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-xs bg-slate-400 inline-block"></span>OpEx (Chi phí):</span>
+                          <strong className="text-slate-300 font-medium">{item.opex} {unitLabel}</strong>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="w-full flex items-end justify-center h-44 overflow-hidden rounded-t">
+                    {/* Dual Bars Container: Revenue Stacked Bar + OpEx Bar */}
+                    <div className="w-full flex items-end justify-center h-44 gap-1 sm:gap-1.5">
+                      {/* Revenue Stacked Bar (Rent + Service) */}
                       <div
-                        style={{ height: `${heightPercent}%`, maxHeight: '100%' }}
-                        className={`w-full rounded-t transition-all duration-300 ${
-                          isCurrent
-                            ? 'bg-brand-600 shadow-xs'
-                            : 'bg-slate-200 hover:bg-slate-300'
+                        style={{ height: `${heightTotalPercent}%` }}
+                        className={`w-4 sm:w-7 flex flex-col justify-end rounded-t overflow-hidden transition-all duration-300 ${
+                          isCurrent ? 'ring-2 ring-brand-500 shadow-sm' : 'hover:brightness-105'
                         }`}
+                      >
+                        {/* Service (Top) */}
+                        <div
+                          style={{ height: `${servicePercent}%` }}
+                          className="w-full bg-sky-400 transition-all"
+                        />
+                        {/* Rent (Bottom) */}
+                        <div
+                          style={{ height: `${rentPercent}%` }}
+                          className="w-full bg-brand-600 transition-all"
+                        />
+                      </div>
+
+                      {/* OpEx Bar (Gray) */}
+                      <div
+                        style={{ height: `${heightOpexPercent}%` }}
+                        className="w-2 sm:w-3.5 bg-slate-300 hover:bg-slate-400 rounded-t transition-all duration-300"
                       />
                     </div>
+
+                    {/* Period Label */}
                     <span
-                      className={`text-[10px] ${
-                        isCurrent ? 'text-brand-600 font-bold' : 'text-slate-400'
+                      className={`text-[10px] text-center truncate ${
+                        isCurrent ? 'text-brand-600 font-bold' : 'text-slate-500'
                       }`}
                     >
-                      {item.month}
+                      {item.period}
                     </span>
                   </div>
                 );
@@ -293,210 +377,124 @@ export const AdminDashboardPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 bg-brand-600 rounded-xs" />
-                  <span>Tiền thuê</span>
+                  <span className="text-slate-700 font-medium">Tiền thuê</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 bg-sky-400 rounded-xs" />
-                  <span>Dịch vụ</span>
+                  <span className="text-slate-700 font-medium">Dịch vụ</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 bg-slate-300 rounded-xs" />
-                  <span>OpEx</span>
+                  <span className="text-slate-700 font-medium">OpEx</span>
                 </span>
               </div>
               <div className="text-slate-700 font-medium">
-                RevPAU: <strong className="text-brand-600">10.680.000 ₫</strong>/căn
+                Chỉ số: <strong className="text-brand-600">10.680.000 ₫</strong>/căn
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: AI Predictive Insights (4 cols) */}
-        <div className="lg:col-span-4 bg-white text-slate-900 p-5 rounded-xl shadow-xs border border-slate-200 flex flex-col justify-between space-y-4">
+        {/* Right Column: Revenue Sources Breakdown (4 cols) */}
+        <div className="lg:col-span-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-brand-50 text-brand-600 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">AI Phân Tích Dự Báo</h4>
-                  <div className="text-[10px] text-slate-400">ML Forecast v3.8</div>
-                </div>
-              </div>
-              <span className="px-2 py-0.5 text-[10px] font-semibold bg-brand-50 text-brand-700 rounded border border-brand-200/80">
-                Độ tin cậy 96%
-              </span>
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <PieChart className="w-4 h-4 text-sky-500" />
+                <span>Cơ Cấu Nguồn Thu</span>
+              </h4>
+              <span className="text-xs text-slate-400 font-medium">T11/2026</span>
             </div>
 
-            {/* Insights list */}
-            <div className="space-y-3 mt-3.5 text-xs">
-              <div className="bg-emerald-50/60 p-3 rounded-lg border border-emerald-200/60 space-y-1">
-                <div className="flex items-center justify-between font-semibold text-emerald-800 text-xs">
-                  <span>Dự báo dòng tiền tháng tới</span>
-                  <span className="font-bold text-emerald-600">+1.5%</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Dòng tiền ròng dự kiến đạt <strong className="text-slate-900">4.920.000.000 ₫</strong> từ hợp đồng dài hạn Sunshine.
-                </p>
+            <div className="space-y-3 mt-4 text-sm">
+              <div className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-50/80">
+                <span className="flex items-center gap-2.5 text-slate-700 font-medium">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0284c7]" />
+                  Tiền thuê căn hộ
+                </span>
+                <span className="font-semibold text-slate-900">3.783 Tr (78%)</span>
               </div>
 
-              <div className="bg-amber-50/60 p-3 rounded-lg border border-amber-200/60 space-y-1">
-                <div className="flex items-center justify-between font-semibold text-amber-800 text-xs">
-                  <span>14 Hợp đồng sắp đáo hạn (30 ngày)</span>
-                  <span className="text-[10px] font-medium bg-amber-100/80 text-amber-800 px-1.5 py-0.5 rounded">Rủi ro TB</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Đề xuất mức tái ký <strong className="text-slate-900">+3.5%</strong> để giữ tỷ lệ lấp đầy &gt; 85%.
-                </p>
+              <div className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-50/80">
+                <span className="flex items-center gap-2.5 text-slate-700 font-medium">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#38bdf8]" />
+                  Phí quản lý & dịch vụ
+                </span>
+                <span className="font-semibold text-slate-900">582 Tr (12%)</span>
               </div>
 
-              <div className="bg-rose-50/60 p-3 rounded-lg border border-rose-200/60 space-y-1">
-                <div className="flex items-center justify-between font-semibold text-rose-800 text-xs">
-                  <span>Cảnh báo điện sảnh tòa nhà</span>
-                  <span className="font-bold text-rose-600">+22% kWh</span>
-                </div>
-                <p className="text-[11px] text-slate-600 leading-relaxed">
-                  Điều hòa sảnh A chạy lệch profile ban đêm. Khuyến nghị điều chỉnh cảm biến.
-                </p>
+              <div className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-50/80">
+                <span className="flex items-center gap-2.5 text-slate-700 font-medium">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+                  Điện nước tiện ích
+                </span>
+                <span className="font-semibold text-slate-900">291 Tr (6%)</span>
+              </div>
+
+              <div className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-slate-50/80">
+                <span className="flex items-center gap-2.5 text-slate-700 font-medium">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#a855f7]" />
+                  Gửi xe & Tiện ích khác
+                </span>
+                <span className="font-semibold text-slate-900">194 Tr (4%)</span>
               </div>
             </div>
           </div>
-
-          <Button
-            variant="primary"
-            size="sm"
-            className="w-full text-xs"
-            rightIcon={<ChevronRight className="w-3.5 h-3.5" />}
-            onClick={() => toast.info('AI Action', 'Đang phân tích các giải pháp tối ưu doanh thu từ Gemini')}
-          >
-            Xem Đề Xuất Tối Ưu Doanh Thu
-          </Button>
         </div>
       </div>
 
-      {/* Breakdown Row: Source Distribution + Building Performance + OpEx */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* 1. Revenue Sources Breakdown */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <PieChart className="w-4 h-4 text-brand-600" />
-              <span>Cơ Cấu Nguồn Thu</span>
-            </h4>
-            <span className="text-[11px] text-slate-400 font-mono">T11/2026</span>
+      {/* OpEx & Maintenance KPI Card */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-amber-600" />
+            <span>Chi Phí Vận Hành (OpEx) & Quản Lý Kỹ Thuật</span>
+          </h4>
+          <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-50 text-amber-700 rounded border border-amber-200/60 self-start sm:self-auto">
+            Tỷ trọng OpEx 25.4%
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 flex flex-col justify-center text-center">
+            <span className="text-slate-500 text-[11px]">Tổng chi phí OpEx tháng:</span>
+            <div className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">1.230.000.000 ₫</div>
           </div>
-
-          <div className="space-y-2.5 text-xs">
-            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-              <span className="flex items-center gap-2 text-slate-700 font-medium">
-                <span className="w-2 h-2 rounded-full bg-brand-600" />
-                Tiền thuê căn hộ
-              </span>
-              <span className="font-semibold text-slate-900">3.783 Tr (78%)</span>
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-center">
+            <div className="flex items-center justify-between text-slate-500 text-[11px] mb-1">
+              <span>Kỹ thuật:</span>
+              <span className="font-semibold text-slate-700">35%</span>
             </div>
-
-            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-              <span className="flex items-center gap-2 text-slate-700 font-medium">
-                <span className="w-2 h-2 rounded-full bg-sky-500" />
-                Phí quản lý & dịch vụ
-              </span>
-              <span className="font-semibold text-slate-900">582 Tr (12%)</span>
+            <div className="font-bold text-slate-900 text-sm">430.5 Tr</div>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-center">
+            <div className="flex items-center justify-between text-slate-500 text-[11px] mb-1">
+              <span>Nhân sự:</span>
+              <span className="font-semibold text-slate-700">40%</span>
             </div>
-
-            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-              <span className="flex items-center gap-2 text-slate-700 font-medium">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                Điện nước tiện ích
-              </span>
-              <span className="font-semibold text-slate-900">291 Tr (6%)</span>
+            <div className="font-bold text-slate-900 text-sm">492.0 Tr</div>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-center">
+            <div className="flex items-center justify-between text-slate-500 text-[11px] mb-1">
+              <span>Điện nước:</span>
+              <span className="font-semibold text-slate-700">15%</span>
             </div>
-
-            <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50">
-              <span className="flex items-center gap-2 text-slate-700 font-medium">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
-                Gửi xe & Tiện ích khác
-              </span>
-              <span className="font-semibold text-slate-900">194 Tr (4%)</span>
+            <div className="font-bold text-slate-900 text-sm">184.5 Tr</div>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-center">
+            <div className="flex items-center justify-between text-slate-500 text-[11px] mb-1">
+              <span>Dự phòng:</span>
+              <span className="font-semibold text-slate-700">10%</span>
             </div>
+            <div className="font-bold text-slate-900 text-sm">123.0 Tr</div>
           </div>
         </div>
 
-        {/* 2. Building Performance List */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Building className="w-4 h-4 text-emerald-600" />
-              <span>Hiệu Suất Theo Tòa</span>
-            </h4>
-            <span className="text-[11px] text-emerald-600 font-medium">4 Tòa nhà</span>
-          </div>
-
-          <div className="space-y-2 text-xs">
-            {buildings.map((b) => (
-              <div
-                key={b.id}
-                className="p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-slate-900 text-xs">{b.name}</div>
-                  <div className="text-[11px] text-slate-500">
-                    Lấp đầy: <strong className="text-emerald-700">{((b.occupiedCount / b.totalApartments) * 100).toFixed(0)}%</strong> ({b.occupiedCount}/{b.totalApartments} căn)
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-slate-900 text-xs">
-                    {formatCompactCurrency(b.monthlyRevenueEstimate)}
-                  </div>
-                  <div className="text-[10px] text-slate-400">SLA: ★ 4.9</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 3. OpEx & Maintenance KPI */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3.5">
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-amber-600" />
-              <span>Chi Phí Vận Hành (OpEx)</span>
-            </h4>
-            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 rounded">
-              OpEx 25.4%
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-xs">
-            <div className="text-center p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <span className="text-slate-500 text-[11px]">Tổng chi phí OpEx tháng:</span>
-              <div className="text-lg font-bold text-slate-900">1.230.000.000 ₫</div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-              <div className="p-2 bg-slate-50 rounded-lg">
-                <span className="text-slate-500 block">Kỹ thuật:</span>
-                <span className="font-semibold text-slate-900">430.5 Tr (35%)</span>
-              </div>
-              <div className="p-2 bg-slate-50 rounded-lg">
-                <span className="text-slate-500 block">Nhân sự:</span>
-                <span className="font-semibold text-slate-900">492.0 Tr (40%)</span>
-              </div>
-              <div className="p-2 bg-slate-50 rounded-lg">
-                <span className="text-slate-500 block">Điện nước:</span>
-                <span className="font-semibold text-slate-900">184.5 Tr (15%)</span>
-              </div>
-              <div className="p-2 bg-slate-50 rounded-lg">
-                <span className="text-slate-500 block">Dự phòng:</span>
-                <span className="font-semibold text-slate-900">123.0 Tr (10%)</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">82 Phiếu bảo trì:</span>
-              <span className="text-emerald-600 font-semibold">Đã đóng 92.7% (76/82)</span>
-            </div>
-          </div>
+        <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+          <span>82 Phiếu bảo trì trong kỳ</span>
+          <span className="text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+            Đã đóng 92.7% (76/82)
+          </span>
         </div>
       </div>
     </div>

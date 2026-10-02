@@ -565,9 +565,9 @@ export const ContractsPage: React.FC = () => {
                 const tenantDisplayCitizenId = c.tenantCitizenId || matchedTenant?.citizenId || 'Chưa cập nhật';
                 const roomDisplayName = c.roomNumber || matchedApt?.roomNumber || `P${c.apartmentId}`;
                 const buildingDisplayName =
-                  c.buildingName && c.buildingName !== 'Sunshine Homes'
+                  c.buildingName && c.buildingName !== 'Sunshine Homes' && c.buildingName !== 'Sunshine Diamond Tower'
                     ? c.buildingName
-                    : matchedApt?.buildingName || 'Sunshine Diamond Tower';
+                    : matchedApt?.buildingName || 'Dwell';
 
                 const contractItem: IContract = {
                   ...c,
@@ -580,12 +580,12 @@ export const ContractsPage: React.FC = () => {
 
                 return (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-4 font-mono font-bold text-brand-700">
+                    <td className="px-5 py-4 font-bold text-brand-700">
                       <div className="flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-slate-400" />
                         <span>{c.contractCode}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-sans mt-0.5">
+                      <div className="text-[11px] text-slate-400 font-normal mt-0.5">
                         Ký ngày: {formatDate(c.createdAt)}
                       </div>
                     </td>
@@ -875,7 +875,7 @@ export const ContractsPage: React.FC = () => {
                 <Input
                   label="Email nhận thông báo"
                   type="email"
-                  placeholder="customer@sunshine.vn"
+                  placeholder="customer@dwell.vn"
                   value={tenantEmail}
                   error={contractErrors.tenantEmail}
                   onChange={(e) => {

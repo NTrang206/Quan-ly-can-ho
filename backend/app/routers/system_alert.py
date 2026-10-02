@@ -255,16 +255,16 @@ def generate_dunning_message(
     if overdue_match:
         days_overdue = int(overdue_match.group(1))
 
-    email_subject = f"[Dwell Sunshine Homes] Thông báo nhắc cước phí dịch vụ quá hạn - {target_name}"
+    email_subject = f"[Dwell] Thông báo nhắc cước phí dịch vụ quá hạn - {target_name}"
     message_body = (
         f"Kính gửi Quý cư dân {target_name},\n\n"
-        f"Ban Quản Lý Tòa Nhà Sunshine Homes xin trân trọng thông báo: Khoản thanh toán cước phí căn hộ hiện đã quá hạn {days_overdue} ngày "
+        f"Ban Quản Lý Tòa Nhà Dwell xin trân trọng thông báo: Khoản thanh toán cước phí căn hộ hiện đã quá hạn {days_overdue} ngày "
         f"với tổng số tiền cần thanh toán là {amount_due:,} VNĐ.\n\n"
         f"Kính mong Quý cư dân sớm hoàn tất chuyển khoản hoặc quét mã VietQR Napas247 đính kèm để hệ thống gạch nợ tự động. "
         f"Nếu đã thanh toán, xin vui lòng bỏ qua thông báo này.\n\n"
-        f"Trân trọng cảm ơn sự phối hợp của Quý cư dân!\nBan Quản Lý Tòa Nhà Sunshine Homes."
+        f"Trân trọng cảm ơn sự phối hợp của Quý cư dân!\nBan Quản Lý Tòa Nhà Dwell."
     )
-    sms_body = f"[Sunshine Homes] Nhac no: Khoan phi phong da qua han {days_overdue} ngay, so tien {amount_due:,}d. Quy khach vui long chuyen khoan VietQR hoac lien he hotline 19008899."
+    sms_body = f"[Dwell] Nhac no: Khoan phi phong da qua han {days_overdue} ngay, so tien {amount_due:,}d. Quy khach vui long chuyen khoan VietQR hoac lien he hotline 19008899."
 
     return {
         "alert_id": alert.id,

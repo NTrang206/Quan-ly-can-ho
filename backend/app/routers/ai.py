@@ -40,7 +40,8 @@ from app.services.ai_service import (
     summarize_contract_text,
     generate_alert_draft,
     generate_rag_answer,
-    generate_text
+    generate_text,
+    generate_ai_chat_answer
 )
 
 
@@ -284,105 +285,40 @@ def seed_knowledge_endpoint(db: Session = Depends(get_db)):
 
 
 # =========================================================
-# CHATBOT RAG (Hỗ trợ cả /chat và /rag-chat)
+# CHATBOT TRỢ LÝ AI (Hỗ trợ cả /chat và /rag-chat - KHÔNG TRUY CẬP CƠ SỞ DỮ LIỆU)
 # =========================================================
 @router.post("/chat")
 @router.post("/rag-chat")
 def rag_chat(
-    data: RagQuestionRequest,
-    db: Session = Depends(get_db)
+    data: RagQuestionRequest
 ):
     question = data.question.strip()
     if len(question) < 2:
         raise HTTPException(status_code=400, detail="Câu hỏi quá ngắn")
 
-    query_vector = None
-    try:
-        query_vector = create_embedding(question)
-    except Exception:
-        # Nếu không gọi được Google Gemini API embedding (mạng/key), dùng dummy vector
-        query_vector = [0.01] * 768
-
-    is_sqlite = db.bind.dialect.name == "sqlite"
-    contexts = []
-    sources = []
-
-    matched_rows = False
-    if not is_sqlite:
-        try:
-            distance = DocumentChunk.embedding_vector.cosine_distance(query_vector)
-            rows = (
-                db.query(DocumentChunk, distance.label("distance"))
-                .order_by(distance)
-                .limit(data.top_k)
-                .all()
-            )
-            for chunk, chunk_distance in rows:
-                similarity = 1 - float(chunk_distance)
-                if similarity < 0.50:
-                    continue
-                contexts.append({
-                    "document_name": chunk.document_name,
-                    "chunk_index": chunk.chunk_index,
-                    "content": chunk.content,
-                })
-                sources.append({
-                    "document_name": chunk.document_name,
-                    "chunk_index": chunk.chunk_index,
-                    "similarity": round(similarity, 4),
-                })
-            matched_rows = True
-        except Exception:
-            matched_rows = False
-
-    if is_sqlite or not matched_rows:
-        all_chunks = db.query(DocumentChunk).all()
-        scored_chunks = []
-        for ch in all_chunks:
-            sim = 0.85
-            # Nếu có từ khóa khớp trong nội dung thì tăng điểm
-            q_words = [w.lower() for w in question.split() if len(w) > 1]
-            match_count = sum(1 for w in q_words if w in ch.content.lower())
-            if match_count > 0:
-                sim = min(0.99, 0.65 + match_count * 0.1)
-            scored_chunks.append((ch, sim))
-        scored_chunks.sort(key=lambda x: x[1], reverse=True)
-        top_chunks = scored_chunks[:data.top_k]
-
-        for chunk, similarity in top_chunks:
-            contexts.append({
-                "document_name": chunk.document_name,
-                "chunk_index": chunk.chunk_index,
-                "content": chunk.content,
-            })
-            sources.append({
-                "document_name": chunk.document_name,
-                "chunk_index": chunk.chunk_index,
-                "similarity": round(similarity, 4),
-            })
-
-    # NO CONTEXT -> NO ANSWER
-    if not contexts:
+    # Kiểm tra an toàn bảo mật: Người dùng yêu cầu truy xuất trực tiếp CSDL
+    q_lower = question.lower()
+    db_security_keywords = [
+        "truy cập csdl", "truy cap csdl", "vào csdl", "vào cơ sở dữ liệu",
+        "dump database", "query db", "select * from", "lấy mật khẩu trong csdl",
+        "danh sách mật khẩu", "database credentials", "xem csdl"
+    ]
+    if any(k in q_lower for k in db_security_keywords):
         return {
-            "answer": "Nội quy không đề cập đến vấn đề này. Vui lòng liên hệ nhân viên hỗ trợ tòa nhà.",
+            "answer": "Vì lý do an toàn bảo mật và bảo vệ quyền riêng tư theo tiêu chuẩn an ninh mạng, Trợ lý AI tuyệt đối không có quyền và không được phép truy cập vào cơ sở dữ liệu (CSDL) nội bộ của hệ thống. Bạn vui lòng tra cứu thông tin trên tài khoản cá nhân hoặc liên hệ trực tiếp Ban Quản Lý tòa nhà nhé!",
             "sources": [],
             "citations": [],
-            "confidence_score": 0.5,
+            "confidence_score": 1.0,
         }
 
-    try:
-        answer = generate_rag_answer(question, contexts)
-    except Exception:
-        # Fallback câu trả lời trích xuất trực tiếp từ điều khoản phù hợp nhất
-        primary_chunk = contexts[0]["content"]
-        answer = f"Theo {contexts[0]['document_name']} (Mục {contexts[0]['chunk_index']}): {primary_chunk}"
+    # Trợ lý AI thông minh giải đáp toàn diện mọi câu hỏi mà không truy cập CSDL
+    answer = generate_ai_chat_answer(question)
 
-    citations = [c["content"] for c in contexts]
     return {
         "answer": answer,
-        "sources": sources,
-        "citations": citations,
-        "confidence_score": 0.95,
+        "sources": [],
+        "citations": [],
+        "confidence_score": 0.98,
     }
 
 

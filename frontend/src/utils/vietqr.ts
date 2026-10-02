@@ -26,6 +26,6 @@ export const DEFAULT_BUILDING_BANK_ACCOUNT = {
   bankName: 'MBBank (Ngân hàng Quân Đội)',
   bankCode: 'MB',
   accountNo: '09128889999',
-  accountName: 'BQL SUNSHINE HOMES',
+  accountName: 'BQL DWELL LIVING',
   branch: 'Chi nhánh Tràng An - Hà Nội',
 };

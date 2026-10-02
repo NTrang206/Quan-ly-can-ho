@@ -84,7 +84,7 @@ export const BuildingLookupModal: React.FC<BuildingLookupModalProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm theo tên tòa nhà hoặc địa chỉ (vd: Sunshine Center, Cầu Giấy...)"
+              placeholder="Tìm kiếm theo tên tòa nhà hoặc địa chỉ (vd: Tòa Dwell, Cầu Giấy...)"
               className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
             {searchTerm && (

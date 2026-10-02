@@ -93,7 +93,7 @@ def restore_apartment_status(
 
 
 # =========================================================
-# ADMIN / STAFF TẠO PHIẾU
+# TẠO PHIẾU BẢO TRÌ (ADMIN / STAFF / TENANT)
 # =========================================================
 @router.post(
     "",
@@ -107,10 +107,37 @@ def create_maintenance_request(
     current_user: User = Depends(
         require_roles(
             "ADMIN",
-            "STAFF"
+            "STAFF",
+            "TENANT"
         )
     )
 ):
+
+    # -----------------------------------------------------
+    # Xác định vai trò người gọi
+    # -----------------------------------------------------
+    role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    is_tenant = role and role.role_code == "TENANT"
+
+    tenant = None
+    if is_tenant:
+        tenant = db.query(Tenant).filter(Tenant.user_id == current_user.id).first()
+        if tenant is None:
+            tenant = db.query(Tenant).filter(
+                (Tenant.phone == current_user.phone) | (Tenant.full_name == current_user.full_name)
+            ).first()
+
+        if tenant is not None:
+            data.tenant_id = tenant.id
+            if not data.reporter_name:
+                data.reporter_name = tenant.full_name
+            if not data.phone:
+                data.phone = tenant.phone
+
+    if not data.reporter_name:
+        data.reporter_name = current_user.full_name or "Cư dân"
+    if not data.phone:
+        data.phone = current_user.phone or "0900000000"
 
     # -----------------------------------------------------
     # 1. Kiểm tra Apartment
@@ -118,6 +145,16 @@ def create_maintenance_request(
     apartment = db.query(Apartment).filter(
         Apartment.id == data.apartment_id
     ).first()
+
+    if apartment is None and is_tenant and tenant is not None:
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == tenant.id,
+            Contract.status == "ACTIVE"
+        ).first()
+        if active_contract:
+            apartment = db.query(Apartment).filter(Apartment.id == active_contract.apartment_id).first()
+            if apartment:
+                data.apartment_id = apartment.id
 
     if apartment is None:
         raise HTTPException(
@@ -142,31 +179,35 @@ def create_maintenance_request(
     # -----------------------------------------------------
     if data.tenant_id is not None:
 
-        tenant = db.query(Tenant).filter(
-            Tenant.id == data.tenant_id
-        ).first()
+        if tenant is None or tenant.id != data.tenant_id:
+            tenant = db.query(Tenant).filter(
+                Tenant.id == data.tenant_id
+            ).first()
 
-        if tenant is None:
+        if tenant is None and not is_tenant:
             raise HTTPException(
                 status_code=404,
                 detail="Không tìm thấy khách thuê"
             )
 
-        # Tenant phải thuê đúng căn hộ này
-        active_contract = db.query(Contract).filter(
-            Contract.tenant_id == tenant.id,
-            Contract.apartment_id == apartment.id,
-            Contract.status == "ACTIVE"
-        ).first()
+        if tenant is not None:
+            active_contract = db.query(Contract).filter(
+                Contract.tenant_id == tenant.id,
+                Contract.apartment_id == apartment.id
+            ).first()
 
-        if active_contract is None:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Khách thuê không có hợp đồng "
-                    "ACTIVE tại căn hộ này"
-                )
-            )
+            if active_contract is None and is_tenant:
+                any_contract = db.query(Contract).filter(
+                    Contract.tenant_id == tenant.id
+                ).first()
+                if any_contract is None:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            "Khách thuê không có hợp đồng "
+                            "tại căn hộ này"
+                        )
+                    )
 
     # -----------------------------------------------------
     # 4. Tạo phiếu
@@ -425,19 +466,54 @@ def tenant_cancel_maintenance(
     response_model=list[MaintenanceResponse]
 )
 def get_maintenance_requests(
+    status: str | None = None,
+    priority: str | None = None,
+    apartment_id: int | None = None,
+    tenant_id: int | None = None,
     db: Session = Depends(get_db),
 
     current_user: User = Depends(
         require_roles(
             "ADMIN",
-            "STAFF"
+            "STAFF",
+            "ACCOUNTANT",
+            "TENANT"
         )
     )
 ):
+    query = db.query(MaintenanceRequest)
+
+    role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if role and role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(Tenant.user_id == current_user.id).first()
+        if tenant is None:
+            tenant = db.query(Tenant).filter(
+                (Tenant.phone == current_user.phone) | (Tenant.full_name == current_user.full_name)
+            ).first()
+
+        if tenant is not None:
+            tenant_contract_apts = [
+                c.apartment_id
+                for c in db.query(Contract).filter(Contract.tenant_id == tenant.id).all()
+            ]
+            query = query.filter(
+                (MaintenanceRequest.tenant_id == tenant.id)
+                | (MaintenanceRequest.apartment_id.in_(tenant_contract_apts))
+            )
+        else:
+            query = query.filter(MaintenanceRequest.tenant_id == -1)
+
+    if apartment_id:
+        query = query.filter(MaintenanceRequest.apartment_id == apartment_id)
+    if tenant_id:
+        query = query.filter(MaintenanceRequest.tenant_id == tenant_id)
+    if status:
+        query = query.filter(MaintenanceRequest.status == status)
+    if priority:
+        query = query.filter(MaintenanceRequest.priority == priority)
 
     return (
-        db.query(MaintenanceRequest)
-        .order_by(
+        query.order_by(
             MaintenanceRequest.created_at.desc()
         )
         .all()
@@ -660,7 +736,8 @@ def complete_maintenance(
     current_user: User = Depends(
         require_roles(
             "ADMIN",
-            "STAFF"
+            "STAFF",
+            "TENANT"
         )
     )
 ):
@@ -676,6 +753,25 @@ def complete_maintenance(
             status_code=404,
             detail="Không tìm thấy phiếu bảo trì"
         )
+
+    role = db.query(Role).filter(Role.id == current_user.role_id).first()
+    if role and role.role_code == "TENANT":
+        tenant = db.query(Tenant).filter(Tenant.user_id == current_user.id).first()
+        if tenant is None:
+            tenant = db.query(Tenant).filter(
+                (Tenant.phone == current_user.phone) | (Tenant.full_name == current_user.full_name)
+            ).first()
+
+        tenant_apt_ids = [
+            c.apartment_id
+            for c in db.query(Contract).filter(Contract.tenant_id == tenant.id).all()
+        ] if tenant else []
+
+        if not tenant or (maintenance.tenant_id != tenant.id and maintenance.apartment_id not in tenant_apt_ids):
+            raise HTTPException(
+                status_code=403,
+                detail="Bạn không có quyền nghiệm thu phiếu của căn hộ khác"
+            )
 
     if maintenance.status != "IN_PROGRESS":
         raise HTTPException(

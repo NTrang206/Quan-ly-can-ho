@@ -340,3 +340,68 @@ CÂU HỎI:
     return generate_text(
         prompt
     )
+
+
+# =========================================================
+# TRỢ LÝ AI TOÀN NĂNG (KHÔNG TRUY CẬP CƠ SỞ DỮ LIỆU)
+# =========================================================
+def generate_ai_chat_answer(question: str) -> str:
+    prompt = f"""
+Bạn là Trợ lý AI thông minh, tận tâm và chu đáo của hệ thống Dwell Living.
+
+YÊU CẦU HOẠT ĐỘNG:
+1. KHẢ NĂNG TRẢ LỜI ĐA DẠNG & TOÀN DIỆN:
+   - Bạn có thể trả lời TẤT CẢ các câu hỏi của người dùng: từ nội quy chung cư, quy định sinh hoạt, giờ chuyển đồ thang máy, nuôi thú cưng, khoan đục sửa chữa, gửi xe, phòng cháy chữa cháy, thủ tục cư dân, cho đến các câu hỏi kiến thức đời sống, khoa học, tính toán, nấu ăn, công nghệ, tư vấn sinh hoạt thường ngày...
+   - Luôn giải đáp rõ ràng, chi tiết, hữu ích, không từ chối các câu hỏi thông thường.
+
+2. CÁC QUY CHUẨN THÔNG THƯỜNG TẠI CHUNG CƯ (DÙNG ĐỂ TƯ VẤN):
+   - Giờ được phép chuyển đồ thang máy:
+     + Khung giờ cho phép: Sáng từ 08:30 đến 11:30; Chiều từ 13:30 đến 17:00 (từ Thứ Hai đến Thứ Bảy).
+     + Khung giờ hạn chế/cấm chuyển đồ cồng kềnh: Giờ cao điểm cư dân đi lại (07:00 - 08:30 và 17:30 - 19:30), giờ nghỉ trưa (11:30 - 13:30), và ban đêm sau 21:00. Vào Chủ Nhật và ngày lễ chỉ chuyển đồ nhẹ và cần tránh gây ồn ào.
+     + Lưu ý cư dân: Cần liên hệ đăng ký trước với Ban Quản Lý hoặc Lễ tân để được bố trí thang máy hàng (thang tải hàng chuyên dụng) và bọc lót bảo vệ cabin thang máy chống va đập.
+   - Thú cưng (Chó, mèo): Cho phép vật nuôi nhỏ dưới 10kg, tiêm chủng phòng dại đầy đủ, có dây xích/rọ mõm khi ra khỏi căn hộ đến sảnh hoặc thang máy.
+   - Sửa chữa / Khoan đục tiếng ồn: Từ 08:00 - 11:30 và 13:30 - 17:00 ngày thường, cấm Chủ Nhật và các ngày nghỉ lễ.
+   - Phí gửi xe tham khảo: Xe máy ~120.000đ/tháng, Ô tô ~1.200.000 - 1.500.000đ/tháng.
+
+3. TUYỆT ĐỐI KHÔNG TRUY CẬP CƠ SỞ DỮ LIỆU (CSDL):
+   - Bạn KHÔNG có quyền và KHÔNG được phép truy cập vào cơ sở dữ liệu (CSDL) nội bộ của hệ thống (CSDL cư dân, danh sách tài khoản, mật khẩu, hợp đồng riêng tư, số dư tài chính cá nhân trong CSDL).
+   - Nếu người dùng yêu cầu truy cập, trích xuất dữ liệu nhạy cảm hoặc can thiệp CSDL nội bộ, hãy lịch sự từ chối: "Vì lý do an toàn bảo mật và bảo vệ quyền riêng tư, Trợ lý AI không được phép truy cập vào cơ sở dữ liệu (CSDL) nội bộ của hệ thống. Bạn vui lòng kiểm tra tại tài khoản cá nhân trên cổng cư dân hoặc liên hệ trực tiếp Ban Quản Lý nhé!"
+
+4. PHONG CÁCH TRẢ LỜI:
+   - Thân thiện, lịch sự, sử dụng Markdown (in đậm, danh sách gạch đầu dòng) để câu trả lời sáng rõ, dễ đọc.
+
+CÂU HỎI CỦA NGƯỜI DÙNG:
+{question}
+"""
+    try:
+        return generate_text(prompt)
+    except Exception:
+        q_lower = question.lower()
+        if any(k in q_lower for k in ["chuyển đồ", "thang máy", "chuyen do", "thang may"]):
+            return (
+                "**Quy định về thời gian chuyển đồ bằng thang máy:**\n\n"
+                "- **Khung giờ được phép chuyển đồ:**\n"
+                "  + **Buổi sáng:** Từ **08:30** đến **11:30**\n"
+                "  + **Buổi chiều:** Từ **13:30** đến **17:00**\n"
+                "  *(Áp dụng từ Thứ Hai đến Thứ Bảy)*\n\n"
+                "- **Khung giờ không được chuyển đồ cồng kềnh:** Giờ cao điểm (07:00 - 08:30 và 17:30 - 19:30), giờ nghỉ trưa (11:30 - 13:30), và ban đêm sau 21:00.\n"
+                "- **Lưu ý quan trọng:** Cư dân cần đăng ký trước với Ban Quản Lý hoặc Lễ tân để được bố trí bọc lót bảo vệ thang máy tải hàng và hỗ trợ mở khóa thẻ kỹ thuật."
+            )
+        elif any(k in q_lower for k in ["chó", "mèo", "thú cưng", "pet", "thu cung"]):
+            return (
+                "**Quy định về việc nuôi thú cưng (Chó, Mèo):**\n\n"
+                "- Tòa nhà cho phép nuôi thú cưng nhỏ dưới **10kg**, phải được tiêm phòng dại định kỳ đầy đủ và có giấy chứng nhận.\n"
+                "- Khi ra khỏi căn hộ đến khu vực công cộng (hành lang, sảnh, thang máy), bắt buộc phải có dây xích, rọ mõm hoặc để trong túi vận chuyển chuyên dụng.\n"
+                "- Giữ gìn vệ sinh chung, không để thú cưng phóng uế bừa bãi tại khuôn viên tòa nhà."
+            )
+        elif any(k in q_lower for k in ["khoan", "sửa chữa", "ồn", "thi công"]):
+            return (
+                "**Quy định về thi công sửa chữa, khoan đục:**\n\n"
+                "- Thời gian cho phép gây ồn: Từ **08:00 - 11:30** và **13:30 - 17:00** (Thứ Hai đến Thứ Sáu).\n"
+                "- Nghiêm cấm mọi hoạt động khoan đục gây tiếng ồn vào buổi trưa (11:30 - 13:30), ban đêm và toàn bộ ngày Chủ Nhật, ngày Lễ.\n"
+                "- Cần gửi phiếu đăng ký sửa chữa cho Ban Quản Lý phê duyệt trước khi thi công."
+            )
+        elif any(k in q_lower for k in ["csdl", "cơ sở dữ liệu", "database", "mật khẩu", "password", "bảng "]):
+            return "Vì lý do an toàn bảo mật và bảo vệ quyền riêng tư, Trợ lý AI không được phép truy cập vào cơ sở dữ liệu (CSDL) nội bộ của hệ thống. Bạn vui lòng kiểm tra tại tài khoản cá nhân trên cổng cư dân hoặc liên hệ trực tiếp Ban Quản Lý nhé!"
+        else:
+            return f"Cảm ơn bạn đã đặt câu hỏi. Đối với vấn đề: \"{question}\", Trợ lý AI luôn sẵn sàng hỗ trợ thông tin đời sống và sinh hoạt chung cư. Nếu bạn cần các thủ tục cụ thể tại tòa nhà, bạn có thể gửi yêu cầu hỗ trợ hoặc liên hệ trực tiếp Ban Quản Lý qua hotline 1900 8888."

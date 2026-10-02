@@ -117,34 +117,22 @@ def seed_all():
             {
                 "id": 1,
                 "building_code": "BLD-01",
-                "name": "Sunshine Diamond Tower",
-                "address": "128 Nguyễn Thị Thập, P. Tân Hưng, Quận 7, TP.HCM",
-                "total_floors": 12,
-                "total_apartments": 48,
-                "status": "ACTIVE",
-            },
-            {
-                "id": 2,
-                "building_code": "BLD-02",
-                "name": "Sunshine Riverside Residence",
-                "address": "25 Mai Chí Thọ, P. An Phú, Quận 2, TP.HCM",
+                "name": "Dwell",
+                "address": "Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội",
                 "total_floors": 18,
                 "total_apartments": 72,
                 "status": "ACTIVE",
             },
-            {
-                "id": 3,
-                "building_code": "BLD-03",
-                "name": "Sunshine Sky Park",
-                "address": "88 Cầu Giấy, P. Dịch Vọng Hậu, Cầu Giấy, Hà Nội",
-                "total_floors": 15,
-                "total_apartments": 60,
-                "status": "ACTIVE",
-            },
         ]
         for b in buildings_data:
-            if not db.query(Building).filter(Building.building_code == b["building_code"]).first():
+            existing_bld = db.query(Building).filter(Building.building_code == b["building_code"]).first()
+            if not existing_bld:
                 db.add(Building(**b))
+            else:
+                existing_bld.name = b["name"]
+                existing_bld.address = b["address"]
+                existing_bld.total_floors = b["total_floors"]
+                existing_bld.total_apartments = b["total_apartments"]
         db.flush()
 
         # =========================================================
@@ -157,11 +145,11 @@ def seed_all():
             {"id": 4, "building_id": 1, "room_number": "P202", "floor": 2, "area_sqm": Decimal("85.0"), "price": Decimal("17500000"), "max_occupants": 4, "status": "OCCUPIED"},
             {"id": 5, "building_id": 1, "room_number": "P301", "floor": 3, "area_sqm": Decimal("60.0"), "price": Decimal("13000000"), "max_occupants": 2, "status": "RESERVED"},
             {"id": 6, "building_id": 1, "room_number": "P302", "floor": 3, "area_sqm": Decimal("95.0"), "price": Decimal("21000000"), "max_occupants": 4, "status": "MAINTENANCE"},
-            {"id": 7, "building_id": 2, "room_number": "A401", "floor": 4, "area_sqm": Decimal("65.0"), "price": Decimal("13500000"), "max_occupants": 3, "status": "AVAILABLE"},
-            {"id": 8, "building_id": 2, "room_number": "A402", "floor": 4, "area_sqm": Decimal("80.0"), "price": Decimal("16000000"), "max_occupants": 3, "status": "AVAILABLE"},
-            {"id": 9, "building_id": 2, "room_number": "A501", "floor": 5, "area_sqm": Decimal("110.0"), "price": Decimal("25000000"), "max_occupants": 5, "status": "OCCUPIED"},
-            {"id": 10, "building_id": 3, "room_number": "B601", "floor": 6, "area_sqm": Decimal("50.0"), "price": Decimal("9500000"), "max_occupants": 2, "status": "AVAILABLE"},
-            {"id": 11, "building_id": 3, "room_number": "B602", "floor": 6, "area_sqm": Decimal("75.0"), "price": Decimal("14500000"), "max_occupants": 3, "status": "AVAILABLE"},
+            {"id": 7, "building_id": 1, "room_number": "A401", "floor": 4, "area_sqm": Decimal("65.0"), "price": Decimal("13500000"), "max_occupants": 3, "status": "AVAILABLE"},
+            {"id": 8, "building_id": 1, "room_number": "A402", "floor": 4, "area_sqm": Decimal("80.0"), "price": Decimal("16000000"), "max_occupants": 3, "status": "AVAILABLE"},
+            {"id": 9, "building_id": 1, "room_number": "A501", "floor": 5, "area_sqm": Decimal("110.0"), "price": Decimal("25000000"), "max_occupants": 5, "status": "OCCUPIED"},
+            {"id": 10, "building_id": 1, "room_number": "B601", "floor": 6, "area_sqm": Decimal("50.0"), "price": Decimal("9500000"), "max_occupants": 2, "status": "AVAILABLE"},
+            {"id": 11, "building_id": 1, "room_number": "B602", "floor": 6, "area_sqm": Decimal("75.0"), "price": Decimal("14500000"), "max_occupants": 3, "status": "AVAILABLE"},
         ]
         for a in apartments_data:
             existing = db.query(Apartment).filter(Apartment.building_id == a["building_id"], Apartment.room_number == a["room_number"]).first()

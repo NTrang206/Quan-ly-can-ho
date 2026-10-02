@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Building2, BedDouble, Maximize2, MapPin, Calendar, CheckCircle2, 
   ArrowLeft, Sparkles, FileText, 
-  Wrench, AlertCircle, Phone, X, Bath
+  Wrench, AlertCircle, Phone, X, Bath, Lock,
+  Banknote, Compass, Layers, Sofa, Key
 } from 'lucide-react';
 import { useGetApartmentByIdQuery, useGetBuildingsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetContractsQuery } from '../modules/contracts/services/contractApi';
@@ -12,11 +13,12 @@ import { useCreateBookingMutation } from '../modules/bookings/services/bookingAp
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
+import { RealEstateFooter } from '../components/common/RealEstateFooter';
 
 export const ApartmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isStaff, isAdmin } = useAuth();
+  const { user, isStaff, isAdmin, isAuthenticated } = useAuth();
   const { showSuccessToast, showErrorToast } = useToast();
 
   const numId = id ? parseInt(id, 10) : 0;
@@ -28,6 +30,17 @@ export const ApartmentDetailPage: React.FC = () => {
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'DESCRIPTION' | 'SPECS' | 'AMENITIES'>('OVERVIEW');
+  const [showFullPhone, setShowFullPhone] = useState(false);
+
+  const formatPriceVND = (price: number) => {
+    if (price >= 1000000) {
+      const millions = price / 1000000;
+      return `${millions % 1 === 0 ? millions : millions.toFixed(1)} triệu/tháng`;
+    }
+    return `${price.toLocaleString('vi-VN')} đ/tháng`;
+  };
+
   const [bookingForm, setBookingForm] = useState({
     name: user?.fullName || '',
     phone: user?.phone || '',
@@ -76,6 +89,10 @@ export const ApartmentDetailPage: React.FC = () => {
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!bookingForm.name.trim() || !bookingForm.phone.trim()) {
+      showErrorToast('Vui lòng điền họ tên và số điện thoại liên hệ!');
+      return;
+    }
     try {
       await createBooking({
         apartmentId: apartment.id,
@@ -85,15 +102,16 @@ export const ApartmentDetailPage: React.FC = () => {
         roomNumber: apartment.roomNumber,
         buildingName: apartment.buildingName,
         monthlyPrice: apartment.price,
-        depositAmount: apartment.depositDefault,
+        depositAmount: apartment.depositDefault || 0,
         checkInDate: bookingForm.date,
-        notes: `[Khung giờ: ${bookingForm.time}] ${bookingForm.notes}`
+        notes: `[Khung giờ hẹn xem: ${bookingForm.time || '14:00'}] ${bookingForm.notes}`
       }).unwrap();
 
-      showSuccessToast('Đã đặt lịch xem phòng thành công! Đội ngũ tư vấn sẽ liên hệ sớm nhất.');
+      showSuccessToast(`Đã đặt lịch hẹn xem căn ${apartment.roomNumber} lúc ${bookingForm.time || '14:00'} ngày ${formatDate(bookingForm.date)} thành công! Ban quản lý Dwell Living sẽ liên hệ xác nhận.`);
       setIsBookingModalOpen(false);
-    } catch {
-      showErrorToast('Không thể đặt lịch. Vui lòng thử lại!');
+    } catch (err: any) {
+      const errorMsg = err?.data?.detail || err?.data?.message || 'Không thể đặt lịch. Vui lòng thử lại!';
+      showErrorToast(errorMsg);
     }
   };
 
@@ -238,13 +256,28 @@ export const ApartmentDetailPage: React.FC = () => {
             {/* Actions */}
             <div className="space-y-2">
               {apartment.status === 'AVAILABLE' ? (
-                <button
-                  onClick={() => setIsBookingModalOpen(true)}
-                  className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-600/20 transition-all flex items-center justify-center space-x-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Đặt Lịch Xem Căn Hộ Này</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        showErrorToast('Vui lòng đăng nhập để tiến hành đặt lịch thuê căn hộ!');
+                        navigate(`/login?redirect=${encodeURIComponent(`/apartments/${apartment.id}`)}`);
+                        return;
+                      }
+                      setIsBookingModalOpen(true);
+                    }}
+                    className="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-600/20 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Đặt Lịch Thuê Căn Hộ Này</span>
+                  </button>
+                  {!isAuthenticated && (
+                    <p className="text-[11px] text-center text-slate-500 mt-1 flex items-center justify-center gap-1">
+                      <Lock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Cần đăng nhập trước khi gửi yêu cầu thuê</span>
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center text-xs text-amber-800 font-medium">
                   Căn hộ hiện đang có hợp đồng thuê hoạt động
@@ -268,15 +301,176 @@ export const ApartmentDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Info (2 cols) */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Description & Overview */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h2 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-sky-600" />
-                <span>Mô Tả Không Gian Sống</span>
+            {/* Navigation Tabs (Image 2 style) */}
+            <div className="flex items-center space-x-6 border-b border-slate-200 pb-1 text-xs font-bold text-slate-500">
+              <button
+                type="button"
+                onClick={() => setActiveTab('OVERVIEW')}
+                className={`pb-2 transition-colors relative ${
+                  activeTab === 'OVERVIEW'
+                    ? 'text-[#1d4ed8] font-extrabold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#1d4ed8]'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                Tổng quan
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('DESCRIPTION')}
+                className={`pb-2 transition-colors relative ${
+                  activeTab === 'DESCRIPTION'
+                    ? 'text-[#1d4ed8] font-extrabold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#1d4ed8]'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                Mô tả
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('SPECS')}
+                className={`pb-2 transition-colors relative ${
+                  activeTab === 'SPECS'
+                    ? 'text-[#1d4ed8] font-extrabold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#1d4ed8]'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                Đặc điểm
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('AMENITIES')}
+                className={`pb-2 transition-colors relative ${
+                  activeTab === 'AMENITIES'
+                    ? 'text-[#1d4ed8] font-extrabold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#1d4ed8]'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                Tiện nghi & Bản đồ
+              </button>
+            </div>
+
+            {/* Comprehensive Description Card (Image 2 format) */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                  Thông tin mô tả Căn hộ Dwell Living - {building?.name || apartment.buildingName} ({building?.address || 'Dwell, Hà Nội'})
+                </h2>
+                <p className="text-xs sm:text-[13px] text-slate-700 font-semibold mt-1.5 leading-relaxed">
+                  Căn hộ P.{apartment.roomNumber}. Chuỗi căn hộ cho thuê Dwell Living ({building?.name || apartment.buildingName}), {apartment.bedrooms} phòng ngủ full đồ
+                </p>
+              </div>
+
+              {/* Bullet details */}
+              <div className="space-y-1.5 text-xs sm:text-[13px] text-slate-700 leading-relaxed">
+                <p>- Diện tích: <strong>{apartment.areaSqm}m²</strong> - đầy đủ đồ cao cấp, thiết kế hiện đại.</p>
+                <p>- Gồm: <strong>{apartment.bedrooms} ngủ, {apartment.bathrooms} WC, 1 khách, 1 bếp</strong>.</p>
+                <p>- full tiện ích của toà nhà (thang máy thẻ từ, an ninh bảo vệ 24/7, hầm để xe rộng rãi, rác tầng sạch sẽ).</p>
+                <p>- Phù hợp hộ gia đình vs chuyên gia nước ngoài, nhân viên văn phòng ở dài hạn.</p>
+                <p>- Chỉ với: <strong className="text-brand-700 text-sm">{formatPriceVND(apartment.price)}</strong> (bao phí quản lý internet tốc độ cao).</p>
+                <p>- Tiền đặt cọc: <strong>{formatCurrency(apartment.depositDefault)}</strong> (hoàn lại 100% khi thanh lý hợp đồng).</p>
+              </div>
+
+              {/* Contact line with Toggle Phone button */}
+              <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-slate-800">
+                <span>
+                  Liên hệ: <strong>{building?.managerName || 'Hoàng Khánh Ly (Quản lý Dwell)'}</strong> -{' '}
+                  <span className="font-semibold text-slate-700 tracking-wide">
+                    {showFullPhone ? (building?.contactPhone || '0912.888.999') : '0912.888.***'}
+                  </span>
+                </span>
+                {!showFullPhone ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullPhone(true)}
+                    className="px-3.5 py-1 bg-[#00a884] hover:bg-[#008f70] text-white text-xs font-bold rounded-full transition-all shadow-2xs"
+                  >
+                    Hiện số
+                  </button>
+                ) : (
+                  <a
+                    href={`tel:${building?.contactPhone || '0912888999'}`}
+                    className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-full transition-all flex items-center gap-1 shadow-2xs"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Gọi điện</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Real Estate Specifications (Đặc điểm bất động sản - Image 2 table) */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <h2 className="text-base font-bold text-slate-900 mb-4">
+                Đặc điểm bất động sản
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                {apartment.description || 'Căn hộ thuộc chuỗi không gian Dwell Living cao cấp, được thiết kế tối ưu hóa ánh sáng tự nhiên và công năng sử dụng. Đầy đủ tiện nghi nội thất cao cấp thông minh, khóa vân tay chống trộm, hệ thống điều hòa Inverter tiết kiệm điện năng và view panorama tuyệt đẹp.'}
-              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3.5 gap-x-8 text-xs sm:text-[13px]">
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Banknote className="w-4 h-4 text-slate-400" />
+                    <span>Mức giá</span>
+                  </div>
+                  <span className="font-bold text-slate-800">{formatPriceVND(apartment.price)}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Maximize2 className="w-4 h-4 text-slate-400" />
+                    <span>Diện tích</span>
+                  </div>
+                  <span className="font-bold text-slate-800">{apartment.areaSqm} m²</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <BedDouble className="w-4 h-4 text-slate-400" />
+                    <span>Số phòng ngủ</span>
+                  </div>
+                  <span className="font-bold text-slate-800">{apartment.bedrooms} phòng</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Bath className="w-4 h-4 text-slate-400" />
+                    <span>Số phòng WC</span>
+                  </div>
+                  <span className="font-bold text-slate-800">{apartment.bathrooms} phòng</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Layers className="w-4 h-4 text-slate-400" />
+                    <span>Tầng số</span>
+                  </div>
+                  <span className="font-bold text-slate-800">Tầng {apartment.floor}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Compass className="w-4 h-4 text-slate-400" />
+                    <span>Hướng ban công</span>
+                  </div>
+                  <span className="font-bold text-slate-800">{apartment.viewDirection || 'Đông Nam'}</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Sofa className="w-4 h-4 text-slate-400" />
+                    <span>Nội thất</span>
+                  </div>
+                  <span className="font-bold text-slate-800">Đầy đủ (Full nội thất)</span>
+                </div>
+
+                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Key className="w-4 h-4 text-slate-400" />
+                    <span>Tình trạng phòng</span>
+                  </div>
+                  <span className="font-bold text-emerald-700">
+                    {apartment.status === 'AVAILABLE' ? 'Sẵn sàng dọn vào' : 'Đang cho thuê'}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Amenities & Features */}
@@ -407,6 +601,9 @@ export const ApartmentDetailPage: React.FC = () => {
         </div>
       </main>
 
+      {/* Real Estate Footer (Image 3 - Thư Viện Nhà Đất format) */}
+      <RealEstateFooter />
+
       {/* Booking Schedule Modal */}
       {isBookingModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -432,25 +629,26 @@ export const ApartmentDetailPage: React.FC = () => {
                   required
                   value={bookingForm.name}
                   onChange={(e) => setBookingForm({ ...bookingForm, name: e.target.value })}
-                  placeholder="Nguyễn Văn A"
+                  placeholder="Ví dụ: Lê Văn A"
                   className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại liên hệ *</label>
+                <input
+                  type="tel"
+                  required
+                  value={bookingForm.phone}
+                  onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                  placeholder="Ví dụ: 0978293173"
+                  className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Số điện thoại *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={bookingForm.phone}
-                    onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
-                    placeholder="0912..."
-                    className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày hẹn *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Ngày hẹn xem *</label>
                   <input
                     type="date"
                     required
@@ -458,6 +656,39 @@ export const ApartmentDetailPage: React.FC = () => {
                     onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                     className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Giờ hẹn xem phòng *</label>
+                  <input
+                    type="time"
+                    required
+                    value={bookingForm.time}
+                    onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
+                    className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Quick time slots */}
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1.5">
+                  Khung giờ xem thuận tiện (bấm chọn nhanh):
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {['09:00', '10:30', '14:00', '15:30', '17:00', '18:30'].map((slot) => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => setBookingForm({ ...bookingForm, time: slot })}
+                      className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-colors ${
+                        bookingForm.time === slot
+                          ? 'bg-sky-600 text-white font-bold shadow-2xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {slot}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -467,6 +698,7 @@ export const ApartmentDetailPage: React.FC = () => {
                   rows={2}
                   value={bookingForm.notes}
                   onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                  placeholder="Ghi chú yêu cầu đặc biệt hoặc thời gian thuận tiện nhất..."
                   className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
                 />
               </div>

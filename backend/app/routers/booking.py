@@ -75,10 +75,10 @@ def create_booking(
             detail="Căn hộ không tồn tại"
         )
 
-    if apartment.status != "AVAILABLE":
+    if apartment.status == "MAINTENANCE":
         raise HTTPException(
             status_code=400,
-            detail="Căn hộ hiện không còn trống"
+            detail="Căn hộ hiện đang trong thời gian bảo trì kỹ thuật, vui lòng chọn căn khác"
         )
 
     booking_code = generate_booking_code(db)
@@ -98,8 +98,9 @@ def create_booking(
     try:
         db.add(booking)
 
-        # Căn hộ chuyển sang giữ chỗ
-        apartment.status = "RESERVED"
+        # Nếu căn hộ đang trống thì chuyển sang giữ chỗ
+        if apartment.status == "AVAILABLE":
+            apartment.status = "RESERVED"
 
         db.commit()
         db.refresh(booking)

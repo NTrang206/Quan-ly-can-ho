@@ -427,10 +427,18 @@ def get_available_apartments(
     response_model=list[ApartmentResponse]
 )
 def get_apartments(
+    building_id: int | None = Query(default=None),
+    status: str | None = Query(default=None),
     db: Session = Depends(get_db)
 ):
+    query = db.query(Apartment)
+    if building_id is not None:
+        query = query.filter(Apartment.building_id == building_id)
+    if status is not None and status.strip():
+        query = query.filter(Apartment.status == status.strip().upper())
+
     return (
-        db.query(Apartment)
+        query
         .order_by(
             Apartment.id.asc()
         )

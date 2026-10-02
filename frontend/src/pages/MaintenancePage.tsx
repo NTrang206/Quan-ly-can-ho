@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Wrench,
   Plus,
@@ -32,9 +33,26 @@ import { useToast } from '../hooks/useToast';
 import { parseApiError } from '../utils/errorHandler';
 
 export const MaintenancePage: React.FC = () => {
-  const [selectedStatus, setSelectedStatus] = useState<MaintenanceStatus | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStatus = (searchParams.get('status') as MaintenanceStatus) || undefined;
+  const [selectedStatus, setSelectedStatus] = useState<MaintenanceStatus | undefined>(urlStatus);
   const [selectedPriority, setSelectedPriority] = useState<MaintenancePriority | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Sync state when URL search params change
+  useEffect(() => {
+    const s = (searchParams.get('status') as MaintenanceStatus) || undefined;
+    setSelectedStatus(s);
+  }, [searchParams]);
+
+  const handleSelectStatus = (stId?: MaintenanceStatus) => {
+    setSelectedStatus(stId);
+    if (stId) {
+      setSearchParams({ status: stId });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -105,7 +123,7 @@ export const MaintenancePage: React.FC = () => {
       await createTicket({
         apartmentId: Number(newAptId),
         roomNumber: apt?.roomNumber || 'P101',
-        buildingName: apt?.buildingName || 'Sunshine Diamond Tower',
+        buildingName: apt?.buildingName || 'Dwell',
         reporterName: newReporter.trim(),
         phone: newPhone.trim(),
         issueDescription: newDesc.trim(),
@@ -212,6 +230,12 @@ export const MaintenancePage: React.FC = () => {
   };
 
   const filteredTickets = tickets.filter((t) => {
+    if (selectedStatus && t.status !== selectedStatus) {
+      return false;
+    }
+    if (selectedPriority && t.priority !== selectedPriority) {
+      return false;
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -257,19 +281,35 @@ export const MaintenancePage: React.FC = () => {
             { id: 'PENDING', label: 'Chờ tiếp nhận' },
             { id: 'IN_PROGRESS', label: 'Đang xử lý' },
             { id: 'COMPLETED', label: 'Đã hoàn tất' },
-          ].map((st) => (
-            <button
-              key={st.label}
-              onClick={() => setSelectedStatus(st.id as any)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                selectedStatus === st.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-              }`}
-            >
-              {st.label}
-            </button>
-          ))}
+          ].map((st) => {
+            const count = st.id
+              ? tickets.filter((t) => t.status === st.id).length
+              : tickets.length;
+            const isActive = selectedStatus === st.id;
+
+            return (
+              <button
+                key={st.label}
+                onClick={() => handleSelectStatus(st.id as any)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                <span>{st.label}</span>
+                <span
+                  className={`text-[10.5px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="relative w-full md:w-72">
@@ -285,8 +325,43 @@ export const MaintenancePage: React.FC = () => {
       </div>
 
       {/* Tickets List View */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredTickets.map((t) => (
+      {filteredTickets.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-3">
+            <Wrench className="w-6 h-6" />
+          </div>
+          <h4 className="text-sm font-bold text-slate-900">
+            Không có phiếu báo hỏng nào ở trạng thái này
+          </h4>
+          <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+            {selectedStatus ? (
+              <>
+                Hiện tại không có phiếu nào đang ở trạng thái{' '}
+                <strong className="text-slate-700">
+                  {selectedStatus === 'PENDING'
+                    ? 'Chờ tiếp nhận'
+                    : selectedStatus === 'IN_PROGRESS'
+                    ? 'Đang xử lý'
+                    : 'Đã hoàn tất'}
+                </strong>
+                .
+              </>
+            ) : (
+              'Chưa có phiếu báo hỏng nào trong hệ thống.'
+            )}
+          </p>
+          {selectedStatus && (
+            <button
+              onClick={() => handleSelectStatus(undefined)}
+              className="mt-4 px-3.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            >
+              Xem tất cả tiến độ
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredTickets.map((t) => (
           <div
             key={t.id}
             className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-soft hover:shadow-soft-lg transition-all duration-200 flex flex-col justify-between space-y-4"
@@ -403,6 +478,7 @@ export const MaintenancePage: React.FC = () => {
           </div>
         ))}
       </div>
+      )}
 
       {/* Modal Assign Technician */}
       {assignTicket && (

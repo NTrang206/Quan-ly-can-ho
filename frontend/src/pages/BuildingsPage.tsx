@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import {
   Building,
+  Building2,
+  MapPin,
+  User,
+  ShieldCheck,
+  Phone,
   Plus,
   Search,
   Filter,
@@ -14,6 +19,8 @@ import {
   MoreVertical,
   ExternalLink,
   AlertCircle,
+  Sparkles,
+  Camera,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -28,7 +35,7 @@ import {
   useCreateApartmentMutation,
 } from '../modules/buildings/services/buildingApi';
 import { ApartmentStatus, IApartment } from '../types';
-import { formatCurrency, formatCompactCurrency } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 import { useToast } from '../hooks/useToast';
 import { useNavigate } from 'react-router-dom';
 import { parseApiError } from '../utils/errorHandler';
@@ -40,6 +47,8 @@ export const BuildingsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedApartmentForInfo, setSelectedApartmentForInfo] = useState<IApartment | null>(null);
+  const [isBuildingInfoModalOpen, setIsBuildingInfoModalOpen] = useState(false);
 
   // Form error state
   const [aptErrors, setAptErrors] = useState<Record<string, string>>({});
@@ -65,7 +74,44 @@ export const BuildingsPage: React.FC = () => {
   const toast = useToast();
   const navigate = useNavigate();
 
+  const handleOpenBuildingInfo = (apt: IApartment) => {
+    setSelectedApartmentForInfo(apt);
+    setIsBuildingInfoModalOpen(true);
+  };
+
+  const activeBuilding =
+    buildings.find((b) => b.id === (selectedApartmentForInfo?.buildingId || 1)) ||
+    buildings[0] || {
+      id: 1,
+      name: 'Dwell',
+      code: 'BLD-01',
+      address: 'Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội',
+      totalFloors: 18,
+      totalApartments: 72,
+      occupiedCount: 57,
+      availableCount: 15,
+      managerName: 'Hoàng Khánh Ly',
+      contactPhone: '0904.123.456',
+      status: 'ACTIVE',
+    };
+
+  const buildingApartments = apartments.filter(
+    (a) => a.buildingId === (activeBuilding?.id || 1)
+  );
+  const totalAptsCount = buildingApartments.length || activeBuilding?.totalApartments || 21;
+  const availableAptsCount = buildingApartments.filter((a) => a.status === 'AVAILABLE').length;
+  const occupiedAptsCount = buildingApartments.filter((a) => a.status === 'OCCUPIED').length;
+  const reservedAptsCount = buildingApartments.filter((a) => a.status === 'RESERVED').length;
+  const occupiedTotal = occupiedAptsCount + reservedAptsCount;
+  const occupancyRate = totalAptsCount > 0 ? Math.round((occupiedTotal / totalAptsCount) * 100) : 0;
+
   const filteredApartments = apartments.filter((a) => {
+    if (selectedBuildingId && a.buildingId !== selectedBuildingId) {
+      return false;
+    }
+    if (selectedStatus && a.status !== selectedStatus) {
+      return false;
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -118,7 +164,7 @@ export const BuildingsPage: React.FC = () => {
       await createApartment({
         roomNumber: newRoomNumber.trim(),
         buildingId: Number(newBuildingId),
-        buildingName: selectedB?.name || 'Sunshine Tower A',
+        buildingName: selectedB?.name || 'Dwell',
         floor: Number(newFloor),
         areaSqm: Number(newArea),
         price: Number(newPrice),
@@ -166,7 +212,7 @@ export const BuildingsPage: React.FC = () => {
             Quản Lý Tòa Nhà & Căn Hộ
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Kiểm tra trạng thái phòng, diện tích và quản lý danh mục tài sản căn hộ.
+            Tòa nhà Dwell • Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội
           </p>
         </div>
 
@@ -178,41 +224,6 @@ export const BuildingsPage: React.FC = () => {
         >
           Thêm Căn Hộ Mới
         </Button>
-      </div>
-
-      {/* Buildings Overview Tabs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {buildings.map((b) => {
-          const isSelected = selectedBuildingId === b.id;
-          return (
-            <div
-              key={b.id}
-              onClick={() => {
-                setSelectedBuildingId(isSelected ? undefined : b.id);
-                setCurrentPage(1);
-              }}
-              className={`p-3.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                isSelected
-                  ? 'bg-brand-50/60 border-brand-500 shadow-xs ring-1 ring-brand-500'
-                  : 'bg-white border-slate-200 hover:border-slate-300 shadow-xs'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-900">{b.name}</span>
-                <Badge
-                  status="AVAILABLE"
-                  label={`${b.availableCount} trống`}
-                  size="sm"
-                />
-              </div>
-              <div className="text-xs text-slate-500 truncate">{b.address}</div>
-              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">{b.totalFloors} Tầng • {b.totalApartments} Căn</span>
-                <span className="font-semibold text-brand-700">{formatCompactCurrency(b.monthlyRevenueEstimate)}</span>
-              </div>
-            </div>
-          );
-        })}
       </div>
 
       {/* Filters & Search Toolbar */}
@@ -266,7 +277,11 @@ export const BuildingsPage: React.FC = () => {
             className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-all duration-200 flex flex-col justify-between"
           >
             {/* Image & Badges */}
-            <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 group">
+            <div
+              className="relative aspect-[16/10] overflow-hidden bg-slate-100 group cursor-pointer"
+              onClick={() => handleOpenBuildingInfo(apt)}
+              title="Nhấp để xem thông tin tòa nhà"
+            >
               <img
                 src={apt.imageUrl}
                 onError={(e) => {
@@ -277,10 +292,16 @@ export const BuildingsPage: React.FC = () => {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />
-              <div className="absolute top-2.5 left-2.5">
+              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors flex items-center justify-center">
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-xs text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-slate-200">
+                  <Building2 className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Xem thông tin tòa nhà</span>
+                </span>
+              </div>
+              <div className="absolute top-2.5 left-2.5 z-10">
                 <Badge status={apt.status} size="sm" />
               </div>
-              <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 bg-slate-900/80 backdrop-blur rounded text-white font-bold text-xs">
+              <div className="absolute bottom-2.5 right-2.5 z-10 px-2 py-0.5 bg-slate-900/80 backdrop-blur rounded text-white font-bold text-xs">
                 {formatCurrency(apt.price)}/th
               </div>
             </div>
@@ -308,28 +329,6 @@ export const BuildingsPage: React.FC = () => {
                     <strong className="text-slate-800 text-[11px]">Tầng {apt.floor}</strong>
                   </div>
                 </div>
-              </div>
-
-              {/* Status Action Switcher */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                <select
-                  value={apt.status}
-                  onChange={(e) => handleStatusChange(apt.id, e.target.value as ApartmentStatus)}
-                  className="bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-[11px] font-semibold px-2 py-1.5 text-slate-800 outline-none cursor-pointer"
-                >
-                  <option value="AVAILABLE">Trống (AVAILABLE)</option>
-                  <option value="RESERVED">Giữ chỗ (RESERVED)</option>
-                  <option value="OCCUPIED">Đang thuê (OCCUPIED)</option>
-                  <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
-                </select>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/admin/contracts?action=create&aptId=${apt.id}`)}
-                >
-                  Lập HĐ
-                </Button>
               </div>
             </div>
           </div>
@@ -469,6 +468,269 @@ export const BuildingsPage: React.FC = () => {
             />
           </div>
         </form>
+      </Modal>
+
+      {/* Modal View Building & Apartment Info */}
+      <Modal
+        isOpen={isBuildingInfoModalOpen}
+        onClose={() => setIsBuildingInfoModalOpen(false)}
+        title="Thông Tin Tòa Nhà & Căn Hộ"
+        subtitle={`Thông số quy hoạch, ban quản lý, tiện ích và chi tiết phòng ${selectedApartmentForInfo?.roomNumber || ''}`}
+        footer={
+          <div className="flex flex-wrap items-center justify-between w-full gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<ExternalLink className="w-3.5 h-3.5" />}
+              onClick={() => {
+                if (selectedApartmentForInfo) {
+                  navigate(`/apartments/${selectedApartmentForInfo.id}`);
+                }
+              }}
+            >
+              Trang Chi Tiết Căn Hộ
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  if (selectedApartmentForInfo) {
+                    navigate(`/admin/contracts?action=create&aptId=${selectedApartmentForInfo.id}`);
+                  }
+                }}
+              >
+                Lập Hợp Đồng Thuê
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setIsBuildingInfoModalOpen(false)}>
+                Đóng
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        {selectedApartmentForInfo && (
+          <div className="space-y-4">
+            {/* Building Banner / Overview Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-sky-50 via-sky-100/50 to-blue-50 border border-sky-200/90 relative overflow-hidden shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-sky-200 flex items-center justify-center shadow-xs shrink-0 select-none">
+                      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+                        <rect x="13" y="8" width="18" height="34" rx="2" fill="#0284c7" />
+                        <rect x="25" y="16" width="13" height="26" rx="1.5" fill="#38bdf8" />
+                        <rect x="16" y="12" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="21" y="12" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="16" y="18" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="21" y="18" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="16" y="24" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="21" y="24" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="16" y="30" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="21" y="30" width="3" height="3" rx="0.5" fill="white" />
+                        <rect x="28" y="20" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <rect x="32" y="20" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <rect x="28" y="26" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <rect x="32" y="26" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <rect x="28" y="32" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <rect x="32" y="32" width="2.5" height="2.5" rx="0.5" fill="#f0f9ff" />
+                        <path d="M9 42H39" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                        {activeBuilding?.name && activeBuilding.name !== 'Sunshine Diamond Tower'
+                          ? activeBuilding.name
+                          : 'Dwell'}
+                      </h3>
+                      <div className="text-[11px] text-brand-700 font-semibold">Mã khối: BLD-01 • Tiêu chuẩn Hạng A+</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600 mt-2 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-brand-600 shrink-0" />
+                    <span>{activeBuilding?.address || 'Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-2.5 py-1 bg-emerald-100/90 text-emerald-800 border border-emerald-300 text-xs font-semibold rounded-lg flex items-center gap-1 shadow-2xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Đang vận hành
+                  </span>
+                </div>
+              </div>
+
+              {/* Building Stats Bar */}
+              <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-sky-200/80 text-center">
+                <div className="bg-white/95 rounded-lg p-2 border border-sky-100 shadow-2xs">
+                  <div className="text-[10px] text-slate-500 font-semibold">Quy mô</div>
+                  <div className="text-sm font-bold text-slate-900">{activeBuilding?.totalFloors || 18} Tầng</div>
+                </div>
+                <div className="bg-white/95 rounded-lg p-2 border border-sky-100 shadow-2xs">
+                  <div className="text-[10px] text-slate-500 font-semibold">Tổng căn hộ</div>
+                  <div className="text-sm font-bold text-slate-900">{totalAptsCount} Căn</div>
+                </div>
+                <div className="bg-white/95 rounded-lg p-2 border border-sky-100 shadow-2xs">
+                  <div className="text-[10px] text-slate-500 font-semibold">Phòng trống</div>
+                  <div className="text-sm font-bold text-emerald-700">{availableAptsCount} Căn</div>
+                </div>
+                <div className="bg-white/95 rounded-lg p-2 border border-sky-100 shadow-2xs">
+                  <div className="text-[10px] text-slate-500 font-semibold">Tỷ lệ lấp đầy</div>
+                  <div className="text-sm font-bold text-brand-700">{occupancyRate}%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Management & Building Specs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <h5 className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Ban Quản Lý Tòa Nhà</span>
+                </h5>
+                <div className="space-y-1.5 text-slate-600">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Trưởng ban QL:</span>
+                    <strong className="text-slate-800">{activeBuilding?.managerName || 'Hoàng Khánh Ly'}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Hotline BQL:</span>
+                    <strong className="text-brand-600">{activeBuilding?.contactPhone || '0904.123.456'}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Email:</span>
+                    <strong className="text-slate-800">banquanly@dwell.vn</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Văn phòng BQL:</span>
+                    <span className="text-slate-700">Tầng 1, Sảnh Dwell</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                <h5 className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Tiện Ích & Tiêu Chuẩn Kỹ Thuật</span>
+                </h5>
+                <div className="space-y-1.5 text-slate-600">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>4 Thang máy Mitsubishi tốc độ cao, thẻ từ phân tầng</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>2 Hầm đỗ xe thông minh, nhận diện biển số tự động</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>PCCC tự động đạt chuẩn kiểm định CA Hà Nội</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span>Hệ thống camera CCTV & an ninh bảo vệ 24/7</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Currently Selected Apartment Details - Khớp với từng phòng */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-3.5">
+              {/* Header: Room Name, Floor, View & Status */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="px-3 py-1 bg-brand-50 text-brand-700 font-extrabold rounded-lg text-sm tracking-tight border border-brand-200/80">
+                    Căn hộ {selectedApartmentForInfo.roomNumber}
+                  </span>
+                  <span className="text-xs text-slate-600 font-semibold flex items-center gap-1.5">
+                    <span>Tầng {selectedApartmentForInfo.floor}</span>
+                    <span className="text-slate-300">•</span>
+                    <span>Hướng ban công: <strong className="text-slate-800">{selectedApartmentForInfo.viewDirection || 'Đông Nam'}</strong></span>
+                  </span>
+                </div>
+                <div>
+                  <Badge status={selectedApartmentForInfo.status} size="md" />
+                </div>
+              </div>
+
+              {/* Apartment Image & Quick Info Split */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-stretch">
+                {/* Real Photo */}
+                <div className="sm:col-span-5 relative rounded-xl overflow-hidden bg-slate-100 aspect-[16/10] sm:aspect-auto border border-slate-200/80 min-h-[145px]">
+                  <img
+                    src={selectedApartmentForInfo.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80'}
+                    alt={`Phòng ${selectedApartmentForInfo.roomNumber}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80';
+                    }}
+                  />
+                  <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
+                    <Camera className="w-3 h-3" />
+                    <span>Ảnh thực tế</span>
+                  </div>
+                </div>
+
+                {/* 4 Key Specs Cards */}
+                <div className="sm:col-span-7 grid grid-cols-2 gap-2">
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-center">
+                    <span className="text-[10.5px] text-slate-400 font-medium">Diện tích thông thủy</span>
+                    <strong className="text-slate-900 text-sm font-bold mt-0.5">{selectedApartmentForInfo.areaSqm} m²</strong>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-center">
+                    <span className="text-[10.5px] text-slate-400 font-medium">Cấu trúc phòng</span>
+                    <strong className="text-slate-900 text-sm font-bold mt-0.5">
+                      {selectedApartmentForInfo.bedrooms} PN • {selectedApartmentForInfo.bathrooms} WC
+                    </strong>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-center">
+                    <span className="text-[10.5px] text-slate-400 font-medium">Giá thuê niêm yết</span>
+                    <strong className="text-brand-600 text-sm font-bold mt-0.5">
+                      {formatCurrency(selectedApartmentForInfo.price)}/th
+                    </strong>
+                  </div>
+                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex flex-col justify-center">
+                    <span className="text-[10.5px] text-slate-400 font-medium">Tiền cọc giữ chỗ</span>
+                    <strong className="text-emerald-700 text-sm font-bold mt-0.5">
+                      {formatCurrency(selectedApartmentForInfo.depositDefault || selectedApartmentForInfo.price * 2)}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 text-xs text-slate-700 leading-relaxed">
+                <span className="font-semibold text-slate-900">Mô tả chi tiết: </span>
+                {selectedApartmentForInfo.description || `Căn hộ ${selectedApartmentForInfo.roomNumber} thiết kế hiện đại, đầy đủ nội thất cao cấp, sẵn sàng dọn vào ở.`}
+              </div>
+
+              {/* Amenities & Equipments */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Trang thiết bị & Tiện nghi phòng:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Điều hòa Inverter Daikin',
+                    'Tủ lạnh 2 cánh Panasonic',
+                    'Khóa cửa vân tay Yale',
+                    'Giường nệm cao cấp',
+                    'Bếp điện từ âm',
+                    'Bình nóng lạnh Ariston',
+                    'Tủ quần áo âm tường',
+                    'Wifi cáp quang tốc độ cao'
+                  ].map((amenity, idx) => (
+                    <span key={idx} className="px-2.5 py-1 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1 shadow-2xs">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <span>{amenity}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

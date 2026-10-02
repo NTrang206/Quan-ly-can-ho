@@ -58,6 +58,36 @@ class Apartment(Base):
         default="AVAILABLE"
     )
 
+    bedrooms = Column(
+        Integer,
+        default=1
+    )
+
+    bathrooms = Column(
+        Integer,
+        default=1
+    )
+
+    image_url = Column(
+        String(500),
+        nullable=True
+    )
+
+    description = Column(
+        String(1000),
+        nullable=True
+    )
+
+    deposit_default = Column(
+        Numeric(12, 2),
+        nullable=True
+    )
+
+    view_direction = Column(
+        String(100),
+        default="Đông Nam"
+    )
+
     created_at = Column(
         DateTime,
         default=datetime.now

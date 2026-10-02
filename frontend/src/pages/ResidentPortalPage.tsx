@@ -21,22 +21,25 @@ import {
   ArrowLeft,
   ChevronRight,
   CreditCard,
+  Printer,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { VietQRModal } from '../components/common/VietQRModal';
+import { ReceiptModal } from '../components/common/ReceiptModal';
 import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetContractsQuery, useRenewContractMutation } from '../modules/contracts/services/contractApi';
-import { useGetReceivablesQuery, useRecordPaymentMutation } from '../modules/finance/services/financeApi';
+import { useGetReceivablesQuery, useRecordPaymentMutation, useGetPaymentsQuery } from '../modules/finance/services/financeApi';
+import { IPayment } from '../types';
 import {
   useGetMaintenanceRequestsQuery,
   useCreateMaintenanceRequestMutation,
   useCompleteAndInspectMaintenanceMutation,
 } from '../modules/maintenance/services/maintenanceApi';
 import { useGetTenantsQuery, useAddRoommateMutation } from '../modules/tenants/services/tenantApi';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency, formatDate, numberToVietnameseWords } from '../utils/formatters';
 import { generateVietQRUrl, DEFAULT_BUILDING_BANK_ACCOUNT } from '../utils/vietqr';
 import { useToast } from '../hooks/useToast';
 import { useAuth } from '../hooks/useAuth';
@@ -52,6 +55,7 @@ export const ResidentPortalPage: React.FC = () => {
   const { data: apartments = [] } = useGetApartmentsQuery({});
   const { data: contracts = [] } = useGetContractsQuery({});
   const { data: receivables = [] } = useGetReceivablesQuery({});
+  const { data: payments = [] } = useGetPaymentsQuery({});
   const { data: maintenanceList = [] } = useGetMaintenanceRequestsQuery({});
   const { data: tenants = [] } = useGetTenantsQuery({});
 
@@ -89,7 +93,8 @@ export const ResidentPortalPage: React.FC = () => {
     || maintenanceList[0];
 
   // Tab State with URL query synchronization
-  const paramTab = searchParams.get('tab') as PortalTab | null;
+  const rawParamTab = searchParams.get('tab');
+  const paramTab = (rawParamTab === 'explore' ? 'apartment' : rawParamTab) as PortalTab | null;
   const validTabs: PortalTab[] = ['overview', 'apartment', 'contract', 'billing', 'maintenance'];
   const [activeTab, setActiveTabState] = useState<PortalTab>(
     paramTab && validTabs.includes(paramTab) ? paramTab : 'overview'
@@ -101,7 +106,8 @@ export const ResidentPortalPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const tab = searchParams.get('tab') as PortalTab | null;
+    const rawTab = searchParams.get('tab');
+    const tab = (rawTab === 'explore' ? 'apartment' : rawTab) as PortalTab | null;
     if (tab && validTabs.includes(tab) && tab !== activeTab) {
       setActiveTabState(tab);
     }
@@ -109,6 +115,7 @@ export const ResidentPortalPage: React.FC = () => {
 
   // Modals state
   const [isVietQROpen, setIsVietQROpen] = useState(false);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
   const [isAddRoommateOpen, setIsAddRoommateOpen] = useState(false);
   const [isInspectModalOpen, setIsInspectModalOpen] = useState(false);
@@ -144,7 +151,7 @@ export const ResidentPortalPage: React.FC = () => {
       await createMaintenance({
         apartmentId: activeApartment?.id || 1,
         roomNumber: activeApartment?.roomNumber || 'P101',
-        buildingName: activeApartment?.buildingName || 'Sunshine Diamond Tower',
+        buildingName: activeApartment?.buildingName || 'Dwell',
         reporterName: currentTenant.fullName,
         phone: currentTenant.phone,
         issueDescription: newDesc,
@@ -256,16 +263,28 @@ export const ResidentPortalPage: React.FC = () => {
         </div>
       )}
 
-      {/* 1. TOP WELCOME BANNER (Clean, balanced, no neon AI glows) */}
-      <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
-              <Home className="w-3.5 h-3.5 text-slate-600" />
+      {/* 1. TOP WELCOME BANNER (Enlarged with subtle blurred apartment complex background) */}
+      <div className="relative overflow-hidden bg-white p-6 sm:p-8 md:p-9 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm min-h-[175px] sm:min-h-[195px] flex flex-col justify-center">
+        {/* Background Image of Luxury Apartment Complex - Richer, Darker & Vivid */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
+          <img
+            src="/resident-banner-bg.jpg"
+            alt="Dwell Complex Background"
+            className="w-full h-full object-cover object-right md:object-center opacity-85"
+          />
+          {/* Soft protective gradient on the left, rich building view across center and right */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent" />
+        </div>
+
+        {/* Content Container */}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 bg-slate-100/90 backdrop-blur-xs text-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200/60 shadow-2xs">
+              <Home className="w-3.5 h-3.5 text-brand-600" />
               <span>Cổng Thông Tin Cư Dân</span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight drop-shadow-2xs">
               {isManagement ? (
                 <span>Xem trước Cổng Cư Dân: <span className="text-brand-700">{currentTenant.fullName}</span></span>
               ) : (
@@ -273,40 +292,26 @@ export const ResidentPortalPage: React.FC = () => {
               )}
             </h1>
 
-            <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-slate-600">
-              <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">
-                <Building className="w-3.5 h-3.5 text-slate-500" />
-                Căn hộ {activeApartment?.roomNumber || 'P101'} (Tầng {activeApartment?.floor || 1}, {activeApartment?.buildingName || 'Sunshine Diamond Tower'})
+            <div className="flex flex-wrap items-center gap-2.5 pt-0.5 text-xs text-slate-600">
+              <span className="flex items-center gap-1.5 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-slate-200 font-medium shadow-2xs">
+                <Building className="w-3.5 h-3.5 text-brand-600" />
+                Căn hộ {activeApartment?.roomNumber || 'P101'} (Tầng {activeApartment?.floor || 1}, {activeApartment?.buildingName || 'Dwell'})
               </span>
-              <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200 font-medium">
-                <FileSignature className="w-3.5 h-3.5 text-slate-500" />
+              <span className="flex items-center gap-1.5 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-slate-200 font-medium shadow-2xs">
+                <FileSignature className="w-3.5 h-3.5 text-brand-600" />
                 Hợp đồng: {activeContract?.contractCode || 'HD-2026-P101'} (Hạn: {formatDate(activeContract?.endDate || '2026-12-31')})
               </span>
             </div>
 
             {/* Unpaid alert */}
             {activeBill && activeBill.status !== 'PAID' && (
-              <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-900 px-3 py-1.5 rounded-xl text-xs font-semibold mt-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <div className="inline-flex items-center gap-2 bg-amber-50/95 backdrop-blur-xs border border-amber-200 text-amber-950 px-3.5 py-2 rounded-xl text-xs font-semibold mt-1 shadow-2xs">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>Hóa đơn cước phí Tháng {activeBill.billingMonth} chưa thanh toán (Hạn đóng: {formatDate(activeBill.dueDate)})</span>
               </div>
             )}
           </div>
 
-          {/* Quick Pay CTA */}
-          <div className="flex items-center gap-3 shrink-0">
-            <Button
-              variant="primary"
-              size="sm"
-              leftIcon={<QrCode className="w-4 h-4" />}
-              onClick={() => {
-                setActiveTab('billing');
-                setIsVietQROpen(true);
-              }}
-            >
-              Thanh Toán VietQR Ngay
-            </Button>
-          </div>
         </div>
       </div>
 
@@ -539,15 +544,19 @@ export const ResidentPortalPage: React.FC = () => {
             <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-                    <Building className="w-5 h-5" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-slate-200/90 shadow-xs shrink-0 bg-slate-100 ring-2 ring-white">
+                    <img
+                      src={activeApartment?.imageUrl || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&auto=format&fit=crop&q=80'}
+                      alt={activeApartment?.roomNumber || 'Căn hộ'}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-slate-900">
                       Căn Hộ {activeApartment?.roomNumber || 'P101'} – {activeApartment?.description || 'Căn hộ tiêu chuẩn'}
                     </h3>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      Tầng {activeApartment?.floor || 1} • {activeApartment?.buildingName || 'Sunshine Diamond Tower'} • Hướng {activeApartment?.viewDirection || 'Đông Nam'}
+                      Tầng {activeApartment?.floor || 1} • {activeApartment?.buildingName || 'Dwell'} • Hướng {activeApartment?.viewDirection || 'Đông Nam'}
                     </div>
                   </div>
                 </div>
@@ -661,123 +670,39 @@ export const ResidentPortalPage: React.FC = () => {
           </div>
         )}
 
-        {/* ================= TAB 3: CONTRACT ================= */}
+        {/* ================= TAB 3: CONTRACT (Full Official Electronic Lease Agreement) ================= */}
         {activeTab === 'contract' && (
           <div className="space-y-6 animate-in fade-in duration-150">
-            <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-5">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-                    <FileSignature className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-black text-slate-900">
-                      Hợp Đồng Thuê Căn Hộ
+            {/* Action Bar (Hidden when printing) */}
+            <div className="no-print bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center shrink-0 border border-brand-200">
+                  <FileSignature className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900">
+                      Hợp Đồng Thuê Căn Hộ Điện Tử
                     </h3>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      Chứng thư số điện tử • Giá trị pháp lý đầy đủ
-                    </div>
-                  </div>
-                </div>
-                <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
-                  MÃ {activeContract?.contractCode || 'HD-2026-P101'}
-                </span>
-              </div>
-
-              {/* Deposit Info Box */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-                  <div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                      TIỀN CỌC BẢO ĐẢM HỢP ĐỒNG
-                    </div>
-                    <div className="text-xl font-black text-slate-900">{formatCurrency(activeContract?.depositAmount || 28000000)}</div>
-                  </div>
-                </div>
-                <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Bảo đảm theo hợp đồng</span>
-                </span>
-              </div>
-
-              {/* 5 Core Terms List (Standard legal language, no AI gimmicks) */}
-              <div className="space-y-3 pt-1">
-                <div className="text-xs font-bold text-slate-800">
-                  05 Điều Khoản Trọng Yếu Cần Lưu Ý
-                </div>
-
-                <div className="space-y-2.5 text-xs">
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      1
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Đang có hiệu lực
                     </span>
-                    <div>
-                      <strong className="text-slate-900 block text-xs">Thời hạn thuê:</strong>
-                      <span className="text-slate-600 text-xs leading-relaxed">
-                        Thời hạn thuê từ ngày {formatDate(activeContract?.startDate || '2026-01-01')} đến hết {formatDate(activeContract?.endDate || '2027-07-27')}. Ưu tiên gia hạn theo thỏa thuận hai bên.
-                      </span>
-                    </div>
                   </div>
-
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      2
-                    </span>
-                    <div>
-                      <strong className="text-slate-900 block text-xs">Giá thuê cố định:</strong>
-                      <span className="text-slate-600 text-xs leading-relaxed">
-                        Giá thuê căn hộ: {formatCurrency(activeContract?.rentalPrice || 14000000)}/tháng. Tiền cọc bảo đảm: {formatCurrency(activeContract?.depositAmount || 28000000)}.
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      3
-                    </span>
-                    <div>
-                      <strong className="text-slate-900 block text-xs">Cam kết hoàn trả tiền đặt cọc:</strong>
-                      <span className="text-slate-600 text-xs leading-relaxed">
-                        Hoàn trả {formatCurrency(activeContract?.depositAmount || 28000000)} trong vòng 48h làm việc kể từ thời điểm bàn giao lại hiện trạng căn hộ.
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      4
-                    </span>
-                    <div>
-                      <strong className="text-slate-900 block text-xs">Kỳ hạn nộp cước dịch vụ:</strong>
-                      <span className="text-slate-600 text-xs leading-relaxed">
-                        Thanh toán cước phí căn hộ, điện lực và nước sạch từ ngày 01 đến 05 hàng tháng qua hình thức chuyển khoản mã VietQR.
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-start gap-3">
-                    <span className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      5
-                    </span>
-                    <div>
-                      <strong className="text-slate-900 block text-xs">Chấm dứt & Gia hạn hợp đồng:</strong>
-                      <span className="text-slate-600 text-xs leading-relaxed">
-                        Thông báo trước tối thiểu 30 ngày cho Ban Quản Lý trước khi hết hạn hoặc có nhu cầu trả phòng.
-                      </span>
-                    </div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    Mã số: <strong className="font-mono text-slate-800 font-bold">{activeContract?.contractCode || 'HD-2026-P101'}</strong> • Thời hạn: Đến {formatDate(activeContract?.endDate || '2027-07-27')}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                <button
-                  onClick={() => toast.info('Tải PDF', 'Đang tải file Hợp đồng thuê căn hộ (PDF)...')}
-                  className="text-xs font-bold text-slate-700 hover:text-brand-700 flex items-center gap-1.5"
+              <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Printer className="w-4 h-4" />}
+                  onClick={() => window.print()}
                 >
-                  <FileText className="w-4 h-4 text-slate-400" />
-                  <span>Tải Hợp Đồng (PDF)</span>
-                </button>
+                  In Hợp Đồng (Print / PDF)
+                </Button>
 
                 <Button
                   variant="primary"
@@ -787,6 +712,225 @@ export const ResidentPortalPage: React.FC = () => {
                 >
                   Gửi Yêu Cầu Gia Hạn HĐ
                 </Button>
+              </div>
+            </div>
+
+            {/* Official Legal Contract Paper Document */}
+            <div
+              id="dwell-printable-contract"
+              className="bg-white mx-auto max-w-4xl p-8 sm:p-12 md:p-14 rounded-2xl shadow-sm border border-slate-200/90 text-slate-800 font-sans space-y-7 leading-relaxed print:shadow-none print:border-none print:p-0 print:m-0"
+            >
+              {/* National Emblem & Title */}
+              <div className="text-center space-y-1.5 pb-4 border-b border-slate-200">
+                <div className="text-xs sm:text-sm font-bold tracking-widest uppercase text-slate-900">
+                  CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+                </div>
+                <div className="text-xs sm:text-sm font-semibold tracking-wider text-slate-800">
+                  Độc lập - Tự do - Hạnh phúc
+                </div>
+                <div className="text-xs text-slate-400 font-mono tracking-widest">
+                  ------------------o0o------------------
+                </div>
+
+                <div className="pt-4 space-y-1">
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight">
+                    HỢP ĐỒNG THUÊ CĂN HỘ NHÀ Ở
+                  </h1>
+                  <div className="font-mono text-xs font-bold text-brand-700">
+                    Số: {activeContract?.contractCode || 'HD-2026-P101'} / HĐTN-DWELL
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic">
+                    (Căn cứ Bộ luật Dân sự 2015, Luật Nhà ở 2023 & Nghị định 123/2020/NĐ-CP)
+                  </p>
+                </div>
+              </div>
+
+              {/* Preamble */}
+              <div className="text-xs sm:text-[13px] text-slate-600 italic">
+                Hôm nay, ngày {formatDate(activeContract?.startDate || '2026-01-01')}, tại Văn phòng Ban Quản Lý Tòa nhà Dwell Living, chúng tôi gồm các bên dưới đây thống nhất ký kết Hợp đồng thuê căn hộ:
+              </div>
+
+              {/* Two Parties Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 bg-slate-50/90 rounded-xl border border-slate-200 text-xs sm:text-[13px]">
+                {/* Party A */}
+                <div className="space-y-1.5">
+                  <div className="font-bold text-slate-900 uppercase text-xs tracking-wider pb-1 border-b border-slate-200 text-brand-800">
+                    BÊN CHO THUÊ (BÊN A)
+                  </div>
+                  <div><strong className="text-slate-900">CÔNG TY TNHH QUẢN LÝ TÒA NHÀ DWELL LIVING</strong></div>
+                  <div><span className="text-slate-500">Đại diện:</span> <strong className="text-slate-800">Bà Hoàng Khánh Ly</strong> (Trưởng ban vận hành)</div>
+                  <div><span className="text-slate-500">Địa chỉ:</span> Tòa nhà Dwell Tower, Quận 7, TP. Hồ Chí Minh</div>
+                  <div><span className="text-slate-500">Mã số thuế:</span> <span className="font-mono font-medium">0317899688</span></div>
+                  <div><span className="text-slate-500">Hotline:</span> 1900 8888 • <span className="text-slate-500">Email:</span> contact@dwell.vn</div>
+                </div>
+
+                {/* Party B */}
+                <div className="space-y-1.5">
+                  <div className="font-bold text-slate-900 uppercase text-xs tracking-wider pb-1 border-b border-slate-200 text-brand-800">
+                    BÊN THUÊ (BÊN B)
+                  </div>
+                  <div><strong className="text-slate-900">ÔNG/BÀ: {currentTenant.fullName}</strong></div>
+                  <div><span className="text-slate-500">Số CCCD / Hộ chiếu:</span> <strong className="font-mono text-slate-900">{currentTenant.citizenId || '079095012345'}</strong></div>
+                  <div><span className="text-slate-500">Số điện thoại:</span> <span className="font-mono">{currentTenant.phone || '0912.888.999'}</span></div>
+                  <div><span className="text-slate-500">Email:</span> {currentTenant.email || 'an.nguyen@dwell.vn'}</div>
+                  <div><span className="text-slate-500">Đại diện thuê căn hộ:</span> <strong className="text-brand-700">{activeApartment?.roomNumber || 'P101'}</strong> ({activeApartment?.buildingName || 'Dwell'})</div>
+                </div>
+              </div>
+
+              {/* Contract Clauses */}
+              <div className="space-y-5 text-xs sm:text-[13px] text-slate-700">
+                {/* Clause 1 */}
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-slate-900 uppercase text-xs">
+                    ĐIỀU 1: ĐỐI TƯỢNG VÀ THÔNG SỐ CĂN HỘ CHO THUÊ
+                  </h4>
+                  <p>
+                    1.1. Bên A đồng ý cho Bên B thuê căn hộ số <strong className="text-slate-900 font-bold">{activeApartment?.roomNumber || 'P101'}</strong>, Tầng {activeApartment?.floor || 1}, thuộc Tòa nhà {activeApartment?.buildingName || 'Dwell Living Tower'}.
+                  </p>
+                  <p>
+                    1.2. Diện tích sử dụng thực tế: <strong className="text-slate-900 font-bold">{activeApartment?.areaSqm || 65.5} m²</strong>, gồm 0{activeApartment?.bedrooms || 2} phòng ngủ, 0{activeApartment?.bathrooms || 1} phòng vệ sinh, ban công hướng {activeApartment?.viewDirection || 'Đông Nam'}.
+                  </p>
+                  <p>
+                    1.3. Mục đích thuê: Dùng làm nơi ở và sinh hoạt cư dân hợp pháp, tuân thủ đúng nội quy quản lý chung cư.
+                  </p>
+                  <p>
+                    1.4. Tình trạng bàn giao: Đầy đủ nội thất cao cấp và trang thiết bị gắn liền căn hộ (Điều hòa Inverter, Tủ lạnh, Bếp từ, Khóa vân tay thông minh Smart Lock) theo đúng Biên bản bàn giao hiện trạng đã ký nhận.
+                  </p>
+                </div>
+
+                {/* Clause 2 */}
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-slate-900 uppercase text-xs">
+                    ĐIỀU 2: THỜI HẠN THUÊ VÀ BÀN GIAO CĂN HỘ
+                  </h4>
+                  <p>
+                    2.1. Thời hạn thuê căn hộ là <strong className="text-slate-900 font-bold">{activeContract?.paymentCycleMonths ? `${activeContract.paymentCycleMonths * 12} tháng` : '12 tháng'}</strong>, bắt đầu từ ngày <strong className="text-slate-900">{formatDate(activeContract?.startDate || '2026-01-01')}</strong> đến hết ngày <strong className="text-slate-900">{formatDate(activeContract?.endDate || '2027-07-27')}</strong>.
+                  </p>
+                  <p>
+                    2.2. Khi hết hạn hợp đồng, nếu Bên B có nguyện vọng tiếp tục thuê và luôn thực hiện nghiêm túc các nghĩa vụ, Bên B sẽ được ưu tiên gia hạn hợp đồng thuê theo biểu giá và điều kiện mới thỏa thuận.
+                  </p>
+                </div>
+
+                {/* Clause 3 */}
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-slate-900 uppercase text-xs">
+                    ĐIỀU 3: GIÁ THUÊ, TIỀN ĐẶT CỌC VÀ PHƯƠNG THỨC THANH TOÁN
+                  </h4>
+                  <p>
+                    3.1. Giá thuê căn hộ: <strong className="text-brand-700 text-sm font-black">{formatCurrency(activeContract?.rentalPrice || 14000000)} / tháng</strong>.
+                  </p>
+                  <p className="italic text-slate-600 pl-4 border-l-2 border-brand-500">
+                    Bằng chữ: <strong>{numberToVietnameseWords(activeContract?.rentalPrice || 14000000)}</strong>
+                  </p>
+                  <p>
+                    3.2. Tiền đặt cọc bảo đảm thực hiện hợp đồng: <strong className="text-emerald-700 text-sm font-black">{formatCurrency(activeContract?.depositAmount || 28000000)}</strong>.
+                  </p>
+                  <p className="italic text-slate-600 pl-4 border-l-2 border-emerald-500">
+                    Bằng chữ: <strong>{numberToVietnameseWords(activeContract?.depositAmount || 28000000)}</strong>
+                  </p>
+                  <p>
+                    3.3. <strong className="text-slate-900 font-semibold">Cam kết hoàn trả tiền đặt cọc:</strong> Bên A cam kết hoàn trả 100% số tiền đặt cọc trên cho Bên B trong vòng 48 giờ làm việc kể từ thời điểm hai bên hoàn tất việc nghiệm thu bàn giao lại căn hộ mà không có hư hỏng kết cấu hoặc nợ cước dịch vụ chưa thanh toán.
+                  </p>
+                  <p>
+                    3.4. Thời gian thanh toán: Bên B thanh toán định kỳ từ ngày 01 đến ngày 05 hàng tháng qua hệ thống chuyển khoản VietQR tự động hoặc thanh toán trực tiếp tại quầy Ban Quản Lý.
+                  </p>
+                </div>
+
+                {/* Clause 4 */}
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-slate-900 uppercase text-xs">
+                    ĐIỀU 4: TRÁCH NHIỆM VÀ NGHĨA VỤ CỦA CÁC BÊN
+                  </h4>
+                  <p>
+                    4.1. <strong className="text-slate-900 font-semibold">Bên A có trách nhiệm:</strong> Bàn giao căn hộ đúng thời gian; bảo đảm quyền sử dụng trọn vẹn của Bên B; duy trì hệ thống an ninh 24/7, phòng cháy chữa cháy, thang máy và hỗ trợ kỹ thuật sửa chữa kịp thời các sự cố phát sinh.
+                  </p>
+                  <p>
+                    4.2. <strong className="text-slate-900 font-semibold">Bên B có trách nhiệm:</strong> Sử dụng căn hộ đúng mục đích để ở; thanh toán tiền thuê và cước điện nước đúng hạn; tuân thủ nội quy chung cư; đăng ký tạm trú đầy đủ; thông báo trước tối thiểu 30 ngày nếu có nhu cầu chấm dứt hoặc gia hạn hợp đồng.
+                  </p>
+                </div>
+
+                {/* Clause 5 */}
+                <div className="space-y-1.5">
+                  <h4 className="font-bold text-slate-900 uppercase text-xs">
+                    ĐIỀU 5: HIỆU LỰC HỢP ĐỒNG & CHỨNG TỰ ĐIỆN TỬ
+                  </h4>
+                  <p>
+                    5.1. Hợp đồng này được lập dưới dạng chứng thư điện tử có giá trị pháp lý tương đương văn bản giấy theo Luật Giao dịch điện tử 2023 và Nghị định 123/2020/NĐ-CP của Chính phủ.
+                  </p>
+                  <p>
+                    5.2. Hai bên đã đọc kỹ, hiểu rõ toàn bộ nội dung và đồng ý ký số xác thực để cùng thực hiện.
+                  </p>
+                </div>
+              </div>
+
+              {/* Signature & Digital Stamp Block */}
+              <div className="pt-8 border-t-2 border-slate-200 grid grid-cols-2 gap-8 text-center text-xs">
+                {/* Tenant Signature */}
+                <div className="flex flex-col justify-between h-44">
+                  <div>
+                    <p className="font-bold text-slate-900 uppercase tracking-wider">ĐẠI DIỆN BÊN B (BÊN THUÊ)</p>
+                    <p className="text-[11px] text-slate-500 italic">(Ký số điện tử định danh VNeID)</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-[11px] font-bold shadow-2xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>ĐÃ KÝ SỐ VNeID MỨC 2</span>
+                    </div>
+                    <div className="font-bold text-slate-900 text-sm pt-1">{currentTenant.fullName}</div>
+                    <div className="text-[10px] text-slate-500">Thời gian ký: {formatDate(activeContract?.startDate || '2026-01-01')}</div>
+                  </div>
+                </div>
+
+                {/* Landlord Seal & Signature */}
+                <div className="flex flex-col justify-between h-44 relative">
+                  <div>
+                    <p className="font-bold text-slate-900 uppercase tracking-wider">ĐẠI DIỆN BÊN A (CHO THUÊ)</p>
+                    <p className="text-[11px] text-slate-500 italic">(Ký số & Đóng dấu điện tử)</p>
+                  </div>
+
+                  {/* Red Seal Stamp */}
+                  <div className="absolute inset-x-0 bottom-6 flex flex-col items-center justify-center pointer-events-none select-none">
+                    <div className="w-28 h-28 border-2 border-red-600 rounded-full flex flex-col items-center justify-center text-red-600 p-1 rotate-[-3deg] opacity-90 shadow-xs bg-red-50/20">
+                      <div className="w-24 h-24 border border-red-500 rounded-full flex flex-col items-center justify-center text-center p-1">
+                        <span className="text-[7.5px] font-extrabold uppercase leading-tight tracking-tighter">
+                          CÔNG TY TNHH QUẢN LÝ
+                        </span>
+                        <span className="text-[7.5px] font-extrabold uppercase leading-tight tracking-tighter">
+                          TÒA NHÀ DWELL
+                        </span>
+                        <div className="my-0.5 text-red-600 flex items-center gap-0.5 text-[8px]">
+                          ★ <span className="font-black text-[9px] tracking-wider">ĐÃ KÝ SỐ</span> ★
+                        </div>
+                        <span className="text-[7px] font-semibold">TP. HỒ CHÍ MINH</span>
+                        <span className="text-[6.5px] font-mono text-red-500">
+                          {activeContract?.startDate || '2026-01-01'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-0.5 z-10">
+                    <div className="font-bold text-slate-900 text-sm">Hoàng Khánh Ly</div>
+                    <div className="text-[10px] text-slate-500">Đại diện BQL Tòa nhà Dwell Living</div>
+                    <div className="text-[10px] text-red-600 font-semibold">Chứng thư số điện tử hợp lệ</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Verification Banner */}
+              <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-100 border border-slate-300 rounded-lg flex items-center justify-center text-slate-700 shrink-0">
+                    <QrCode className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-800">Tra cứu hợp đồng điện tử gốc</div>
+                    <div>Mã hợp đồng: <span className="font-mono font-bold text-brand-700">{activeContract?.contractCode || 'HD-2026-P101'}</span></div>
+                  </div>
+                </div>
+                <div className="text-right text-[10px] text-slate-400">
+                  Lưu trữ trên Hệ thống Dwell Cloud theo tiêu chuẩn an toàn bảo mật dữ liệu quốc gia.
+                </div>
               </div>
             </div>
           </div>
@@ -912,7 +1056,7 @@ export const ResidentPortalPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   leftIcon={<Download className="w-4 h-4" />}
-                  onClick={() => toast.info('In biên lai', 'Đang tải hóa đơn điện tử PDF...')}
+                  onClick={() => setIsReceiptOpen(true)}
                 >
                   In Biên Lai Điện Tử
                 </Button>
@@ -1249,6 +1393,40 @@ export const ResidentPortalPage: React.FC = () => {
           />
         </div>
       </Modal>
+
+      {/* Electronic Receipt Modal */}
+      {isReceiptOpen && (
+        <ReceiptModal
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+          payment={
+            payments.find(
+              (p) => p.receivableId === activeBill?.id || (activeContract && p.contractId === activeContract.id)
+            ) || {
+              id: activeBill?.id || 1,
+              receivableId: activeBill?.id || 1,
+              contractId: activeContract?.id || 1,
+              receiptNumber: `PT-2026-${String(activeBill?.id || 1).padStart(4, '0')}`,
+              amount:
+                activeBill?.paidAmount && activeBill.paidAmount > 0
+                  ? activeBill.paidAmount
+                  : activeBill?.totalAmount || 15725000,
+              paymentMethod: 'BANK_TRANSFER',
+              transactionCode: `MBB2026${activeBill?.id || 101}X${(activeContract?.contractCode || 'HD101').replace(/[^a-zA-Z0-9]/g, '')}`,
+              paymentDate: activeBill?.createdAt ? formatDate(activeBill.createdAt) : '2026-10-02',
+              note: `Thanh toán cước tiền phòng căn ${activeApartment?.roomNumber || 'P101'} và phí dịch vụ tháng ${activeBill?.billingMonth || 9}/${activeBill?.billingYear || 2026}`,
+              handledBy: 1,
+              handledByName: 'Hoàng Khánh Ly',
+              payerName: currentTenant?.fullName || 'Nguyễn Văn An',
+              roomNumber: activeApartment?.roomNumber || 'P101',
+            }
+          }
+          receivable={activeBill}
+          contract={activeContract}
+          tenant={currentTenant as any}
+          apartment={activeApartment}
+        />
+      )}
     </div>
   );
 };

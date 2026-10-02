@@ -8,7 +8,6 @@ import {
   Wrench,
   Phone,
   ShieldCheck,
-  Compass,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/useRedux';
 import { toggleSidebar } from '../../stores/globalSlice';
@@ -66,14 +65,6 @@ export const TenantSidebar: React.FC = () => {
       label: 'Căn hộ của tôi',
       icon: <Building2 className="w-[18px] h-[18px]" />,
       badge: activeApartment?.roomNumber || 'P101',
-    },
-    {
-      id: 'explore',
-      to: '/tenant-portal?tab=explore',
-      label: 'Xem căn hộ cho thuê',
-      icon: <Compass className="w-[18px] h-[18px]" />,
-      badge: `${apartments.length || 11} căn`,
-      badgeVariant: 'blue',
     },
     {
       id: 'contract',

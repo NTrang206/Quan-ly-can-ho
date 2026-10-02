@@ -42,7 +42,7 @@ export const Badge: React.FC<BadgeProps> = ({
       // Apartment
       case 'AVAILABLE':
         resolvedVariant = 'emerald';
-        text = label || 'Trống sẵn sàng';
+        text = label || 'Còn trống';
         break;
       case 'OCCUPIED':
         resolvedVariant = 'sky';
@@ -145,6 +145,34 @@ export const Badge: React.FC<BadgeProps> = ({
       case 'LOW':
         resolvedVariant = 'slate';
         text = label || 'Thấp';
+        break;
+
+      // Booking Status
+      case 'CONFIRMED':
+        resolvedVariant = 'emerald';
+        text = label || 'Đã xác nhận';
+        break;
+      case 'CONVERTED':
+        resolvedVariant = 'purple';
+        text = label || 'Đã tạo hợp đồng';
+        break;
+
+      // User Roles
+      case 'ADMIN':
+        resolvedVariant = 'sky';
+        text = label || 'Quản trị viên';
+        break;
+      case 'STAFF':
+        resolvedVariant = 'slate';
+        text = label || 'Nhân viên';
+        break;
+      case 'ACCOUNTANT':
+        resolvedVariant = 'emerald';
+        text = label || 'Kế toán';
+        break;
+      case 'TENANT':
+        resolvedVariant = 'sky';
+        text = label || 'Khách thuê';
         break;
     }
   }

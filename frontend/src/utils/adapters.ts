@@ -46,7 +46,7 @@ export const adaptBuilding = (b: any): IBuilding => {
 export const adaptApartment = (a: any, buildings: IBuilding[] = []): IApartment => {
   if (!a) return {} as IApartment;
   const building = buildings.find(b => b.id === a.building_id);
-  const buildingName = a.building_name || (building ? building.name : `Tòa ${a.building_id || 'Chính'}`);
+  const buildingName = a.building_name || (building ? building.name : (a.building_id === 1 || !a.building_id ? 'Dwell' : `Tòa ${a.building_id}`));
 
   return {
     id: a.id,
@@ -285,7 +285,7 @@ export const adaptMaintenance = (m: any): IMaintenanceRequest => {
     ticketCode: `SC-${String(m.id).padStart(4, '0')}`,
     apartmentId: m.apartment_id,
     roomNumber: m.room_number || `P${m.apartment_id}`,
-    buildingName: m.building_name || 'Sunshine Homes',
+    buildingName: m.building_name || 'Dwell',
     reporterName: m.reporter_name || 'Cư dân',
     phone: m.phone || '',
     issueDescription: m.issue_description || '',
@@ -338,7 +338,7 @@ export const adaptAlert = (a: any): ISystemAlert => {
     targetName: a.target_name || (normType === 'EXPIRED_CONTRACT' ? 'Trần Thị Bích' : 'Nguyễn Văn An'),
     targetPhone: a.target_phone || (normType === 'EXPIRED_CONTRACT' ? '0933.111.222' : '0912.888.999'),
     roomNumber: a.room_number || (normType === 'EXPIRED_CONTRACT' ? 'P202' : 'P101'),
-    buildingName: a.building_name || 'Sunshine Diamond Tower',
+    buildingName: a.building_name || 'Dwell',
     amountDue: amountDue || (normType === 'OVERDUE_DEBT' ? 21100000 : 0),
     daysOverdue: daysOverdue,
     daysUntilExpiry: daysUntilExpiry,
@@ -368,7 +368,7 @@ export const adaptBooking = (b: any): IBooking => {
     customerCitizenId: b.customer_citizen_id,
     apartmentId: b.apartment_id,
     roomNumber: b.room_number || `P${b.apartment_id}`,
-    buildingName: b.building_name || 'Sunshine Homes',
+    buildingName: b.building_name || 'Dwell',
     monthlyPrice: Number(b.monthly_price) || 12000000,
     checkInDate: b.check_in_date || '',
     depositAmount: Number(b.deposit_amount) || 0,

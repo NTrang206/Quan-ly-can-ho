@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   CalendarCheck,
+  Calendar,
   Plus,
   Search,
   CheckCircle2,
@@ -79,7 +80,7 @@ export const BookingsPage: React.FC = () => {
       await createBooking({
         apartmentId: Number(aptId),
         roomNumber: apt?.roomNumber || 'P.---',
-        buildingName: apt?.buildingName || 'Sunshine Tower A',
+        buildingName: apt?.buildingName || 'Dwell',
         customerName: name,
         customerPhone: phone,
         customerEmail: email,
@@ -187,8 +188,7 @@ export const BookingsPage: React.FC = () => {
               <tr>
                 <th className="px-5 py-3.5">Mã Booking</th>
                 <th className="px-5 py-3.5">Khách Hàng Đặt Chỗ</th>
-                <th className="px-5 py-3.5">Căn Hộ Giữ Chỗ</th>
-                <th className="px-5 py-3.5">Ngày Dự Kiến Dọn Vào</th>
+                <th className="px-5 py-3.5">Căn Hộ & Thời Gian Dọn Vào</th>
                 <th className="px-5 py-3.5">Cọc Giữ Chỗ</th>
                 <th className="px-5 py-3.5">Trạng Thái</th>
                 <th className="px-5 py-3.5 text-right">Thao Tác</th>
@@ -197,31 +197,51 @@ export const BookingsPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {paginatedBookings.map((b) => (
                 <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="px-5 py-4 font-mono font-bold text-brand-700">
-                    {b.bookingCode}
-                    <div className="text-[10px] text-slate-400 font-sans mt-0.5">
+                  <td className="px-5 py-4">
+                    <span className="font-mono font-semibold text-xs text-brand-700 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-200/70 inline-block">
+                      {b.bookingCode}
+                    </span>
+                    <div className="text-[11px] text-slate-500 font-normal mt-1">
                       Tạo ngày: {formatDate(b.createdAt)}
                     </div>
                   </td>
 
                   <td className="px-5 py-4">
-                    <div className="font-bold text-slate-900 text-sm">{b.customerName}</div>
-                    <div className="text-[11px] text-slate-500">{b.customerPhone}</div>
-                    <div className="text-[10px] text-slate-400">{b.customerEmail}</div>
+                    <div className="font-bold text-slate-900 text-sm leading-snug">{b.customerName}</div>
+                    <div className="text-xs text-slate-600 font-medium mt-0.5">{b.customerPhone}</div>
+                    {b.customerEmail && <div className="text-[11px] text-slate-400 mt-0.5">{b.customerEmail}</div>}
                   </td>
 
                   <td className="px-5 py-4">
-                    <div className="font-bold text-slate-900">{b.roomNumber}</div>
-                    <div className="text-[11px] text-slate-500">{b.buildingName}</div>
-                    <div className="text-[11px] font-semibold text-brand-700">{formatCurrency(b.monthlyPrice)}/th</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 text-sm">Căn {b.roomNumber}</span>
+                      <span className="text-xs text-slate-500 font-normal">
+                        • {b.buildingName && b.buildingName !== 'Sunshine Diamond Tower' && b.buildingName !== 'Sunshine Homes' ? b.buildingName : 'Dwell'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 text-xs">
+                      <span className="font-semibold text-brand-700">{formatCurrency(b.monthlyPrice)}/th</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-700 font-medium flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Dọn vào: <strong className="text-slate-900 font-semibold">{formatDate(b.checkInDate)}</strong></span>
+                      </span>
+                    </div>
+                    {b.notes && (
+                      <div className="text-xs text-slate-700 font-medium mt-1.5 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 max-w-md leading-relaxed">
+                        {b.notes}
+                      </div>
+                    )}
                   </td>
 
-                  <td className="px-5 py-4 font-semibold text-slate-800">
-                    {formatDate(b.checkInDate)}
-                  </td>
-
-                  <td className="px-5 py-4 font-bold text-emerald-600">
-                    {formatCurrency(b.depositAmount)}
+                  <td className="px-5 py-4">
+                    <span className="font-bold text-slate-900 text-sm">
+                      {b.depositAmount > 0 ? (
+                        <span className="text-emerald-700">{formatCurrency(b.depositAmount)}</span>
+                      ) : (
+                        <span className="text-slate-400 font-medium">0 đ</span>
+                      )}
+                    </span>
                   </td>
 
                   <td className="px-5 py-4">
@@ -233,7 +253,7 @@ export const BookingsPage: React.FC = () => {
                       {b.status === 'PENDING' && (
                         <button
                           onClick={() => handleStatusChange(b.id, 'CONFIRMED')}
-                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-1.5 rounded-lg text-xs font-semibold"
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                         >
                           Xác Nhận Giữ Chỗ
                         </button>
@@ -242,7 +262,7 @@ export const BookingsPage: React.FC = () => {
                       {b.status === 'CONFIRMED' && (
                         <button
                           onClick={() => handleConvertToContract(b)}
-                          className="flex items-center gap-1 bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs"
+                          className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors"
                         >
                           <FileSignature className="w-3.5 h-3.5" />
                           <span>Lập Hợp Đồng</span>
@@ -285,7 +305,7 @@ export const BookingsPage: React.FC = () => {
               isLoading={isCreating}
               onClick={handleCreateBooking}
             >
-              Tạo Booking Giữ Chỗ
+              Giữ Chỗ
             </Button>
           </div>
         }
