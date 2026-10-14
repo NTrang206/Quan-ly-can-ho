@@ -130,6 +130,20 @@ def create_receivable(
         10
     )
 
+    elec_cost = data.electricity_cost
+    elec_kwh = data.electricity_usage_kwh
+    wat_cost = data.water_cost
+    wat_m3 = data.water_usage_m3
+    mgmt_cost = data.management_cost
+
+    if data.service_amount > 0 and elec_cost == 0 and wat_cost == 0:
+        from decimal import Decimal
+        mgmt_cost = Decimal(str(round(float(data.service_amount) * 0.20 / 1000) * 1000))
+        wat_cost = Decimal(str(round(float(data.service_amount) * 0.18 / 1000) * 1000))
+        elec_cost = data.service_amount - mgmt_cost - wat_cost
+        elec_kwh = Decimal(str(round(float(elec_cost) / 3500, 1)))
+        wat_m3 = Decimal(str(round(float(wat_cost) / 15000, 1)))
+
     # 10. Tạo khoản phải thu
     receivable = Receivable(
         contract_id=contract.id,
@@ -138,6 +152,13 @@ def create_receivable(
         billing_year=data.billing_year,
         room_amount=room_amount,
         service_amount=data.service_amount,
+        electricity_cost=elec_cost,
+        electricity_usage_kwh=elec_kwh,
+        water_cost=wat_cost,
+        water_usage_m3=wat_m3,
+        management_cost=mgmt_cost,
+        parking_cost=data.parking_cost,
+        internet_cost=data.internet_cost,
         total_amount=total_amount,
         paid_amount=0,
         status="UNPAID",

@@ -124,8 +124,13 @@ export const AIDunningDrawer: React.FC<AIDunningDrawerProps> = ({
         `Thông báo đôn đốc đã được gửi tới ${alert.targetName} qua ${selectedChannels.join(', ')}!`
       );
       onClose();
-    } catch {
-      toast.error('Thất bại', 'Không thể gửi thông báo lúc này');
+    } catch (err: any) {
+      const errorMsg =
+        err?.data?.detail ||
+        err?.data?.message ||
+        (typeof err?.data === 'string' ? err.data : null) ||
+        'Không thể gửi thông báo lúc này';
+      toast.error('Thất bại', errorMsg);
     }
   };
 

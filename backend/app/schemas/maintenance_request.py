@@ -65,6 +65,8 @@ class MaintenanceResponse(BaseModel):
     id: int
 
     apartment_id: int
+    room_number: str | None = None
+    building_name: str | None = None
 
     reporter_name: str
     phone: str
@@ -77,6 +79,8 @@ class MaintenanceResponse(BaseModel):
     repair_cost: Decimal
 
     assigned_staff_id: int | None
+    assigned_staff_name: str | None = None
+    assigned_staff_phone: str | None = None
 
     created_at: datetime
     resolved_at: datetime | None

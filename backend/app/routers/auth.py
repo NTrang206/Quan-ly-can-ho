@@ -94,7 +94,36 @@ def login(
             detail="Tài khoản chưa được gán vai trò hợp lệ"
         )
 
-    # 5. Tạo JWT
+    # 5. Kiểm tra hợp đồng của khách thuê
+    tenant = db.query(Tenant).filter(
+        (Tenant.user_id == user.id) |
+        (Tenant.phone == user.phone)
+    ).first()
+
+    has_active_contract = False
+    active_contract_code = None
+    room_number = None
+    tenant_id = None
+
+    if tenant:
+        tenant_id = tenant.id
+        from app.models.contract import Contract
+        from app.models.apartment import Apartment
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == tenant.id,
+            Contract.status == "ACTIVE"
+        ).first()
+        if active_contract:
+            has_active_contract = True
+            active_contract_code = active_contract.contract_code
+            apt = db.query(Apartment).filter(Apartment.id == active_contract.apartment_id).first()
+            if apt:
+                room_number = apt.room_number
+
+    if role.role_code in ["ADMIN", "STAFF", "ACCOUNTANT"]:
+        has_active_contract = True
+
+    # 6. Tạo JWT
     access_token = create_access_token(
         user.id,
         user.role_id
@@ -109,7 +138,7 @@ def login(
     )
     db.commit()
 
-    # 6. Trả về cho Frontend
+    # 7. Trả về cho Frontend
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -122,6 +151,10 @@ def login(
             "phone": user.phone,
             "role_id": user.role_id,
             "role_code": role.role_code,
+            "tenant_id": tenant_id,
+            "has_active_contract": has_active_contract,
+            "active_contract_code": active_contract_code,
+            "room_number": room_number,
             "is_active": user.is_active
         }
     }
@@ -143,14 +176,33 @@ def get_me(
     ).first()
 
     tenant_id = None
+    has_active_contract = False
+    active_contract_code = None
+    room_number = None
 
-    # Nếu là tài khoản Tenant Portal
+    # Nếu là tài khoản Tenant Portal hoặc Khách
     tenant = db.query(Tenant).filter(
-        Tenant.user_id == current_user.id
+        (Tenant.user_id == current_user.id) |
+        (Tenant.phone == current_user.phone)
     ).first()
 
     if tenant:
         tenant_id = tenant.id
+        from app.models.contract import Contract
+        from app.models.apartment import Apartment
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == tenant.id,
+            Contract.status == "ACTIVE"
+        ).first()
+        if active_contract:
+            has_active_contract = True
+            active_contract_code = active_contract.contract_code
+            apt = db.query(Apartment).filter(Apartment.id == active_contract.apartment_id).first()
+            if apt:
+                room_number = apt.room_number
+
+    if role and role.role_code in ["ADMIN", "STAFF", "ACCOUNTANT"]:
+        has_active_contract = True
 
     return {
         "id": current_user.id,
@@ -165,6 +217,9 @@ def get_me(
             else None
         ),
         "tenant_id": tenant_id,
+        "has_active_contract": has_active_contract,
+        "active_contract_code": active_contract_code,
+        "room_number": room_number,
         "is_active": current_user.is_active
     }
 
@@ -419,25 +474,38 @@ def register(
                 detail="Email đã được sử dụng"
             )
 
-    # 3. Lấy role TENANT
-    tenant_role = db.query(Role).filter(
-        Role.role_code == "TENANT"
-    ).first()
-    if not tenant_role:
-        tenant_role = Role(
-            role_code="TENANT",
-            role_name="Khách thuê",
-            description="Người thuê căn hộ"
-        )
-        db.add(tenant_role)
-        db.flush()
-
-    # 4. Tìm hoặc tạo hồ sơ Tenant
+    # 3. Tìm hoặc tạo hồ sơ Tenant
     clean_phone = data.phone.strip()
     tenant = db.query(Tenant).filter(
         Tenant.phone == clean_phone
     ).first()
 
+    has_active_contract = False
+    if tenant:
+        from app.models.contract import Contract
+        active_contract = db.query(Contract).filter(
+            Contract.tenant_id == tenant.id,
+            Contract.status == "ACTIVE"
+        ).first()
+        if active_contract:
+            has_active_contract = True
+
+    # Khách đăng ký tự do mặc định là GUEST (Khách vãn lai)
+    # Chỉ khi đã có hợp đồng ACTIVE thì mới là TENANT
+    target_role_code = "TENANT" if has_active_contract else "GUEST"
+    target_role = db.query(Role).filter(
+        Role.role_code == target_role_code
+    ).first()
+    if not target_role:
+        target_role = Role(
+            role_code=target_role_code,
+            role_name="Khách vãn lai" if target_role_code == "GUEST" else "Khách thuê",
+            description="Khách vãn lai tìm phòng" if target_role_code == "GUEST" else "Người thuê căn hộ"
+        )
+        db.add(target_role)
+        db.flush()
+
+    # 4. Tạo hồ sơ Tenant nếu chưa có
     if not tenant:
         citizen_id = f"GUEST_{clean_phone}"
         # Đảm bảo không trùng citizen_id
@@ -455,9 +523,9 @@ def register(
         db.add(tenant)
         db.flush()
 
-    # 5. Tạo User mới
+    # 5. Tạo User mới với vai trò phù hợp
     user = User(
-        role_id=tenant_role.id,
+        role_id=target_role.id,
         username=clean_username,
         password_hash=hash_password(data.password),
         full_name=data.full_name.strip(),
@@ -499,8 +567,9 @@ def register(
             "email": user.email,
             "phone": user.phone,
             "role_id": user.role_id,
-            "role_code": "TENANT",
+            "role_code": target_role_code,
             "tenant_id": tenant.id,
+            "has_active_contract": has_active_contract,
             "is_active": user.is_active
         }
     }

@@ -44,6 +44,7 @@ export const Input: React.FC<InputProps> = ({
             rightIcon ? 'pr-9.5' : 'pr-3.5',
             'py-2.5',
             error ? 'border-rose-400 bg-rose-50/30 focus:ring-rose-500/20' : 'border-slate-200',
+            props.disabled && 'bg-slate-100/90 text-slate-600 cursor-not-allowed select-none border-slate-200 focus:border-slate-200 focus:ring-0',
             className
           )}
           {...props}

@@ -7,25 +7,13 @@ import { useToast } from '../hooks/useToast';
 import { DwellLogo } from '../components/common/DwellLogo';
 import { AIBotLogo } from '../components/common/AIBotLogo';
 
-interface DemoUser {
-  username: string;
-  roleCode: UserRole;
-  fullName: string;
-}
-
-const DEMO_USERS: DemoUser[] = [
-  { username: 'admin@dwell.vn', roleCode: 'ADMIN', fullName: 'Hoàng Khánh Ly' },
-  { username: 'accountant@dwell.vn', roleCode: 'ACCOUNTANT', fullName: 'Lê Thu Trang' },
-  { username: 'staff@dwell.vn', roleCode: 'STAFF', fullName: 'Lê Quang Khánh' },
-  { username: 'tenant@dwell.vn', roleCode: 'TENANT', fullName: 'Nguyễn Văn An' },
-];
 
 export const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
 
   // Login Form State
-  const [username, setUsername] = useState('admin@dwell.vn');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
@@ -39,7 +27,7 @@ export const LoginPage: React.FC = () => {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
 
-  const { login, register, switchRole, isLoggingIn, isRegistering } = useAuth();
+  const { login, register, isLoggingIn, isRegistering } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -47,7 +35,7 @@ export const LoginPage: React.FC = () => {
   const searchParams = new URLSearchParams(location.search);
   const redirectParam = searchParams.get('redirect');
 
-  const navigateByRole = (role: UserRole, fullName?: string) => {
+  const navigateByRole = (role: UserRole, fullName?: string, hasActiveContract?: boolean) => {
     if (redirectParam) {
       toast.success(
         'Đăng nhập thành công',
@@ -56,10 +44,16 @@ export const LoginPage: React.FC = () => {
       navigate(redirectParam);
       return;
     }
-    if (role === 'TENANT') {
+    if (role === 'GUEST' || (role === 'TENANT' && !hasActiveContract)) {
       toast.success(
         'Đăng nhập thành công',
-        `Chào mừng Cư dân / Khách thuê ${fullName || 'Nguyễn Văn An'}!`
+        `Chào mừng ${fullName || 'quý khách'} đến với Dwell Living! Khám phá danh sách căn hộ và gửi yêu cầu hẹn giờ xem phòng.`
+      );
+      navigate('/explore');
+    } else if (role === 'TENANT') {
+      toast.success(
+        'Đăng nhập thành công',
+        `Chào mừng Cư dân ${fullName || ''} đến với Cổng Cư Dân!`
       );
       navigate('/tenant-portal');
     } else if (role === 'ACCOUNTANT') {
@@ -89,7 +83,7 @@ export const LoginPage: React.FC = () => {
 
     try {
       const res = await login(cleanUser, password);
-      navigateByRole(res.user.roleCode, res.user.fullName);
+      navigateByRole(res.user.roleCode, res.user.fullName, res.user.hasActiveContract);
       return;
     } catch {
       // Nếu người dùng nhập từ khóa nhanh (vd: cudan, ketoan...) thì tự động map sang tài khoản demo tương ứng và gọi API login thật
@@ -108,7 +102,7 @@ export const LoginPage: React.FC = () => {
       if (targetCreds) {
         try {
           const res = await login(targetCreds.u, targetCreds.p);
-          navigateByRole(res.user.roleCode, res.user.fullName);
+          navigateByRole(res.user.roleCode, res.user.fullName, res.user.hasActiveContract);
           return;
         } catch {
           // fallback
@@ -117,46 +111,8 @@ export const LoginPage: React.FC = () => {
 
       toast.error(
         'Đăng nhập thất bại',
-        'Sai tài khoản hoặc mật khẩu. Vui lòng kiểm tra lại hoặc chọn vai trò mẫu bên dưới!'
+        'Sai tài khoản hoặc mật khẩu. Vui lòng kiểm tra lại!'
       );
-    }
-  };
-
-  const handleQuickDemoLogin = async (role: UserRole) => {
-    let demoUser = 'admin@dwell.vn';
-    let demoPass = 'admin123';
-    switch (role) {
-      case 'ADMIN':
-        demoUser = 'admin@dwell.vn';
-        demoPass = 'admin123';
-        break;
-      case 'ACCOUNTANT':
-        demoUser = 'accountant@dwell.vn';
-        demoPass = 'acc123';
-        break;
-      case 'STAFF':
-        demoUser = 'staff@dwell.vn';
-        demoPass = 'staff123';
-        break;
-      case 'TENANT':
-        demoUser = 'tenant@dwell.vn';
-        demoPass = 'tenant123';
-        break;
-      default:
-        demoUser = 'admin@dwell.vn';
-        demoPass = 'admin123';
-        break;
-    }
-    setUsername(demoUser);
-    setPassword(demoPass);
-
-    try {
-      const res = await login(demoUser, demoPass);
-      navigateByRole(res.user.roleCode, res.user.fullName);
-    } catch {
-      await switchRole(role);
-      const found = DEMO_USERS.find((u) => u.roleCode === role);
-      navigateByRole(role, found?.fullName);
     }
   };
 
@@ -197,7 +153,7 @@ export const LoginPage: React.FC = () => {
         'Đăng ký tài khoản thành công',
         `Chào mừng ${res.user.fullName || regFullName} gia nhập Dwell Living!`
       );
-      navigateByRole('TENANT', res.user.fullName || regFullName);
+      navigateByRole(res.user.roleCode, res.user.fullName || regFullName, res.user.hasActiveContract);
     } catch (err: any) {
       const msg = err?.data?.detail || err?.message || 'Đăng ký không thành công. Tên đăng nhập hoặc số điện thoại có thể đã tồn tại!';
       toast.error('Đăng ký thất bại', msg);
@@ -269,6 +225,8 @@ export const LoginPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setActiveTab('LOGIN');
+                  setUsername('');
+                  setPassword('');
                   setRegErrors({});
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all text-center ${
@@ -283,6 +241,11 @@ export const LoginPage: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setActiveTab('REGISTER');
+                  setRegFullName('');
+                  setRegPhone('');
+                  setRegEmail('');
+                  setRegPassword('');
+                  setRegConfirmPassword('');
                   setRegErrors({});
                 }}
                 className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all text-center ${
@@ -307,13 +270,15 @@ export const LoginPage: React.FC = () => {
             {/* TAB 1: LOGIN FORM */}
             {activeTab === 'LOGIN' && (
               <>
-                <form onSubmit={handleLogin} className="space-y-3.5">
+                <form onSubmit={handleLogin} className="space-y-3.5" autoComplete="off">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Tài khoản, Email hoặc Số điện thoại *
                     </label>
                     <input
                       type="text"
+                      name="login_account"
+                      autoComplete="off"
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
@@ -332,6 +297,8 @@ export const LoginPage: React.FC = () => {
                     <div className="relative flex items-center">
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        name="login_password"
+                        autoComplete="new-password"
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -378,48 +345,12 @@ export const LoginPage: React.FC = () => {
                   </button>
                 </form>
 
-                {/* Quick Demo Login Chips */}
-                <div className="mt-5 pt-4 border-t border-slate-100">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 text-center">
-                    Đăng nhập mẫu theo vai trò (1-Click Switch)
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemoLogin('ADMIN')}
-                      className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 text-xs font-bold transition-colors text-center"
-                    >
-                      Admin
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemoLogin('ACCOUNTANT')}
-                      className="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 text-xs font-bold transition-colors text-center"
-                    >
-                      Kế toán
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemoLogin('STAFF')}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/80 text-xs font-semibold transition-colors text-center"
-                    >
-                      Nhân viên
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleQuickDemoLogin('TENANT')}
-                      className="p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200/80 text-xs font-bold transition-colors text-center"
-                    >
-                      Khách hàng / Cư dân
-                    </button>
-                  </div>
-                </div>
               </>
             )}
 
             {/* TAB 2: REGISTER FORM */}
             {activeTab === 'REGISTER' && (
-              <form onSubmit={handleRegisterSubmit} className="space-y-3">
+              <form onSubmit={handleRegisterSubmit} className="space-y-3" autoComplete="off">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -427,6 +358,8 @@ export const LoginPage: React.FC = () => {
                     </label>
                     <input
                       type="text"
+                      name="reg_fullname"
+                      autoComplete="off"
                       required
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
@@ -444,6 +377,8 @@ export const LoginPage: React.FC = () => {
                     </label>
                     <input
                       type="tel"
+                      name="reg_phone"
+                      autoComplete="off"
                       required
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
@@ -462,6 +397,8 @@ export const LoginPage: React.FC = () => {
                   </label>
                   <input
                     type="email"
+                    name="reg_email"
+                    autoComplete="off"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     placeholder="VD: an.nguyen@gmail.com (dùng nhận thông báo hợp đồng, hóa đơn)"
@@ -477,6 +414,8 @@ export const LoginPage: React.FC = () => {
                     <div className="relative flex items-center">
                       <input
                         type={showRegPassword ? 'text' : 'password'}
+                        name="reg_password"
+                        autoComplete="new-password"
                         required
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
@@ -502,6 +441,8 @@ export const LoginPage: React.FC = () => {
                     </label>
                     <input
                       type={showRegPassword ? 'text' : 'password'}
+                      name="reg_confirm_password"
+                      autoComplete="new-password"
                       required
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}

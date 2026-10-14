@@ -209,6 +209,22 @@ export const adaptReceivable = (r: any): IReceivable => {
   if (!r) return {} as IReceivable;
   const total = Number(r.total_amount) || 0;
   const paid = Number(r.paid_amount) || 0;
+  const rawService = Number(r.service_amount) || 0;
+
+  let elecCost = Number(r.electricity_cost) || 0;
+  let elecKwh = Number(r.electricity_usage_kwh) || 0;
+  let watCost = Number(r.water_cost) || 0;
+  let watM3 = Number(r.water_usage_m3) || 0;
+  let mgmtCost = Number(r.management_cost) || 0;
+
+  if (rawService > 0 && elecCost === 0 && watCost === 0) {
+    mgmtCost = Math.round((rawService * 0.20) / 1000) * 1000;
+    watCost = Math.round((rawService * 0.18) / 1000) * 1000;
+    elecCost = rawService - mgmtCost - watCost;
+    elecKwh = Math.round((elecCost / 3500) * 10) / 10;
+    watM3 = Math.round((watCost / 15000) * 10) / 10;
+  }
+
   return {
     id: r.id,
     contractId: r.contract_id,
@@ -221,12 +237,12 @@ export const adaptReceivable = (r: any): IReceivable => {
     billingMonth: r.billing_month || (new Date().getMonth() + 1),
     billingYear: r.billing_year || new Date().getFullYear(),
     roomAmount: Number(r.room_amount) || total,
-    serviceAmount: Number(r.service_amount) || 0,
-    electricityCost: Number(r.electricity_cost) || 0,
-    electricityUsageKwh: Number(r.electricity_usage_kwh) || 0,
-    waterCost: Number(r.water_cost) || 0,
-    waterUsageM3: Number(r.water_usage_m3) || 0,
-    managementCost: Number(r.management_cost) || 0,
+    serviceAmount: rawService,
+    electricityCost: elecCost,
+    electricityUsageKwh: elecKwh,
+    waterCost: watCost,
+    waterUsageM3: watM3,
+    managementCost: mgmtCost,
     parkingCost: Number(r.parking_cost) || 0,
     internetCost: Number(r.internet_cost) || 0,
     totalAmount: total,
@@ -284,7 +300,7 @@ export const adaptMaintenance = (m: any): IMaintenanceRequest => {
     id: m.id,
     ticketCode: `SC-${String(m.id).padStart(4, '0')}`,
     apartmentId: m.apartment_id,
-    roomNumber: m.room_number || `P${m.apartment_id}`,
+    roomNumber: m.room_number || (m.apartment_id ? `P${m.apartment_id >= 100 ? m.apartment_id : 100 + m.apartment_id}` : 'P101'),
     buildingName: m.building_name || 'Dwell',
     reporterName: m.reporter_name || 'Cư dân',
     phone: m.phone || '',
@@ -339,9 +355,12 @@ export const adaptAlert = (a: any): ISystemAlert => {
     targetPhone: a.target_phone || (normType === 'EXPIRED_CONTRACT' ? '0933.111.222' : '0912.888.999'),
     roomNumber: a.room_number || (normType === 'EXPIRED_CONTRACT' ? 'P202' : 'P101'),
     buildingName: a.building_name || 'Dwell',
-    amountDue: amountDue || (normType === 'OVERDUE_DEBT' ? 21100000 : 0),
-    daysOverdue: daysOverdue,
-    daysUntilExpiry: daysUntilExpiry,
+    amountDue:
+      a.amount_due !== undefined && a.amount_due !== null
+        ? Number(a.amount_due)
+        : amountDue || (normType === 'OVERDUE_DEBT' ? 21100000 : 0),
+    daysOverdue: a.days_overdue !== undefined && a.days_overdue !== null ? a.days_overdue : daysOverdue,
+    daysUntilExpiry: a.days_until_expiry !== undefined && a.days_until_expiry !== null ? a.days_until_expiry : daysUntilExpiry,
     priority: a.priority || (normType === 'OVERDUE_DEBT' ? 'HIGH' : 'MEDIUM'),
     isSent: Boolean(a.is_sent),
     sentChannels: a.sent_channels || ['SMS', 'APP_PUSH', 'ZALO'],
@@ -442,5 +461,8 @@ export const adaptUser = (u: any): IUser => {
     createdAt: u.created_at || new Date().toISOString(),
     tenantId: u.tenant_id,
     assignedBuildingIds: u.assigned_building_ids || [1, 2, 3],
+    hasActiveContract: Boolean(u.has_active_contract),
+    activeContractCode: u.active_contract_code || undefined,
+    roomNumber: u.room_number || undefined,
   };
 };

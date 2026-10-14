@@ -64,10 +64,13 @@ export const BuildingsPage: React.FC = () => {
   const [newBuildingId, setNewBuildingId] = useState(1);
 
   const { data: buildings = [] } = useGetBuildingsQuery();
-  const { data: apartments = [], isLoading } = useGetApartmentsQuery({
-    buildingId: selectedBuildingId,
-    status: selectedStatus,
-  });
+  const { data: apartments = [], isLoading } = useGetApartmentsQuery(
+    {
+      buildingId: selectedBuildingId,
+      status: selectedStatus,
+    },
+    { pollingInterval: 3000, refetchOnMountOrArgChange: true }
+  );
 
   const [updateApartmentStatus] = useUpdateApartmentStatusMutation();
   const [createApartment, { isLoading: isCreating }] = useCreateApartmentMutation();
@@ -126,12 +129,22 @@ export const BuildingsPage: React.FC = () => {
   const totalPages = Math.ceil(filteredApartments.length / pageSize) || 1;
   const paginatedApartments = filteredApartments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const handleStatusChange = async (aptId: number, newStatus: ApartmentStatus) => {
+  const handleStatusChange = async (apt: IApartment, newStatus: ApartmentStatus) => {
     try {
-      await updateApartmentStatus({ id: aptId, status: newStatus }).unwrap();
-      toast.success('Cập nhật thành công', `Đã chuyển trạng thái phòng sang ${newStatus}`);
-    } catch {
-      toast.error('Lỗi', 'Không thể đổi trạng thái căn hộ');
+      await updateApartmentStatus({ id: apt.id, status: newStatus }).unwrap();
+      const statusLabels: Record<string, string> = {
+        AVAILABLE: 'Căn trống (Sẵn sàng đón khách)',
+        MAINTENANCE: 'Đang bảo trì',
+        OCCUPIED: 'Đang thuê',
+        RESERVED: 'Đã giữ chỗ',
+      };
+      toast.success(
+        'Cập nhật thành công',
+        `Căn hộ ${apt.roomNumber} đã chuyển sang trạng thái "${statusLabels[newStatus] || newStatus}"!`
+      );
+    } catch (err: any) {
+      const parsed = parseApiError(err, 'Không thể đổi trạng thái căn hộ');
+      toast.error('Lỗi cập nhật', parsed.message);
     }
   };
 
@@ -201,19 +214,26 @@ export const BuildingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-3.5 animate-in fade-in duration-300">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-        <div>
-          <div className="text-xs font-semibold text-brand-600 mb-0.5">
-            Quản lý vận hành
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white py-3 px-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-brand-50 border border-brand-200/80 flex items-center justify-center text-brand-600 shrink-0">
+            <Building2 className="w-5 h-5" />
           </div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-            Quản Lý Tòa Nhà & Căn Hộ
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Tòa nhà Dwell • Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội
-          </p>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none">
+                Quản Lý Tòa Nhà & Căn Hộ
+              </h1>
+              <span className="text-[11px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full border border-slate-200">
+                {apartments.length} Căn hộ
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Tòa nhà Dwell • Số 16 Phạm Hùng, P. Mỹ Đình 2, Q. Nam Từ Liêm, Hà Nội
+            </p>
+          </div>
         </div>
 
         <Button
@@ -227,15 +247,15 @@ export const BuildingsPage: React.FC = () => {
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {/* Status filters */}
+      <div className="bg-white py-2 px-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+          {/* Status filters with live counts */}
           {[
-            { id: undefined, label: 'Tất cả' },
-            { id: 'AVAILABLE', label: 'Còn trống' },
-            { id: 'RESERVED', label: 'Đã giữ chỗ' },
-            { id: 'OCCUPIED', label: 'Đang thuê' },
-            { id: 'MAINTENANCE', label: 'Đang bảo trì' },
+            { id: undefined, label: 'Tất cả', count: apartments.length },
+            { id: 'AVAILABLE', label: 'Còn trống', count: apartments.filter((a) => a.status === 'AVAILABLE').length },
+            { id: 'RESERVED', label: 'Đã giữ chỗ', count: apartments.filter((a) => a.status === 'RESERVED').length },
+            { id: 'OCCUPIED', label: 'Đang thuê', count: apartments.filter((a) => a.status === 'OCCUPIED').length },
+            { id: 'MAINTENANCE', label: 'Đang bảo trì', count: apartments.filter((a) => a.status === 'MAINTENANCE').length },
           ].map((st) => (
             <button
               key={st.label}
@@ -243,19 +263,26 @@ export const BuildingsPage: React.FC = () => {
                 setSelectedStatus(st.id as any);
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 selectedStatus === st.id
-                  ? 'bg-slate-900 text-white shadow-xs font-semibold'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100/80 hover:bg-slate-200/80 text-slate-600'
               }`}
             >
-              {st.label}
+              <span>{st.label}</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  selectedStatus === st.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}
+              >
+                {st.count}
+              </span>
             </button>
           ))}
         </div>
 
-        <div className="relative w-full md:w-64">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+        <div className="relative w-full sm:w-60">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
@@ -264,7 +291,7 @@ export const BuildingsPage: React.FC = () => {
               setCurrentPage(1);
             }}
             placeholder="Tìm số phòng (P101, P201)..."
-            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1 text-xs text-slate-900 focus:outline-none focus:border-brand-500 focus:bg-white"
           />
         </div>
       </div>
@@ -274,13 +301,13 @@ export const BuildingsPage: React.FC = () => {
         {paginatedApartments.map((apt) => (
           <div
             key={apt.id}
-            className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-all duration-200 flex flex-col justify-between"
+            onClick={() => handleOpenBuildingInfo(apt)}
+            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group cursor-pointer"
           >
             {/* Image & Badges */}
             <div
-              className="relative aspect-[16/10] overflow-hidden bg-slate-100 group cursor-pointer"
-              onClick={() => handleOpenBuildingInfo(apt)}
-              title="Nhấp để xem thông tin tòa nhà"
+              className="relative aspect-[16/10] overflow-hidden bg-slate-100"
+              title="Nhấp để xem thông tin chi tiết căn hộ"
             >
               <img
                 src={apt.imageUrl}
@@ -292,42 +319,50 @@ export const BuildingsPage: React.FC = () => {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 transition-colors flex items-center justify-center">
+              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/95 backdrop-blur-xs text-slate-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-slate-200">
                   <Building2 className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Xem thông tin tòa nhà</span>
+                  <span>Xem chi tiết</span>
                 </span>
               </div>
               <div className="absolute top-2.5 left-2.5 z-10">
                 <Badge status={apt.status} size="sm" />
               </div>
-              <div className="absolute bottom-2.5 right-2.5 z-10 px-2 py-0.5 bg-slate-900/80 backdrop-blur rounded text-white font-bold text-xs">
-                {formatCurrency(apt.price)}/th
+              <div className="absolute bottom-2.5 right-2.5 z-10 px-2.5 py-1 bg-slate-900/80 backdrop-blur-sm rounded-lg text-white font-bold text-xs shadow-xs flex items-baseline gap-0.5">
+                <span>{formatCurrency(apt.price)}</span>
+                <span className="text-[10px] font-normal text-slate-300">/th</span>
               </div>
             </div>
 
             {/* Info details */}
-            <div className="p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
+            <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
               <div>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">{apt.roomNumber}</h3>
-                  <span className="text-xs text-slate-500 font-medium truncate">{apt.buildingName}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                    {apt.roomNumber}
+                  </h3>
+                  <span className="text-xs text-slate-500 font-medium px-2 py-0.5 bg-slate-100 rounded-md truncate max-w-[130px]">
+                    {apt.buildingName}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 truncate">{apt.description}</p>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-1 h-4" title={apt.description}>
+                  {apt.description || 'Căn hộ tiêu chuẩn đầy đủ tiện nghi'}
+                </p>
+              </div>
 
-                <div className="grid grid-cols-3 gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100 text-center text-xs">
-                  <div className="bg-slate-50 p-1 rounded">
-                    <span className="text-slate-400 text-[10px] block">Diện tích</span>
-                    <strong className="text-slate-800 text-[11px]">{apt.areaSqm}m²</strong>
-                  </div>
-                  <div className="bg-slate-50 p-1 rounded">
-                    <span className="text-slate-400 text-[10px] block">Phòng ngủ</span>
-                    <strong className="text-slate-800 text-[11px]">{apt.bedrooms} PN</strong>
-                  </div>
-                  <div className="bg-slate-50 p-1 rounded">
-                    <span className="text-slate-400 text-[10px] block">Tầng</span>
-                    <strong className="text-slate-800 text-[11px]">Tầng {apt.floor}</strong>
-                  </div>
+              {/* Specs Grid */}
+              <div className="grid grid-cols-3 gap-1.5 pt-2.5 border-t border-slate-100 text-center">
+                <div className="bg-slate-50/90 rounded-lg p-1.5 border border-slate-100/80">
+                  <span className="text-slate-400 text-[10px] font-medium block uppercase tracking-wider">Diện tích</span>
+                  <strong className="text-slate-800 text-[11.5px] font-bold block mt-0.5">{apt.areaSqm} m²</strong>
+                </div>
+                <div className="bg-slate-50/90 rounded-lg p-1.5 border border-slate-100/80">
+                  <span className="text-slate-400 text-[10px] font-medium block uppercase tracking-wider">Phòng ngủ</span>
+                  <strong className="text-slate-800 text-[11.5px] font-bold block mt-0.5">{apt.bedrooms} PN</strong>
+                </div>
+                <div className="bg-slate-50/90 rounded-lg p-1.5 border border-slate-100/80">
+                  <span className="text-slate-400 text-[10px] font-medium block uppercase tracking-wider">Vị trí</span>
+                  <strong className="text-slate-800 text-[11.5px] font-bold block mt-0.5">Tầng {apt.floor}</strong>
                 </div>
               </div>
             </div>
@@ -491,6 +526,34 @@ export const BuildingsPage: React.FC = () => {
               Trang Chi Tiết Căn Hộ
             </Button>
             <div className="flex items-center gap-2">
+              {selectedApartmentForInfo?.status === 'AVAILABLE' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Wrench className="w-3.5 h-3.5 text-amber-600" />}
+                  className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                  onClick={() => {
+                    handleStatusChange(selectedApartmentForInfo, 'MAINTENANCE');
+                    setIsBuildingInfoModalOpen(false);
+                  }}
+                >
+                  Báo Bảo Trì
+                </Button>
+              )}
+              {selectedApartmentForInfo?.status === 'MAINTENANCE' && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => {
+                    handleStatusChange(selectedApartmentForInfo, 'AVAILABLE');
+                    setIsBuildingInfoModalOpen(false);
+                  }}
+                >
+                  Hoàn Tất Bảo Trì
+                </Button>
+              )}
               <Button
                 variant="primary"
                 size="sm"

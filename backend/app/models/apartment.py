@@ -101,3 +101,6 @@ class Apartment(Base):
         "Booking",
         back_populates="apartment"
     )
+    building = relationship(
+        "Building"
+    )

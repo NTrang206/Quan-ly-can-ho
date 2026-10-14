@@ -25,7 +25,18 @@ export const alertApi = baseApi.injectEndpoints({
           : [{ type: 'Alert', id: 'LIST' }],
     }),
 
-    triggerSystemScan: builder.mutation<{ newAlertsCount: number; scannedItemsCount: number }, { daysToEnd?: number } | void>({
+    triggerSystemScan: builder.mutation<
+      {
+        message: string;
+        scannedItemsCount: number;
+        newAlertsCount: number;
+        scannedContractsCount: number;
+        scannedReceivablesCount: number;
+        totalActiveAlerts: number;
+        cleanedAlertsCount: number;
+      },
+      { daysToEnd?: number } | void
+    >({
       query: (arg) => ({
         url: '/alerts/scan',
         method: 'POST',
@@ -34,8 +45,13 @@ export const alertApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: (res: any) => ({
-        newAlertsCount: (res.expired_contracts_count || 0) + (res.overdue_receivables_count || 0),
-        scannedItemsCount: res.total_new_alerts || 0,
+        message: res.message || 'Quét toàn diện hệ thống hoàn tất',
+        scannedItemsCount: Number(res.total_scanned) || 0,
+        newAlertsCount: Number(res.total_new_alerts) || 0,
+        scannedContractsCount: Number(res.scanned_contracts_count) || 0,
+        scannedReceivablesCount: Number(res.scanned_receivables_count) || 0,
+        totalActiveAlerts: Number(res.total_active_alerts) || 0,
+        cleanedAlertsCount: Number(res.cleaned_alerts_count) || 0,
       }),
       invalidatesTags: [{ type: 'Alert', id: 'LIST' }, { type: 'Dashboard', id: 'STATS' }],
     }),
@@ -44,12 +60,22 @@ export const alertApi = baseApi.injectEndpoints({
       ISystemAlert,
       { alertId: number; channels: ('ZALO' | 'SMS' | 'EMAIL' | 'APP_PUSH')[]; editedBody?: string }
     >({
-      query: ({ alertId, channels }) => {
-        const primaryChannel = channels.includes('ZALO') ? 'ZALO' : channels.includes('SMS') ? 'SMS' : 'EMAIL';
+      query: ({ alertId, channels, editedBody }) => {
+        const primaryChannel = channels.includes('ZALO')
+          ? 'ZALO'
+          : channels.includes('SMS')
+          ? 'SMS'
+          : channels.includes('APP_PUSH')
+          ? 'APP_PUSH'
+          : 'EMAIL';
         return {
           url: `/alerts/${alertId}/mark-sent`,
           method: 'PATCH',
-          body: { channel: primaryChannel },
+          body: {
+            channel: primaryChannel,
+            channels,
+            edited_body: editedBody,
+          },
         };
       },
       transformResponse: (res: any) => adaptAlert(res),

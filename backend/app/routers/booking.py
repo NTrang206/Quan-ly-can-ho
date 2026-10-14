@@ -6,6 +6,7 @@ from fastapi import (
 )
 
 from sqlalchemy.orm import Session
+from sqlalchemy import case
 
 from datetime import datetime
 from uuid import uuid4
@@ -21,7 +22,7 @@ from app.schemas.booking import (
     BookingResponse
 )
 
-from app.dependencies.auth import require_roles
+from app.dependencies.auth import require_roles, get_current_user
 
 
 router = APIRouter(
@@ -120,7 +121,10 @@ def get_bookings(
     )
 ):
 
-    bookings = db.query(Booking).all()
+    bookings = db.query(Booking).order_by(
+        case((Booking.status == "PENDING", 0), else_=1),
+        Booking.id.desc()
+    ).all()
 
     return bookings
 
@@ -146,6 +150,23 @@ def lookup_booking(
         )
 
     return booking
+
+
+@router.get(
+    "/my",
+    response_model=list[BookingResponse]
+)
+def get_my_bookings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    bookings = db.query(Booking).filter(
+        (Booking.customer_phone == current_user.phone) |
+        (Booking.customer_email == current_user.email)
+    ).order_by(Booking.id.desc()).all()
+    return bookings
+
+
 @router.get(
     "/{booking_id}",
     response_model=BookingResponse

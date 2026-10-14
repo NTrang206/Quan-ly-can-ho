@@ -43,6 +43,9 @@ export interface IUser {
   createdAt: string;
   tenantId?: number;
   assignedBuildingIds?: number[];
+  hasActiveContract?: boolean;
+  activeContractCode?: string;
+  roomNumber?: string;
 }
 
 // 3. Building

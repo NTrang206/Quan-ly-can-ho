@@ -7,7 +7,7 @@ interface DwellLogoProps {
   subtitle1?: string;
   subtitle2?: string;
   showSubtitles?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
 }
 
@@ -32,18 +32,32 @@ export const DwellLogo: React.FC<DwellLogoProps> = ({
     sm: 'w-8 h-8 rounded-xl p-1',
     md: 'w-10 h-10 rounded-2xl p-1.5',
     lg: 'w-12 h-12 rounded-2xl p-2',
+    xl: 'w-14 h-14 rounded-2xl p-2.5',
+    '2xl': 'w-16 h-16 rounded-2xl p-3',
   }[size];
 
   const svgSizes = {
     sm: 'w-5 h-5',
     md: 'w-6 h-6',
     lg: 'w-7 h-7',
+    xl: 'w-9 h-9',
+    '2xl': 'w-10 h-10',
   }[size];
 
   const titleSizes = {
     sm: 'text-lg',
-    md: 'text-[20px] sm:text-[22px]',
-    lg: 'text-2xl',
+    md: 'text-xl sm:text-2xl',
+    lg: 'text-2xl sm:text-3xl',
+    xl: 'text-3xl sm:text-4xl',
+    '2xl': 'text-4xl sm:text-5xl',
+  }[size];
+
+  const badgeSizes = {
+    sm: 'text-[9px] px-1.5 py-0.5 rounded',
+    md: 'text-[11px] px-2 py-0.5 rounded-md',
+    lg: 'text-xs sm:text-[13px] px-2.5 py-1 rounded-lg',
+    xl: 'text-xs sm:text-sm px-3 py-1 rounded-lg font-bold',
+    '2xl': 'text-sm sm:text-base px-3.5 py-1.5 rounded-xl font-bold',
   }[size];
 
   return (
@@ -103,7 +117,8 @@ export const DwellLogo: React.FC<DwellLogoProps> = ({
           {badge && (
             <span
               className={clsx(
-                'px-1.5 py-0.5 rounded text-[8.5px] font-extrabold uppercase border',
+                badgeSizes,
+                'font-extrabold uppercase border select-none tracking-wide shadow-2xs',
                 badgeClasses
               )}
             >

@@ -1,0 +1,2727 @@
+{
+  "tables": {
+    "amenities": {
+      "id": "ead33613-93c0-4392-b091-cdc9f9a7de2e",
+      "x": 1037.5,
+      "y": 948.296875,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "brand",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "serial_number",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "condition_status",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16568,
+          "name": "amenities_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "amenities",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "apartments": {
+      "id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "x": 1485,
+      "y": 480,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "building_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "room_number",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "floor",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "area_sqm",
+          "type": "numeric(6,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "price",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "max_occupants",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16552,
+          "name": "apartments_building_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16487,
+          "fknsp": "public",
+          "fktab": "apartments",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "buildings",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "building_id",
+              "references": "9046af5f-e7f0-4a57-8a2d-aabcd1c2beed",
+              "referenced": "id",
+              "references_table_name": "public.buildings"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "buildings",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "audit_logs": {
+      "id": "f5f7e8e6-f96d-47e1-a1d6-d901d0dbdcea",
+      "x": 5,
+      "y": 935.4453125,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        },
+        {
+          "name": "action",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "entity_type",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "entity_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "details",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16631,
+          "name": "audit_logs_user_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "audit_logs",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "user_id",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "bookings": {
+      "id": "2df1b161-44ea-4f22-839a-9b3b9683dba5",
+      "x": 1507.5,
+      "y": 855.53125,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "booking_code",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "customer_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "customer_phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "customer_email",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "check_in_date",
+          "type": "date",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "deposit_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16612,
+          "name": "bookings_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            6
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "bookings",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "buildings": {
+      "id": "9046af5f-e7f0-4a57-8a2d-aabcd1c2beed",
+      "x": 1515,
+      "y": 75,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "building_code",
+          "type": "character varying(30)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "address",
+          "type": "character varying(255)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "total_floors",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "total_apartments",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(30)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": []
+    },
+    "contracts": {
+      "id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "x": 682.5,
+      "y": 1383.0625,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "contract_code",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "tenant_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "start_date",
+          "type": "date",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "end_date",
+          "type": "date",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "rental_price",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "deposit_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "rejection_reason",
+          "type": "character varying(500)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_by",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "approved_by",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "booking_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16698,
+          "name": "contracts_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            3
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "contracts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16713,
+          "name": "contracts_approved_by_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            12
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "contracts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "approved_by",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16718,
+          "name": "contracts_booking_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            14
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16596,
+          "fknsp": "public",
+          "fktab": "contracts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "bookings",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "booking_id",
+              "references": "2df1b161-44ea-4f22-839a-9b3b9683dba5",
+              "referenced": "id",
+              "references_table_name": "public.bookings"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "bookings",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16708,
+          "name": "contracts_created_by_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            11
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "contracts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "created_by",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16703,
+          "name": "contracts_tenant_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            4
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16575,
+          "fknsp": "public",
+          "fktab": "contracts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "tenants",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "tenant_id",
+              "references": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+              "referenced": "id",
+              "references_table_name": "public.tenants"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "tenants",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "debt_ledger": {
+      "id": "9ed4f62a-e5fa-4ee9-bb8b-7b0d1c2c469d",
+      "x": 912.5,
+      "y": 1504.890625,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "tenant_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "total_receivable",
+          "type": "numeric(14,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "total_paid",
+          "type": "numeric(14,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "current_debt",
+          "type": "numeric(14,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "last_updated",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16735,
+          "name": "debt_ledger_tenant_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16575,
+          "fknsp": "public",
+          "fktab": "debt_ledger",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "tenants",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "tenant_id",
+              "references": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+              "referenced": "id",
+              "references_table_name": "public.tenants"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "tenants",
+          "coveringindex": "debt_ledger_tenant_id_key",
+          "autoindex": true,
+          "hasindex": true
+        }
+      ]
+    },
+    "deposits": {
+      "id": "b0057d2a-4068-4f24-abe4-f5efbdfe73bd",
+      "x": 170,
+      "y": 1965.9296875,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "contract_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "paid_date",
+          "type": "date",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "refund_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "deduction_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "deduction_reason",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "handled_by",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16785,
+          "name": "deposits_contract_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16679,
+          "fknsp": "public",
+          "fktab": "deposits",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "contracts",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "contract_id",
+              "references": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+              "referenced": "id",
+              "references_table_name": "public.contracts"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "contracts",
+          "coveringindex": "deposits_contract_id_key",
+          "autoindex": true,
+          "hasindex": true
+        },
+        {
+          "oid": 16790,
+          "name": "deposits_handled_by_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            9
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "deposits",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "handled_by",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "document_chunks": {
+      "id": "15eac5a1-9801-4f3b-b440-1bab7242a81f",
+      "x": 1020,
+      "y": 555,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "document_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "chunk_index",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "embedding_vector",
+          "type": "json",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": []
+    },
+    "emergency_contacts": {
+      "id": "59e505d3-5247-48f9-b3c5-07d4a1c37d89",
+      "x": 1142.5,
+      "y": 1517.75,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "tenant_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "full_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "relationship",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16672,
+          "name": "emergency_contacts_tenant_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16575,
+          "fknsp": "public",
+          "fktab": "emergency_contacts",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "tenants",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "tenant_id",
+              "references": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+              "referenced": "id",
+              "references_table_name": "public.tenants"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "tenants",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "maintenance_requests": {
+      "id": "b86e374b-1070-4f67-8c0e-33c2d04966a1",
+      "x": 1372.5,
+      "y": 1386.4140625,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "reporter_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "issue_description",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "priority",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "repair_cost",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "assigned_staff_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "resolved_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "image_url",
+          "type": "character varying(255)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "tenant_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16755,
+          "name": "maintenance_requests_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "maintenance_requests",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16760,
+          "name": "maintenance_requests_assigned_staff_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            9
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "maintenance_requests",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "assigned_staff_id",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16765,
+          "name": "maintenance_requests_tenant_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            13
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16575,
+          "fknsp": "public",
+          "fktab": "maintenance_requests",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "tenants",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "tenant_id",
+              "references": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+              "referenced": "id",
+              "references_table_name": "public.tenants"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "tenants",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "payments": {
+      "id": "e368642f-92a1-4579-be94-b34923b7c39f",
+      "x": 1095,
+      "y": 2190,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "receivable_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "payment_method",
+          "type": "character varying(30)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "transaction_code",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "payment_date",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "note",
+          "type": "character varying(255)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "handled_by",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16843,
+          "name": "payments_handled_by_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            8
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "payments",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "handled_by",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16838,
+          "name": "payments_receivable_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16797,
+          "fknsp": "public",
+          "fktab": "payments",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "receivables",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "receivable_id",
+              "references": "3a15e00f-053e-4008-a6ec-26bd2a27b06c",
+              "referenced": "id",
+              "references_table_name": "public.receivables"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "receivables",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "receivables": {
+      "id": "3a15e00f-053e-4008-a6ec-26bd2a27b06c",
+      "x": 1767.5,
+      "y": 1949.71875,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "contract_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "billing_month",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "billing_year",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "room_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "service_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "total_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "paid_amount",
+          "type": "numeric(12,2)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "due_date",
+          "type": "date",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16818,
+          "name": "receivables_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            3
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "receivables",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16813,
+          "name": "receivables_contract_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16679,
+          "fknsp": "public",
+          "fktab": "receivables",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "contracts",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "contract_id",
+              "references": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+              "referenced": "id",
+              "references_table_name": "public.contracts"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "contracts",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "roles": {
+      "id": "26349391-7b80-49df-8ec5-f5e0106da1fe",
+      "x": 345,
+      "y": 480,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "role_code",
+          "type": "character varying(30)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "role_name",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "description",
+          "type": "character varying(255)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": []
+    },
+    "roommates": {
+      "id": "a885df05-5f54-448e-a27e-84931ce5e855",
+      "x": 1602.5,
+      "y": 1482.5390625,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "tenant_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "apartment_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "full_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "citizen_id",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "relationship",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16654,
+          "name": "roommates_apartment_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            3
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16540,
+          "fknsp": "public",
+          "fktab": "roommates",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "apartments",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "apartment_id",
+              "references": "fb1ea69f-3afa-47f5-acd2-942771833126",
+              "referenced": "id",
+              "references_table_name": "public.apartments"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "apartments",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        },
+        {
+          "oid": 16649,
+          "name": "roommates_tenant_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16575,
+          "fknsp": "public",
+          "fktab": "roommates",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "tenants",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "tenant_id",
+              "references": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+              "referenced": "id",
+              "references_table_name": "public.tenants"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "tenants",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    },
+    "system_alerts": {
+      "id": "7c83ddff-4df3-4bff-9b98-7846222c7624",
+      "x": 1755,
+      "y": 180,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "alert_type",
+          "type": "character varying(30)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "reference_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "is_sent",
+          "type": "boolean",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": []
+    },
+    "tenants": {
+      "id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "x": 765,
+      "y": 720,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "full_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "citizen_id",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "email",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "hometown",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "is_bad_debt",
+          "type": "boolean",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16589,
+          "name": "tenants_user_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            9
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16515,
+          "fknsp": "public",
+          "fktab": "tenants",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "users",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "user_id",
+              "references": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+              "referenced": "id",
+              "references_table_name": "public.users"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "users",
+          "coveringindex": "tenants_user_id_key",
+          "autoindex": true,
+          "hasindex": true
+        }
+      ]
+    },
+    "users": {
+      "id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "x": 315,
+      "y": 975,
+      "schema": "public",
+      "columns": [
+        {
+          "name": "id",
+          "type": "serial",
+          "is_pk": true,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "role_id",
+          "type": "integer",
+          "is_pk": false,
+          "is_fk": true,
+          "not_null": true
+        },
+        {
+          "name": "username",
+          "type": "character varying(50)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "password_hash",
+          "type": "character varying(255)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "full_name",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "email",
+          "type": "character varying(100)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "phone",
+          "type": "character varying(20)",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": true
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "is_pk": false,
+          "is_fk": false,
+          "not_null": false
+        }
+      ],
+      "fks": [
+        {
+          "oid": 16533,
+          "name": "users_role_id_fkey",
+          "condeferrable": false,
+          "condeferred": false,
+          "confupdtype": "a",
+          "confdeltype": "a",
+          "confmatchtype": false,
+          "conkey": [
+            2
+          ],
+          "confkey": [
+            1
+          ],
+          "confrelid": 16474,
+          "fknsp": "public",
+          "fktab": "users",
+          "refnspoid": 2200,
+          "refnsp": "public",
+          "reftab": "roles",
+          "comment": null,
+          "convalidated": true,
+          "conislocal": true,
+          "columns": [
+            {
+              "local_column": "role_id",
+              "references": "26349391-7b80-49df-8ec5-f5e0106da1fe",
+              "referenced": "id",
+              "references_table_name": "public.roles"
+            }
+          ],
+          "remote_schema": "public",
+          "remote_table": "roles",
+          "coveringindex": null,
+          "autoindex": false,
+          "hasindex": false
+        }
+      ]
+    }
+  },
+  "links": [
+    {
+      "id": "74400927-8d61-411a-b123-f120eb50775e",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "ead33613-93c0-4392-b091-cdc9f9a7de2e",
+      "points": [
+        {
+          "id": "f6c1c8be-bdbd-49d2-a84b-2cc6ea303a37",
+          "type": "point",
+          "x": 1455.666748046875,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "f5a312d9-c1b6-42d4-9bbd-6a5e99ac6c5d",
+          "type": "point",
+          "x": 1455.666748046875,
+          "y": 1067.2708740234375
+        },
+        {
+          "id": "7bc772e4-e3d0-4ad0-8fb4-9568c58c04c6",
+          "type": "point",
+          "x": 1246.8333740234375,
+          "y": 1067.2708740234375
+        }
+      ]
+    },
+    {
+      "id": "9a470de3-ad4e-4b5d-a57d-14e8e5359324",
+      "source_id": "9046af5f-e7f0-4a57-8a2d-aabcd1c2beed",
+      "target_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "points": [
+        {
+          "id": "17fab606-063b-407c-b5a8-fee1e01cb94f",
+          "type": "point",
+          "x": 1724.3333740234375,
+          "y": 168.27083587646484
+        },
+        {
+          "id": "5f3ca1d9-a319-4ed9-b199-9801a95edc0b",
+          "type": "point",
+          "x": 1724.3333740234375,
+          "y": 598.9791870117188
+        },
+        {
+          "id": "d499aa7f-50f5-439e-a381-35476bf00178",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 598.9791870117188
+        }
+      ]
+    },
+    {
+      "id": "43afcf8d-6bb5-46ac-a9ca-f229ff0eb934",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "f5f7e8e6-f96d-47e1-a1d6-d901d0dbdcea",
+      "points": [
+        {
+          "id": "d7a6c9ba-0b4f-4aa3-9399-d49e1d027552",
+          "type": "point",
+          "x": 285.66668701171875,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "f6d5748b-30bc-4442-952f-d531431e0bd7",
+          "type": "point",
+          "x": 285.66668701171875,
+          "y": 1054.416748046875
+        },
+        {
+          "id": "a5b182ad-a6ed-4915-b2be-3099bdd476b2",
+          "type": "point",
+          "x": 214.33334350585938,
+          "y": 1054.416748046875
+        }
+      ]
+    },
+    {
+      "id": "3647aefe-c4b2-4420-b05b-038cdce52314",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "2df1b161-44ea-4f22-839a-9b3b9683dba5",
+      "points": [
+        {
+          "id": "60c4a2d8-5945-4872-9194-59f919cbc36b",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "70330e9e-50a5-4df8-8974-9beab7a6df38",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 1153.34375
+        },
+        {
+          "id": "31693aa7-80d4-418e-82cd-b03230de8ff9",
+          "type": "point",
+          "x": 1716.8333740234375,
+          "y": 1153.34375
+        }
+      ]
+    },
+    {
+      "id": "6756a225-9a00-4950-b941-8ccf515c28bf",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "points": [
+        {
+          "id": "c7794021-9700-4893-8e4a-9b20620d4019",
+          "type": "point",
+          "x": 1455.666748046875,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "5af57ff1-d20e-40e4-91b0-7682c05c8872",
+          "type": "point",
+          "x": 1455.666748046875,
+          "y": 1546.75
+        },
+        {
+          "id": "9b66ac8b-8bf6-4ad4-8231-f19040a7e147",
+          "type": "point",
+          "x": 891.8333740234375,
+          "y": 1546.75
+        }
+      ]
+    },
+    {
+      "id": "5f48a3ac-9104-4619-9a6e-21fd5dcdd04c",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "points": [
+        {
+          "id": "bc79517e-0779-4d3f-9286-c79f2c011597",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "9186a4f8-8b61-4cbe-b1b1-c0e3bcad6c81",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1816.125
+        },
+        {
+          "id": "9265357e-d600-4306-a84c-56fb0182946d",
+          "type": "point",
+          "x": 653.1666870117188,
+          "y": 1816.125
+        }
+      ]
+    },
+    {
+      "id": "8167e7c7-21e2-4b7b-a1cb-24e6766c6e9f",
+      "source_id": "2df1b161-44ea-4f22-839a-9b3b9683dba5",
+      "target_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "points": [
+        {
+          "id": "b2c97157-1b2a-4fc9-8ba9-98fb16afedb5",
+          "type": "point",
+          "x": 1478.166748046875,
+          "y": 948.8021240234375
+        },
+        {
+          "id": "92511ebf-8dfd-4069-bf10-285965ac736c",
+          "type": "point",
+          "x": 1478.166748046875,
+          "y": 1886.541748046875
+        },
+        {
+          "id": "4521edd6-a838-453f-8fc1-1596f8a270e7",
+          "type": "point",
+          "x": 891.8333740234375,
+          "y": 1886.541748046875
+        }
+      ]
+    },
+    {
+      "id": "c8dc99a5-8110-4646-8cb5-8f843515a884",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "points": [
+        {
+          "id": "4e629e9b-c3ee-4209-af55-2ac4887cc2a5",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "b3811567-2250-4df2-92fd-6fc2a304a9e6",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1790.416748046875
+        },
+        {
+          "id": "0479a1aa-c1e9-4cca-b5f9-870e7bb03917",
+          "type": "point",
+          "x": 653.1666870117188,
+          "y": 1790.416748046875
+        }
+      ]
+    },
+    {
+      "id": "0365eb7d-aa2a-4b2b-be4e-9d534f2b360b",
+      "source_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "target_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "points": [
+        {
+          "id": "210f04cb-61f6-4dc5-a9b0-a66e77c32460",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 813.265625
+        },
+        {
+          "id": "368d95f2-0d6d-42d3-84fd-e0d90a5a6165",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 1572.4583740234375
+        },
+        {
+          "id": "09168d36-cbab-4a74-bcab-0e7144a1e045",
+          "type": "point",
+          "x": 891.8333740234375,
+          "y": 1572.4583740234375
+        }
+      ]
+    },
+    {
+      "id": "f1da4115-4a00-435e-b857-20f4f908c726",
+      "source_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "target_id": "9ed4f62a-e5fa-4ee9-bb8b-7b0d1c2c469d",
+      "points": [
+        {
+          "id": "67c235bd-dda5-4ebf-baf6-1acec2a798f2",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 813.265625
+        },
+        {
+          "id": "3f14db25-99f5-4b20-a0e3-c211eb514374",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 1623.8646240234375
+        },
+        {
+          "id": "59509da2-011b-4d0f-b006-220b6631f8b8",
+          "type": "point",
+          "x": 1121.8333740234375,
+          "y": 1623.8646240234375
+        }
+      ]
+    },
+    {
+      "id": "9469222a-6ab2-44df-873f-f813cc4a0ff7",
+      "source_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "target_id": "b0057d2a-4068-4f24-abe4-f5efbdfe73bd",
+      "points": [
+        {
+          "id": "7dbdc3a6-cd82-40d6-b019-5b64f3617d7a",
+          "type": "point",
+          "x": 653.1666870117188,
+          "y": 1476.3333740234375
+        },
+        {
+          "id": "a40172b1-a020-494d-bfd2-69df3d3c7479",
+          "type": "point",
+          "x": 653.1666870117188,
+          "y": 2084.90625
+        },
+        {
+          "id": "f7e7efb1-70e5-4006-9ad5-7d5e66822ea3",
+          "type": "point",
+          "x": 379.3333435058594,
+          "y": 2084.90625
+        }
+      ]
+    },
+    {
+      "id": "dee03298-a739-4af9-bf13-edb866b41513",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "b0057d2a-4068-4f24-abe4-f5efbdfe73bd",
+      "points": [
+        {
+          "id": "151ddc97-c05f-438e-951d-3783b407bedf",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "3aca9c92-6c59-4e38-a7d9-95e317327ff7",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 2302.86474609375
+        },
+        {
+          "id": "acfbbcb2-7d6f-4c15-8b9e-0507ed508fd4",
+          "type": "point",
+          "x": 379.3333435058594,
+          "y": 2302.86474609375
+        }
+      ]
+    },
+    {
+      "id": "74a72e11-90ea-4979-b719-0b61dca107ae",
+      "source_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "target_id": "59e505d3-5247-48f9-b3c5-07d4a1c37d89",
+      "points": [
+        {
+          "id": "88a0cb48-4bd7-4ebb-8be0-80410c7113ed",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 813.265625
+        },
+        {
+          "id": "bb7961e5-bf1b-4e37-b59e-dfb4f5994e1e",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 1636.729248046875
+        },
+        {
+          "id": "788b1773-e5f6-4530-9a84-aae5dbdfab26",
+          "type": "point",
+          "x": 1113.166748046875,
+          "y": 1636.729248046875
+        }
+      ]
+    },
+    {
+      "id": "f0afcae5-194f-4f06-9a42-f9c463fe6da2",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "b86e374b-1070-4f67-8c0e-33c2d04966a1",
+      "points": [
+        {
+          "id": "3af55b7f-7c56-4c9d-9698-59af7feed14a",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "0fc80e68-9602-49ba-84ca-847270755d1a",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 1505.385498046875
+        },
+        {
+          "id": "0fba6f8c-68a5-4223-9d84-8d43ff36aa8e",
+          "type": "point",
+          "x": 1581.8333740234375,
+          "y": 1505.385498046875
+        }
+      ]
+    },
+    {
+      "id": "a05dd4cf-a333-4db7-b0cd-0195bd8b5d5d",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "b86e374b-1070-4f67-8c0e-33c2d04966a1",
+      "points": [
+        {
+          "id": "0086f08a-ce99-4f2c-b512-d2f4dce0f2da",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "e1f171f9-a7ed-4575-b10d-5dab11e1bd2b",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1723.34375
+        },
+        {
+          "id": "5fd519c8-d6dd-4ffd-ba6e-4b3dee8b4449",
+          "type": "point",
+          "x": 1343.166748046875,
+          "y": 1723.34375
+        }
+      ]
+    },
+    {
+      "id": "63c0764a-40a0-40df-9dbd-98c4a413554a",
+      "source_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "target_id": "b86e374b-1070-4f67-8c0e-33c2d04966a1",
+      "points": [
+        {
+          "id": "2bb12639-2451-42a6-a7c9-16210d805a90",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 813.265625
+        },
+        {
+          "id": "16643c2d-b562-472e-a869-415c7fc4000b",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 1883.1771240234375
+        },
+        {
+          "id": "ed27c404-51cb-4a9f-b8c6-76ffacfda194",
+          "type": "point",
+          "x": 1343.166748046875,
+          "y": 1883.1771240234375
+        }
+      ]
+    },
+    {
+      "id": "eb0e994c-7de4-434b-b227-05de121b0f7c",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "e368642f-92a1-4579-be94-b34923b7c39f",
+      "points": [
+        {
+          "id": "0b2ffe8e-6f3c-46c1-bcf8-5a2cb83f54e9",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "3b38c999-34a3-4226-b231-fa388710038e",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 2520.229248046875
+        },
+        {
+          "id": "2efb7444-e7a3-497e-b063-e509eb252ddc",
+          "type": "point",
+          "x": 1065.666748046875,
+          "y": 2520.229248046875
+        }
+      ]
+    },
+    {
+      "id": "5455f351-df54-4e96-833c-1cbeb1b570eb",
+      "source_id": "3a15e00f-053e-4008-a6ec-26bd2a27b06c",
+      "target_id": "e368642f-92a1-4579-be94-b34923b7c39f",
+      "points": [
+        {
+          "id": "ae035e6e-0cc4-4659-af4a-02dd58584027",
+          "type": "point",
+          "x": 1738.166748046875,
+          "y": 2042.9896240234375
+        },
+        {
+          "id": "ed1a5b3e-c6eb-4b33-8540-b5f56dbfc32e",
+          "type": "point",
+          "x": 1738.166748046875,
+          "y": 2308.979248046875
+        },
+        {
+          "id": "980aaa3d-d364-4fd4-80f9-d43c55541925",
+          "type": "point",
+          "x": 1304.3333740234375,
+          "y": 2308.979248046875
+        }
+      ]
+    },
+    {
+      "id": "f0489a33-0472-4243-9aec-f4ecf37e4e78",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "3a15e00f-053e-4008-a6ec-26bd2a27b06c",
+      "points": [
+        {
+          "id": "91b7d91f-262e-44f7-aa9d-88389410b0cc",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "e00b18d9-72d5-4f29-b02a-de61258f5399",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 2094.40625
+        },
+        {
+          "id": "84107654-ac3b-4efa-b55c-bd777c03a507",
+          "type": "point",
+          "x": 1738.166748046875,
+          "y": 2094.40625
+        }
+      ]
+    },
+    {
+      "id": "86c5e00a-45d9-4e96-81c1-edc16f53c7bc",
+      "source_id": "99d95b9b-ee16-4b2d-99be-e7689bac115f",
+      "target_id": "3a15e00f-053e-4008-a6ec-26bd2a27b06c",
+      "points": [
+        {
+          "id": "07205911-27fc-4d57-9c8e-5bd404f37d4e",
+          "type": "point",
+          "x": 891.8333740234375,
+          "y": 1476.3333740234375
+        },
+        {
+          "id": "7fff119b-d71b-4fb2-a6dc-0ba68d3d3b7d",
+          "type": "point",
+          "x": 891.8333740234375,
+          "y": 2068.697998046875
+        },
+        {
+          "id": "c0869a70-5d59-49fc-9b7d-753a20c04b09",
+          "type": "point",
+          "x": 1738.166748046875,
+          "y": 2068.697998046875
+        }
+      ]
+    },
+    {
+      "id": "b9ae33b4-61de-4f4a-a050-3b990e2346f4",
+      "source_id": "fb1ea69f-3afa-47f5-acd2-942771833126",
+      "target_id": "a885df05-5f54-448e-a27e-84931ce5e855",
+      "points": [
+        {
+          "id": "b0f28902-57df-4a19-9d56-ac17280484ce",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 573.2708740234375
+        },
+        {
+          "id": "e33d3e46-7ae3-4df4-9be6-78062bb2058f",
+          "type": "point",
+          "x": 1694.3333740234375,
+          "y": 1627.21875
+        },
+        {
+          "id": "6d54f9c2-bac2-4188-84b7-4945df95787e",
+          "type": "point",
+          "x": 1811.8333740234375,
+          "y": 1627.21875
+        }
+      ]
+    },
+    {
+      "id": "64270206-5236-4ab4-adf6-e80109d63793",
+      "source_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "target_id": "a885df05-5f54-448e-a27e-84931ce5e855",
+      "points": [
+        {
+          "id": "876edd64-f7c9-40cf-b8cc-6d3356fcecd9",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 813.265625
+        },
+        {
+          "id": "a81fff39-f569-440f-a328-9205d3c5392f",
+          "type": "point",
+          "x": 974.3333740234375,
+          "y": 1601.510498046875
+        },
+        {
+          "id": "96cd6092-b7f0-4734-a6c3-c24685bc5624",
+          "type": "point",
+          "x": 1573.166748046875,
+          "y": 1601.510498046875
+        }
+      ]
+    },
+    {
+      "id": "4aba2890-2824-40c2-9191-c528888d881b",
+      "source_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "target_id": "7fb25c13-7eb7-488c-9fcc-7e779f5f9757",
+      "points": [
+        {
+          "id": "ce8a5fb8-4f7b-40a6-8d34-c9e944bcd0cd",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1068.2708435058594
+        },
+        {
+          "id": "59df6287-1b3d-4e82-a5d4-9e718f4c9fa5",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1094.932373046875
+        },
+        {
+          "id": "5b98ca6f-47da-4a41-8b9a-666a1901cbea",
+          "type": "point",
+          "x": 735.6666870117188,
+          "y": 1094.932373046875
+        }
+      ]
+    },
+    {
+      "id": "9a4c1692-8abc-424e-a23f-35b041de87cd",
+      "source_id": "26349391-7b80-49df-8ec5-f5e0106da1fe",
+      "target_id": "8b1751e7-70cf-4221-945f-b8786ae24e4b",
+      "points": [
+        {
+          "id": "6d87b909-9082-45c8-afff-dca2588a3a2e",
+          "type": "point",
+          "x": 554.3333740234375,
+          "y": 573.2708435058594
+        },
+        {
+          "id": "701c51da-1ebd-41fb-b494-120d11152d35",
+          "type": "point",
+          "x": 554.3333740234375,
+          "y": 1093.9791870117188
+        },
+        {
+          "id": "7b6dbcd5-5b3d-452e-a233-c18ee85a9238",
+          "type": "point",
+          "x": 524.3333740234375,
+          "y": 1093.9791870117188
+        }
+      ]
+    }
+  ]
+}

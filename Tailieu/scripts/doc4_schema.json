@@ -1,0 +1,1037 @@
+{
+  "roles": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh vai trò"
+    },
+    {
+      "stt": "2",
+      "name": "roleCode",
+      "type": "String",
+      "constraint": "VARCHAR(30), Unique",
+      "desc": "Mã vai trò chuẩn (ADMIN, STAFF, ACCOUNTANT, TENANT)"
+    },
+    {
+      "stt": "3",
+      "name": "roleName",
+      "type": "String",
+      "constraint": "VARCHAR(50), Not Null",
+      "desc": "Tên hiển thị vai trò người dùng"
+    },
+    {
+      "stt": "4",
+      "name": "description",
+      "type": "String",
+      "constraint": "VARCHAR(255)",
+      "desc": "Mô tả phạm vi quyền hạn của vai trò"
+    },
+    {
+      "stt": "5",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm khởi tạo bản ghi"
+    }
+  ],
+  "users": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh người dùng"
+    },
+    {
+      "stt": "2",
+      "name": "roleId",
+      "type": "int",
+      "constraint": "FK -> roles.id, Not Null",
+      "desc": "Khóa ngoại liên kết vai trò"
+    },
+    {
+      "stt": "3",
+      "name": "username",
+      "type": "String",
+      "constraint": "VARCHAR(50), Unique",
+      "desc": "Tên đăng nhập hệ thống duy nhất"
+    },
+    {
+      "stt": "4",
+      "name": "passwordHash",
+      "type": "String",
+      "constraint": "VARCHAR(255), Not Null",
+      "desc": "Mật khẩu băm bảo mật bằng thuật toán Argon2/BCrypt"
+    },
+    {
+      "stt": "5",
+      "name": "fullName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ và tên đầy đủ của người dùng / nhân sự"
+    },
+    {
+      "stt": "6",
+      "name": "email",
+      "type": "String",
+      "constraint": "VARCHAR(100), Unique",
+      "desc": "Email liên hệ chính thức"
+    },
+    {
+      "stt": "7",
+      "name": "phone",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số điện thoại di động"
+    },
+    {
+      "stt": "8",
+      "name": "isActive",
+      "type": "boolean",
+      "constraint": "BOOLEAN, Default True",
+      "desc": "Trạng thái hoạt động: true = hoạt động, false = khóa"
+    },
+    {
+      "stt": "9",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tạo tài khoản"
+    },
+    {
+      "stt": "10",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Nullable",
+      "desc": "Khóa ngoại liên kết hồ sơ khách thuê (nếu là tài khoản cư dân)"
+    }
+  ],
+  "buildings": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh tòa nhà"
+    },
+    {
+      "stt": "2",
+      "name": "name",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Tên tòa nhà (ví dụ: Tòa SkyView A)"
+    },
+    {
+      "stt": "3",
+      "name": "address",
+      "type": "String",
+      "constraint": "VARCHAR(255), Not Null",
+      "desc": "Địa chỉ chi tiết của tòa nhà"
+    },
+    {
+      "stt": "4",
+      "name": "totalFloors",
+      "type": "int",
+      "constraint": "INT, Default 1",
+      "desc": "Tổng số tầng của tòa nhà"
+    },
+    {
+      "stt": "5",
+      "name": "totalApartments",
+      "type": "int",
+      "constraint": "INT, Default 0",
+      "desc": "Tổng số căn hộ trong tòa nhà"
+    },
+    {
+      "stt": "6",
+      "name": "status",
+      "type": "String",
+      "constraint": "VARCHAR(30), Default 'ACTIVE'",
+      "desc": "Trạng thái vận hành của tòa nhà"
+    },
+    {
+      "stt": "7",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm khởi tạo bản ghi"
+    }
+  ],
+  "apartments": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh căn hộ"
+    },
+    {
+      "stt": "2",
+      "name": "buildingId",
+      "type": "int",
+      "constraint": "FK -> buildings.id, Not Null",
+      "desc": "Khóa ngoại liên kết tòa nhà"
+    },
+    {
+      "stt": "3",
+      "name": "roomNumber",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số phòng hiển thị (ví dụ: P.302)"
+    },
+    {
+      "stt": "4",
+      "name": "floor",
+      "type": "int",
+      "constraint": "INT, Not Null",
+      "desc": "Tầng định vị căn hộ"
+    },
+    {
+      "stt": "5",
+      "name": "areaSqm",
+      "type": "Decimal",
+      "constraint": "DECIMAL(6,2), Not Null",
+      "desc": "Diện tích thông thủy (m2)"
+    },
+    {
+      "stt": "6",
+      "name": "price",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Đơn giá thuê cơ bản hàng tháng (VNĐ)"
+    },
+    {
+      "stt": "7",
+      "name": "maxOccupants",
+      "type": "int",
+      "constraint": "INT, Default 2",
+      "desc": "Số lượng người ở tối đa cho phép"
+    },
+    {
+      "stt": "8",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('AVAILABLE','RESERVED','OCCUPIED','MAINTENANCE')",
+      "desc": "4 trạng thái chuẩn của phòng (Trống, Đang giữ chỗ/đặt phòng, Đang thuê, Bảo trì)"
+    },
+    {
+      "stt": "9",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tạo căn hộ"
+    }
+  ],
+  "amenities": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh tiện ích"
+    },
+    {
+      "stt": "2",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ"
+    },
+    {
+      "stt": "3",
+      "name": "name",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Tên thiết bị (ví dụ: Điều hòa Daikin 12000 BTU)"
+    },
+    {
+      "stt": "4",
+      "name": "brand",
+      "type": "String",
+      "constraint": "VARCHAR(50)",
+      "desc": "Thương hiệu sản xuất"
+    },
+    {
+      "stt": "5",
+      "name": "serialNumber",
+      "type": "String",
+      "constraint": "VARCHAR(50)",
+      "desc": "Số seri thiết bị phục vụ bảo hành"
+    },
+    {
+      "stt": "6",
+      "name": "conditionStatus",
+      "type": "String",
+      "constraint": "VARCHAR(50), Default 'GOOD'",
+      "desc": "Tình trạng: GOOD (tốt), DAMAGED (hỏng), REPAIRED (đã sửa)"
+    }
+  ],
+  "tenants": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh khách thuê"
+    },
+    {
+      "stt": "2",
+      "name": "fullName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ và tên đầy đủ theo CCCD"
+    },
+    {
+      "stt": "3",
+      "name": "citizenId",
+      "type": "String",
+      "constraint": "VARCHAR(20), Unique [CCCD]",
+      "desc": "Số Căn cước công dân 12 số duy nhất"
+    },
+    {
+      "stt": "4",
+      "name": "phone",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số điện thoại liên lạc chính"
+    },
+    {
+      "stt": "5",
+      "name": "email",
+      "type": "String",
+      "constraint": "VARCHAR(100)",
+      "desc": "Địa chỉ email nhận thông báo"
+    },
+    {
+      "stt": "6",
+      "name": "hometown",
+      "type": "String",
+      "constraint": "VARCHAR(100)",
+      "desc": "Quê quán / Địa chỉ thường trú"
+    },
+    {
+      "stt": "7",
+      "name": "isBadDebt",
+      "type": "boolean",
+      "constraint": "BOOLEAN, Default False",
+      "desc": "Cờ đánh dấu nợ xấu: true = có nợ xấu, false = tốt"
+    },
+    {
+      "stt": "8",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tạo hồ sơ khách"
+    },
+    {
+      "stt": "9",
+      "name": "userId",
+      "type": "int",
+      "constraint": "FK -> users.id, Nullable",
+      "desc": "Khóa ngoại liên kết tài khoản đăng nhập Cổng thông tin cư dân (Tenant Portal)"
+    }
+  ],
+  "roommates": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính người ở cùng"
+    },
+    {
+      "stt": "2",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Not Null",
+      "desc": "Khóa ngoại liên kết khách thuê đại diện"
+    },
+    {
+      "stt": "3",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ đang ở"
+    },
+    {
+      "stt": "4",
+      "name": "fullName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ và tên người ở cùng"
+    },
+    {
+      "stt": "5",
+      "name": "citizenId",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số CCCD người ở cùng"
+    },
+    {
+      "stt": "6",
+      "name": "phone",
+      "type": "String",
+      "constraint": "VARCHAR(20)",
+      "desc": "Số điện thoại liên hệ"
+    },
+    {
+      "stt": "7",
+      "name": "relationship",
+      "type": "String",
+      "constraint": "VARCHAR(50)",
+      "desc": "Mối quan hệ với khách đại diện (bạn bè, người thân)"
+    }
+  ],
+  "emergency_contacts": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính liên hệ khẩn"
+    },
+    {
+      "stt": "2",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Not Null",
+      "desc": "Khóa ngoại liên kết khách thuê"
+    },
+    {
+      "stt": "3",
+      "name": "fullName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ tên người liên hệ khẩn cấp"
+    },
+    {
+      "stt": "4",
+      "name": "phone",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số điện thoại khẩn cấp"
+    },
+    {
+      "stt": "5",
+      "name": "relationship",
+      "type": "String",
+      "constraint": "VARCHAR(50), Not Null",
+      "desc": "Mối quan hệ (Bố mẹ, vợ/chồng, anh chị em)"
+    }
+  ],
+  "contracts": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính hợp đồng"
+    },
+    {
+      "stt": "2",
+      "name": "contractCode",
+      "type": "String",
+      "constraint": "VARCHAR(50), Unique",
+      "desc": "Mã hợp đồng duy nhất (HD-YYYYMM-XXXX)"
+    },
+    {
+      "stt": "3",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ thuê"
+    },
+    {
+      "stt": "4",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Not Null",
+      "desc": "Khóa ngoại liên kết khách đại diện"
+    },
+    {
+      "stt": "5",
+      "name": "startDate",
+      "type": "Date",
+      "constraint": "DATE, Not Null",
+      "desc": "Ngày bắt đầu có hiệu lực thuê"
+    },
+    {
+      "stt": "6",
+      "name": "endDate",
+      "type": "Date",
+      "constraint": "DATE, Not Null",
+      "desc": "Ngày hết hạn hợp đồng (endDate > startDate)"
+    },
+    {
+      "stt": "7",
+      "name": "rentalPrice",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Đơn giá thuê hàng tháng (VNĐ)"
+    },
+    {
+      "stt": "8",
+      "name": "depositAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Số tiền cọc thỏa thuận trong hợp đồng"
+    },
+    {
+      "stt": "9",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('DRAFT','ACTIVE','EXPIRED','TERMINATED')",
+      "desc": "4 trạng thái vòng đời hợp đồng"
+    },
+    {
+      "stt": "10",
+      "name": "createdBy",
+      "type": "int",
+      "constraint": "FK -> users.id, Not Null",
+      "desc": "Mã nhân viên lập hợp đồng dự thảo"
+    },
+    {
+      "stt": "11",
+      "name": "approvedBy",
+      "type": "int",
+      "constraint": "FK -> users.id, Nullable",
+      "desc": "Mã quản lý phê duyệt hợp đồng"
+    },
+    {
+      "stt": "12",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tạo hợp đồng"
+    },
+    {
+      "stt": "13",
+      "name": "bookingId",
+      "type": "int",
+      "constraint": "FK -> bookings.id, Nullable",
+      "desc": "Khóa ngoại liên kết yêu cầu đặt phòng (nếu hợp đồng chuyển đổi từ Booking)"
+    }
+  ],
+  "deposits": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính bản ghi tiền cọc"
+    },
+    {
+      "stt": "2",
+      "name": "contractId",
+      "type": "int",
+      "constraint": "FK -> contracts.id, Unique [1:1]",
+      "desc": "Khóa ngoại duy nhất 1:1 với hợp đồng"
+    },
+    {
+      "stt": "3",
+      "name": "amount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Số tiền cọc thực thu ban đầu"
+    },
+    {
+      "stt": "4",
+      "name": "paidDate",
+      "type": "Date",
+      "constraint": "DATE, Nullable",
+      "desc": "Ngày khách nộp tiền cọc"
+    },
+    {
+      "stt": "5",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('PENDING','HELD','REFUNDED','DEDUCTED')",
+      "desc": "Trạng thái giữ hoặc hoàn cọc"
+    },
+    {
+      "stt": "6",
+      "name": "refundAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Số tiền cọc thực tế hoàn trả cho khách"
+    },
+    {
+      "stt": "7",
+      "name": "deductionAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Số tiền cọc bị khấu trừ do hư hại/vi phạm"
+    },
+    {
+      "stt": "8",
+      "name": "deductionReason",
+      "type": "String",
+      "constraint": "TEXT, Nullable",
+      "desc": "Lý do chi tiết khấu trừ cọc"
+    },
+    {
+      "stt": "9",
+      "name": "handledBy",
+      "type": "int",
+      "constraint": "FK -> users.id, Nullable",
+      "desc": "Mã kế toán xử lý quyết toán cọc"
+    },
+    {
+      "stt": "10",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tạo bản ghi cọc"
+    }
+  ],
+  "receivables": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính khoản phải thu"
+    },
+    {
+      "stt": "2",
+      "name": "contractId",
+      "type": "int",
+      "constraint": "FK -> contracts.id, Not Null",
+      "desc": "Khóa ngoại liên kết hợp đồng"
+    },
+    {
+      "stt": "3",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ"
+    },
+    {
+      "stt": "4",
+      "name": "billingMonth",
+      "type": "int",
+      "constraint": "INT, Not Null (1..12)",
+      "desc": "Kỳ thu tháng"
+    },
+    {
+      "stt": "5",
+      "name": "billingYear",
+      "type": "int",
+      "constraint": "INT, Not Null",
+      "desc": "Kỳ thu năm (ví dụ: 2026)"
+    },
+    {
+      "stt": "6",
+      "name": "roomAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Tiền thuê phòng trong kỳ"
+    },
+    {
+      "stt": "7",
+      "name": "serviceAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Tổng tiền dịch vụ: điện, nước, gửi xe"
+    },
+    {
+      "stt": "8",
+      "name": "totalAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Tổng phải thu = roomAmount + serviceAmount"
+    },
+    {
+      "stt": "9",
+      "name": "paidAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Tổng số tiền khách đã thanh toán"
+    },
+    {
+      "stt": "10",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('UNPAID','PARTIAL','PAID','OVERDUE')",
+      "desc": "4 trạng thái thu tiền"
+    },
+    {
+      "stt": "11",
+      "name": "dueDate",
+      "type": "Date",
+      "constraint": "DATE, Not Null [Ngày 10 hàng tháng]",
+      "desc": "Hạn nộp tiền cuối cùng"
+    },
+    {
+      "stt": "12",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm sinh khoản thu"
+    }
+  ],
+  "payments": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính giao dịch thanh toán"
+    },
+    {
+      "stt": "2",
+      "name": "receivableId",
+      "type": "int",
+      "constraint": "FK -> receivables.id, Not Null",
+      "desc": "Khóa ngoại liên kết khoản phải thu"
+    },
+    {
+      "stt": "3",
+      "name": "amount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Not Null",
+      "desc": "Số tiền thanh toán trong đợt này"
+    },
+    {
+      "stt": "4",
+      "name": "paymentMethod",
+      "type": "String",
+      "constraint": "ENUM('CASH','BANK_TRANSFER')",
+      "desc": "Phương thức: TIEN_MAT hoặc CHUYEN_KHOAN"
+    },
+    {
+      "stt": "5",
+      "name": "transactionCode",
+      "type": "String",
+      "constraint": "VARCHAR(50) [VietQR]",
+      "desc": "Mã giao dịch ngân hàng hoặc số phiếu thu"
+    },
+    {
+      "stt": "6",
+      "name": "paymentDate",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm giao dịch thành công"
+    },
+    {
+      "stt": "7",
+      "name": "note",
+      "type": "String",
+      "constraint": "VARCHAR(255)",
+      "desc": "Ghi chú nội dung nộp tiền"
+    },
+    {
+      "stt": "8",
+      "name": "handledBy",
+      "type": "int",
+      "constraint": "FK -> users.id, Not Null",
+      "desc": "Mã nhân viên kế toán tiếp nhận tiền"
+    }
+  ],
+  "debt_ledger": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính sổ nợ"
+    },
+    {
+      "stt": "2",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Unique [1:1]",
+      "desc": "Khóa ngoại duy nhất 1:1 với khách thuê"
+    },
+    {
+      "stt": "3",
+      "name": "totalReceivable",
+      "type": "Decimal",
+      "constraint": "DECIMAL(14,2), Default 0",
+      "desc": "Tổng số tiền phải thu lũy kế từ trước tới nay"
+    },
+    {
+      "stt": "4",
+      "name": "totalPaid",
+      "type": "Decimal",
+      "constraint": "DECIMAL(14,2), Default 0",
+      "desc": "Tổng số tiền khách đã thanh toán lũy kế"
+    },
+    {
+      "stt": "5",
+      "name": "currentDebt",
+      "type": "Decimal",
+      "constraint": "DECIMAL(14,2), Default 0",
+      "desc": "Dư nợ hiện tại = totalReceivable - totalPaid"
+    },
+    {
+      "stt": "6",
+      "name": "lastUpdated",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm cập nhật sổ nợ gần nhất"
+    }
+  ],
+  "maintenance_requests": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính phiếu sự cố bảo trì"
+    },
+    {
+      "stt": "2",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ bị sự cố"
+    },
+    {
+      "stt": "3",
+      "name": "reporterName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ tên người báo hỏng hóc"
+    },
+    {
+      "stt": "4",
+      "name": "phone",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số điện thoại người báo"
+    },
+    {
+      "stt": "5",
+      "name": "issueDescription",
+      "type": "String",
+      "constraint": "TEXT, Not Null",
+      "desc": "Mô tả chi tiết tình trạng hư hỏng"
+    },
+    {
+      "stt": "6",
+      "name": "priority",
+      "type": "String",
+      "constraint": "ENUM('LOW','MEDIUM','HIGH','URGENT')",
+      "desc": "Mức độ ưu tiên: THAP, TRUNG_BINH, CAO, KHAN_CAP"
+    },
+    {
+      "stt": "7",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('PENDING','IN_PROGRESS','COMPLETED')",
+      "desc": "Tiến độ: CHO_XU_LY, DANG_SUA, HOAN_TAT"
+    },
+    {
+      "stt": "8",
+      "name": "repairCost",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Chi phí vật tư sửa chữa thực tế"
+    },
+    {
+      "stt": "9",
+      "name": "assignedStaffId",
+      "type": "int",
+      "constraint": "FK -> users.id, Nullable",
+      "desc": "Mã kỹ thuật viên phụ trách sửa chữa"
+    },
+    {
+      "stt": "10",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm tiếp nhận sự cố"
+    },
+    {
+      "stt": "11",
+      "name": "resolvedAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Nullable",
+      "desc": "Thời điểm nghiệm thu hoàn tất"
+    },
+    {
+      "stt": "12",
+      "name": "imageUrl",
+      "type": "String",
+      "constraint": "VARCHAR(255), Nullable",
+      "desc": "Đường dẫn hình ảnh hiện trường sự cố do khách thuê tải lên"
+    },
+    {
+      "stt": "13",
+      "name": "tenantId",
+      "type": "int",
+      "constraint": "FK -> tenants.id, Nullable",
+      "desc": "Khóa ngoại liên kết khách thuê tạo phiếu từ Cổng cư dân"
+    }
+  ],
+  "system_alerts": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính bản ghi cảnh báo"
+    },
+    {
+      "stt": "2",
+      "name": "alertType",
+      "type": "String",
+      "constraint": "ENUM('EXPIRED_CONTRACT','OVERDUE_DEBT')",
+      "desc": "Loại cảnh báo: HĐ_HET_HAN hoặc NO_QUA_HAN"
+    },
+    {
+      "stt": "3",
+      "name": "referenceId",
+      "type": "int",
+      "constraint": "INT, Not Null",
+      "desc": "Mã tham chiếu (contract_id hoặc receivable_id)"
+    },
+    {
+      "stt": "4",
+      "name": "message",
+      "type": "String",
+      "constraint": "TEXT, Not Null",
+      "desc": "Nội dung cảnh báo chi tiết"
+    },
+    {
+      "stt": "5",
+      "name": "isSent",
+      "type": "boolean",
+      "constraint": "BOOLEAN, Default False",
+      "desc": "Trạng thái đã gửi thông báo tới khách hay chưa"
+    },
+    {
+      "stt": "6",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm Rule Engine phát hiện cảnh báo"
+    }
+  ],
+  "document_chunks": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính đoạn văn bản tri thức"
+    },
+    {
+      "stt": "2",
+      "name": "documentName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Tên tài liệu gốc (ví dụ: NoiQuyToaNha.pdf)"
+    },
+    {
+      "stt": "3",
+      "name": "chunkIndex",
+      "type": "int",
+      "constraint": "INT, Not Null",
+      "desc": "Thứ tự phân đoạn trong tài liệu gốc"
+    },
+    {
+      "stt": "4",
+      "name": "content",
+      "type": "String",
+      "constraint": "TEXT, Not Null (300-500 tokens)",
+      "desc": "Nội dung văn bản đoạn trích quy định"
+    },
+    {
+      "stt": "5",
+      "name": "embeddingVector",
+      "type": "Vector",
+      "constraint": "VECTOR(768) [text-embedding-004]",
+      "desc": "Vector nhúng 768 chiều trong Vector DB"
+    },
+    {
+      "stt": "6",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm nạp văn bản vào cơ sở tri thức"
+    }
+  ],
+  "bookings": [
+    {
+      "stt": "1",
+      "name": "id",
+      "type": "int",
+      "constraint": "PK, Auto Increment",
+      "desc": "Khóa chính định danh yêu cầu đặt phòng"
+    },
+    {
+      "stt": "2",
+      "name": "bookingCode",
+      "type": "String",
+      "constraint": "VARCHAR(50), Unique",
+      "desc": "Mã đặt phòng duy nhất (BK-YYYYMM-XXXX)"
+    },
+    {
+      "stt": "3",
+      "name": "customerName",
+      "type": "String",
+      "constraint": "VARCHAR(100), Not Null",
+      "desc": "Họ và tên khách hàng đặt phòng"
+    },
+    {
+      "stt": "4",
+      "name": "customerPhone",
+      "type": "String",
+      "constraint": "VARCHAR(20), Not Null",
+      "desc": "Số điện thoại liên hệ của khách hàng"
+    },
+    {
+      "stt": "5",
+      "name": "customerEmail",
+      "type": "String",
+      "constraint": "VARCHAR(100)",
+      "desc": "Địa chỉ email nhận thông báo xác nhận"
+    },
+    {
+      "stt": "6",
+      "name": "apartmentId",
+      "type": "int",
+      "constraint": "FK -> apartments.id, Not Null",
+      "desc": "Khóa ngoại liên kết căn hộ giữ chỗ"
+    },
+    {
+      "stt": "7",
+      "name": "checkInDate",
+      "type": "Date",
+      "constraint": "DATE, Not Null",
+      "desc": "Ngày dự kiến khách dọn vào ở"
+    },
+    {
+      "stt": "8",
+      "name": "depositAmount",
+      "type": "Decimal",
+      "constraint": "DECIMAL(12,2), Default 0",
+      "desc": "Số tiền cọc giữ chỗ (nếu có)"
+    },
+    {
+      "stt": "9",
+      "name": "status",
+      "type": "String",
+      "constraint": "ENUM('PENDING','CONFIRMED','CANCELLED','CONVERTED')",
+      "desc": "Trạng thái: CHO_XAC_NHAN, DA_XAC_NHAN, DA_HUY, DA_LEN_HOP_DONG"
+    },
+    {
+      "stt": "10",
+      "name": "notes",
+      "type": "String",
+      "constraint": "TEXT, Nullable",
+      "desc": "Ghi chú nhu cầu đặc biệt của khách"
+    },
+    {
+      "stt": "11",
+      "name": "createdAt",
+      "type": "DateTime",
+      "constraint": "DATETIME, Default Now",
+      "desc": "Thời điểm khách gửi yêu cầu đặt phòng"
+    }
+  ]
+}

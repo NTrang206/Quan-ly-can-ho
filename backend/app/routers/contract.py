@@ -15,6 +15,8 @@ from app.models.contract import Contract
 from app.models.booking import Booking
 from app.models.apartment import Apartment
 from app.models.tenant import Tenant
+from app.models.roommate import Roommate
+from app.models.emergency_contact import EmergencyContact
 from app.models.user import User
 from app.models.role import Role
 from app.models.deposit import Deposit
@@ -371,11 +373,30 @@ def create_contract_from_booking(
             detail="Căn hộ bị trùng lịch thuê"
         )
 
+    # Tìm user theo phone hoặc email từ booking
+    matched_user = db.query(User).filter(
+        (User.phone == booking.customer_phone) |
+        (User.username == booking.customer_phone) |
+        (User.email == booking.customer_email)
+    ).first()
+
     # Tìm Tenant theo CCCD
     from app.routers.tenant import is_same_person
     tenant = db.query(Tenant).filter(
         Tenant.citizen_id == data.citizen_id
     ).first()
+
+    # Nếu chưa tìm thấy theo CCCD, tìm theo hồ sơ Tenant đã tạo lúc đăng ký User
+    if tenant is None and matched_user:
+        tenant = db.query(Tenant).filter(
+            Tenant.user_id == matched_user.id
+        ).first()
+        if tenant:
+            tenant.citizen_id = data.citizen_id
+            tenant.full_name = booking.customer_name
+            tenant.phone = booking.customer_phone
+            tenant.email = booking.customer_email
+            tenant.hometown = data.hometown
 
     if tenant is not None:
         if not is_same_person(tenant.full_name, booking.customer_name):
@@ -384,9 +405,8 @@ def create_contract_from_booking(
                 detail=f"Số CCCD {data.citizen_id} đã thuộc về khách thuê '{tenant.full_name}'. Không thể lập hợp đồng cho khách thuê khác tên ('{booking.customer_name}') trùng CCCD!"
             )
 
-    # Nếu chưa có Tenant thì tạo
+    # Nếu vẫn chưa có Tenant thì tạo mới
     if tenant is None:
-
         tenant = Tenant(
             full_name=booking.customer_name,
             citizen_id=data.citizen_id,
@@ -395,9 +415,17 @@ def create_contract_from_booking(
             hometown=data.hometown,
             is_bad_debt=False
         )
+        if matched_user:
+            user_has_tenant = db.query(Tenant).filter(Tenant.user_id == matched_user.id).first()
+            if not user_has_tenant:
+                tenant.user_id = matched_user.id
 
         db.add(tenant)
         db.flush()
+    elif tenant.user_id is None and matched_user:
+        user_has_tenant = db.query(Tenant).filter(Tenant.user_id == matched_user.id).first()
+        if not user_has_tenant:
+            tenant.user_id = matched_user.id
 
     if tenant.is_bad_debt:
         raise HTTPException(
@@ -635,22 +663,37 @@ def activate_contract(
 
     apartment.status = "OCCUPIED"
 
-    # Nếu Tenant đã có tài khoản Portal
-    # thì mở tài khoản
+    # Nếu Tenant đã có tài khoản Portal hoặc có User theo SĐT
+    # thì nâng cấp lên vai trò TENANT (Cư dân chính thức) và kích hoạt
     tenant = db.query(Tenant).filter(
         Tenant.id == contract.tenant_id
     ).first()
 
-    if (
-        tenant is not None
-        and tenant.user_id is not None
-    ):
-
-        portal_user = db.query(User).filter(
-            User.id == tenant.user_id
-        ).first()
+    if tenant is not None:
+        portal_user = None
+        if tenant.user_id is not None:
+            portal_user = db.query(User).filter(
+                User.id == tenant.user_id
+            ).first()
+        elif tenant.phone or tenant.email:
+            conditions = []
+            if tenant.phone:
+                conditions.extend([User.phone == tenant.phone, User.username == tenant.phone])
+            if tenant.email:
+                conditions.append(User.email == tenant.email)
+            if conditions:
+                from sqlalchemy import or_
+                portal_user = db.query(User).filter(or_(*conditions)).first()
 
         if portal_user:
+            existing_tenant_with_user = db.query(Tenant).filter(Tenant.user_id == portal_user.id).first()
+            if not existing_tenant_with_user or existing_tenant_with_user.id == tenant.id:
+                tenant.user_id = portal_user.id
+            tenant_role = db.query(Role).filter(
+                Role.role_code == "TENANT"
+            ).first()
+            if tenant_role:
+                portal_user.role_id = tenant_role.id
             portal_user.is_active = True
 
     db.commit()

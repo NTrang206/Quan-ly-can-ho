@@ -1,0 +1,9 @@
+{
+  "step_index": 13,
+  "source": "MODEL",
+  "type": "RUN_COMMAND",
+  "status": "DONE",
+  "exit_code": 1,
+  "created_at": "2026-10-02T16:22:29Z",
+  "content": "Created At: 2026-10-02T23:22:29+07:00\nCompleted At: 2026-10-02T23:22:30+07:00\n\n\t\t\t\tThe command exited with code 1.\n\t\t\t\tOutput:\n\t\t\t\tTraceback (most recent call last):\r\n  File \"<string>\", line 6, in <module>\r\n    print('  FILE:', f)\r\n    ~~~~~^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\encodings\\cp1252.py\", line 19, in encode\r\n    return codecs.charmap_encode(input,self.errors,encoding_table)[0]\r\n           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nUnicodeEncodeError: 'charmap' codec can't encode character '\\u1ef1' in position 9: character maps to <undefined>\r\nDIR: d:/Detai12_QLCH/Tailieu\r\n  FILE: 01_GenAI_SoftwareDevelopment_project-plan.docx\r\n  FILE: 02_GenAI_SoftwareDevelopment_requirements-qa (1) (1).docx\r\n  FILE: 03_GenAI_SoftwareDevelopment_requirements-specification (1) (1).docx\r\n  FILE: 04_GenAI_SoftwareDevelopment_object-oriented-design (1) (1).docx\r\n  FILE: 05_GenAI_SoftwareDevelopment_functional-testing.docx\r\n  FILE: 05_GenAI_SoftwareDevelopment_functional-testing.docx.bak\r\n  FILE: 06_GenAI_SoftwareDevelopment_screenflow_db.docx\r\n  FILE: 07_GenAI_SoftwareDevelopment_user-guide.docx\r\n  FILE: de_tai_12 (4).md\r\n  FILE: ~$_tai_12 (4).md\r\nDIR: d:/Detai12_QLCH/Tailieu\\giao dien\r\nDIR: d:/Detai12_QLCH/Tailieu\\giao dien\\Kh�ch h�ng\r\n  FILE: \n"
+}

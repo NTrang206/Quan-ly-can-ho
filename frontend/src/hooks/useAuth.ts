@@ -24,6 +24,7 @@ export const useAuth = () => {
   const isGuest = activeRole === 'GUEST';
 
   const isManagement = isAdmin || isStaff || isAccountant;
+  const hasActiveContract = Boolean(user?.hasActiveContract);
 
   const handleLogin = async (username: string, password: string) => {
     const res = await loginMutation({ username, password }).unwrap();
@@ -69,6 +70,7 @@ export const useAuth = () => {
     isTenant,
     isGuest,
     isManagement,
+    hasActiveContract,
     login: handleLogin,
     register: handleRegister,
     switchRole: handleRoleSwitch,

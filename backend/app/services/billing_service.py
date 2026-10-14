@@ -54,6 +54,20 @@ def generate_monthly_receivables(
             Decimal(str(contract.rental_price))
             + service_amount
         )
+
+        if service_amount > 0:
+            mgmt_cost = Decimal(str(round(float(service_amount) * 0.20 / 1000) * 1000))
+            wat_cost = Decimal(str(round(float(service_amount) * 0.18 / 1000) * 1000))
+            elec_cost = service_amount - mgmt_cost - wat_cost
+            elec_kwh = Decimal(str(round(float(elec_cost) / 3500, 1)))
+            wat_m3 = Decimal(str(round(float(wat_cost) / 15000, 1)))
+        else:
+            mgmt_cost = Decimal("0")
+            wat_cost = Decimal("0")
+            elec_cost = Decimal("0")
+            elec_kwh = Decimal("0")
+            wat_m3 = Decimal("0")
+
         db.add(
             Receivable(
                 contract_id=contract.id,
@@ -62,6 +76,11 @@ def generate_monthly_receivables(
                 billing_year=billing_year,
                 room_amount=contract.rental_price,
                 service_amount=service_amount,
+                electricity_cost=elec_cost,
+                electricity_usage_kwh=elec_kwh,
+                water_cost=wat_cost,
+                water_usage_m3=wat_m3,
+                management_cost=mgmt_cost,
                 total_amount=total,
                 paid_amount=Decimal("0"),
                 status="UNPAID",

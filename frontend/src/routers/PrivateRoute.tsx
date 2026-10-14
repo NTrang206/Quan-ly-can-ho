@@ -9,7 +9,7 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRoles }) => {
-  const { isAuthenticated, user, isInitialized } = useAuth();
+  const { isAuthenticated, user, isInitialized, hasActiveContract, isManagement } = useAuth();
   const location = useLocation();
 
   if (!isInitialized) {
@@ -28,6 +28,18 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, allowedRol
   }
 
   const currentRole = user.roleCode;
+
+  // Nghiệp vụ Cổng Cư Dân:
+  // Nếu là đường dẫn cổng cư dân (/tenant-portal hoặc /resident-portal):
+  // Chỉ tài khoản đã được duyệt hợp đồng ACTIVE (hoặc ban quản lý) mới được vào.
+  // Khách vãn lai (GUEST) hoặc tài khoản chưa có hợp đồng được duyệt bị chặn và redirect về /explore
+  const isResidentPortal = location.pathname.startsWith('/tenant-portal') || location.pathname.startsWith('/resident-portal');
+  if (isResidentPortal) {
+    if (!isManagement && (currentRole === 'GUEST' || !hasActiveContract)) {
+      return <Navigate to="/explore?notice=no_active_contract" replace />;
+    }
+  }
+
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(currentRole)) {
     return <Navigate to="/unauthorized" replace />;
   }

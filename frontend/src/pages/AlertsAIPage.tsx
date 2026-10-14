@@ -39,13 +39,21 @@ export const AlertsAIPage: React.FC = () => {
     try {
       const res = await triggerScan().unwrap();
       toast.success(
-        'Đã quét toàn diện hệ thống',
-        `Hoàn tất quét ${res.scannedItemsCount} hồ sơ hợp đồng & công nợ. Phát hiện ${res.newAlertsCount} cảnh báo mới!`
+        'Đã quét toàn diện hệ thống AI',
+        `Hoàn tất quét ${res.scannedContractsCount} hợp đồng & ${res.scannedReceivablesCount} khoản công nợ (${res.scannedItemsCount} hồ sơ). Phát hiện ${res.newAlertsCount} cảnh báo mới, hiện có ${res.totalActiveAlerts} cảnh báo rủi ro cần xử lý!`
       );
     } catch {
-      toast.error('Lỗi', 'Không thể kích hoạt quét tự động');
+      toast.error('Lỗi', 'Không thể kích hoạt quét tự động lúc này');
     }
   };
+
+  const overdueAlerts = alerts.filter((a) => a.alertType === 'OVERDUE_DEBT');
+  const expiringAlerts = alerts.filter((a) => a.alertType === 'EXPIRED_CONTRACT');
+  const urgentAlertsCount = alerts.filter((a) => a.priority === 'HIGH').length;
+  const mediumAlertsCount = alerts.filter((a) => a.priority === 'MEDIUM').length;
+  const totalDebtAmount = overdueAlerts.reduce((sum, a) => sum + (Number(a.amountDue) || 0), 0);
+  const sentCount = alerts.filter((a) => a.isSent).length;
+  const sentRate = alerts.length > 0 ? Math.round((sentCount / alerts.length) * 100) : 0;
 
   const filteredAlerts = alerts.filter((a) => {
     if (selectedFilter === 'OVERDUE') return a.alertType === 'OVERDUE_DEBT';
@@ -164,12 +172,12 @@ export const AlertsAIPage: React.FC = () => {
           <div>
             <div className="text-xs font-medium text-slate-500">Cảnh báo cần xử lý</div>
             <div className="text-xl sm:text-2xl font-bold text-rose-600 mt-1">
-              12 <span className="text-xs font-normal text-slate-400">cảnh báo</span>
+              {alerts.length} <span className="text-xs font-normal text-slate-400">cảnh báo</span>
             </div>
             <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
-              <span className="text-rose-600 font-semibold">4 Khẩn cấp</span>
+              <span className="text-rose-600 font-semibold">{urgentAlertsCount} Khẩn cấp</span>
               <span>•</span>
-              <span className="text-amber-600 font-medium">5 Vừa</span>
+              <span className="text-amber-600 font-medium">{mediumAlertsCount} Vừa</span>
             </div>
           </div>
           <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
@@ -180,9 +188,11 @@ export const AlertsAIPage: React.FC = () => {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-xs font-medium text-slate-500">Nợ đọng quá hạn</div>
-            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">48.25 Tr</div>
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">
+              {formatCurrency(totalDebtAmount)}
+            </div>
             <div className="text-[11px] text-amber-600 font-medium mt-1">
-              5 căn hộ quá hạn &gt; 5 ngày
+              {overdueAlerts.length} khoản nợ quá hạn
             </div>
           </div>
           <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -194,10 +204,11 @@ export const AlertsAIPage: React.FC = () => {
           <div>
             <div className="text-xs font-medium text-slate-500">Sắp hết hạn (≤ 30 ngày)</div>
             <div className="text-xl sm:text-2xl font-bold text-purple-600 mt-1">
-              04 <span className="text-xs font-normal text-slate-400">hợp đồng</span>
+              {String(expiringAlerts.length).padStart(2, '0')}{' '}
+              <span className="text-xs font-normal text-slate-400">hợp đồng</span>
             </div>
             <div className="text-[11px] text-purple-700 font-medium mt-1">
-              Kích hoạt quy trình SQ03
+              Kích hoạt quy trình SG03
             </div>
           </div>
           <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
@@ -208,9 +219,9 @@ export const AlertsAIPage: React.FC = () => {
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
             <div className="text-xs font-medium text-slate-500">Phản hồi sau đôn đốc</div>
-            <div className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">89.4%</div>
+            <div className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1">{sentRate}%</div>
             <div className="text-[11px] text-slate-400 mt-1">
-              95% nộp tiền trong 24h
+              {sentCount}/{alerts.length} cảnh báo đã phát lệnh
             </div>
           </div>
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">

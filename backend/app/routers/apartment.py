@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 
 from fastapi import (
     APIRouter,
@@ -16,6 +17,7 @@ from app.models.apartment import Apartment
 from app.models.building import Building
 from app.models.amenity import Amenity
 from app.models.user import User
+from app.models.maintenance_request import MaintenanceRequest
 
 from app.schemas.apartment import (
     ApartmentCreate,
@@ -604,6 +606,15 @@ def update_apartment(
             value
         )
 
+    if apartment.status != "MAINTENANCE":
+        db.query(MaintenanceRequest).filter(
+            MaintenanceRequest.apartment_id == apartment.id,
+            MaintenanceRequest.status.in_(["PENDING", "IN_PROGRESS"])
+        ).update(
+            {"status": "COMPLETED", "resolved_at": datetime.now()},
+            synchronize_session=False
+        )
+
     db.commit()
     db.refresh(apartment)
 
@@ -640,6 +651,14 @@ def update_apartment_status(
 
     try:
         apartment.status = data.status.upper()
+        if apartment.status != "MAINTENANCE":
+            db.query(MaintenanceRequest).filter(
+                MaintenanceRequest.apartment_id == apartment.id,
+                MaintenanceRequest.status.in_(["PENDING", "IN_PROGRESS"])
+            ).update(
+                {"status": "COMPLETED", "resolved_at": datetime.now()},
+                synchronize_session=False
+            )
         db.commit()
         db.refresh(apartment)
     except Exception:

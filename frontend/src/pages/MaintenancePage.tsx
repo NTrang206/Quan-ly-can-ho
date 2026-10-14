@@ -35,14 +35,19 @@ import { parseApiError } from '../utils/errorHandler';
 export const MaintenancePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlStatus = (searchParams.get('status') as MaintenanceStatus) || undefined;
+  const urlSearch = searchParams.get('search') || '';
   const [selectedStatus, setSelectedStatus] = useState<MaintenanceStatus | undefined>(urlStatus);
   const [selectedPriority, setSelectedPriority] = useState<MaintenancePriority | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
 
   // Sync state when URL search params change
   useEffect(() => {
     const s = (searchParams.get('status') as MaintenanceStatus) || undefined;
     setSelectedStatus(s);
+    const q = searchParams.get('search');
+    if (q !== null && q !== undefined) {
+      setSearchQuery(q);
+    }
   }, [searchParams]);
 
   const handleSelectStatus = (stId?: MaintenanceStatus) => {
@@ -80,10 +85,13 @@ export const MaintenancePage: React.FC = () => {
   const [newPriority, setNewPriority] = useState<MaintenancePriority>('MEDIUM');
   const [newCategory, setNewCategory] = useState<'PLUMBING' | 'ELECTRICAL' | 'APPLIANCE' | 'DOOR_LOCK' | 'OTHER'>('PLUMBING');
 
-  const { data: tickets = [], isLoading } = useGetMaintenanceRequestsQuery({
-    status: selectedStatus,
-    priority: selectedPriority,
-  });
+  const { data: tickets = [], isLoading } = useGetMaintenanceRequestsQuery(
+    {
+      status: selectedStatus,
+      priority: selectedPriority,
+    },
+    { pollingInterval: 3000, refetchOnMountOrArgChange: true }
+  );
 
   const { data: apartments = [] } = useGetApartmentsQuery({});
 

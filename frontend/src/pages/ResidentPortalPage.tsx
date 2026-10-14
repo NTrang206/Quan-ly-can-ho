@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Building,
@@ -23,6 +23,8 @@ import {
   CreditCard,
   Printer,
   Sparkles,
+  Lock,
+  AlertCircle,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -34,7 +36,7 @@ import { AISummarizerModal } from '../components/ai/AISummarizerModal';
 import { useGetApartmentsQuery } from '../modules/buildings/services/buildingApi';
 import { useGetContractsQuery, useRenewContractMutation } from '../modules/contracts/services/contractApi';
 import { useGetReceivablesQuery, useRecordPaymentMutation, useGetPaymentsQuery } from '../modules/finance/services/financeApi';
-import { IPayment } from '../types';
+import { IPayment, ITenant, IContract } from '../types';
 import {
   useGetMaintenanceRequestsQuery,
   useCreateMaintenanceRequestMutation,
@@ -68,27 +70,80 @@ export const ResidentPortalPage: React.FC = () => {
   const [renewContract, { isLoading: isRenewing }] = useRenewContractMutation();
   const [addRoommate, { isLoading: isAddingRm }] = useAddRoommateMutation();
 
-  // Active Resident Context (Dynamic from Auth and DB)
-  const currentTenant = tenants.find((t) => t.userId === user?.id || t.fullName === user?.fullName || t.phone === user?.phone || t.email === user?.email)
-    || tenants.find((t) => t.fullName === 'Nguyễn Văn An')
-    || tenants[0]
-    || {
-      id: 1,
-      fullName: user?.roleCode === 'TENANT' ? (user?.fullName || 'Nguyễn Văn An') : 'Nguyễn Văn An',
-      currentRoomNumber: 'P101',
-      phone: user?.phone || '0912.888.999',
-      roommates: [],
-    };
+  const navigate = useNavigate();
 
-  const activeContract = contracts.find((c) => c.tenantId === currentTenant?.id && c.status === 'ACTIVE')
-    || contracts.find((c) => c.tenantId === currentTenant?.id || c.roomNumber === currentTenant?.currentRoomNumber)
-    || contracts.find((c) => c.roomNumber === 'P101')
-    || contracts[0];
-  const activeApartment = apartments.find((a) => a.id === activeContract?.apartmentId || a.roomNumber === activeContract?.roomNumber || a.roomNumber === currentTenant?.currentRoomNumber)
-    || apartments.find((a) => a.roomNumber === 'P101')
+  // Tìm hồ sơ tenant thực tế của user (không gán bừa hồ sơ người khác cho user thường)
+  const realTenant = tenants.find(
+    (t) => (user?.id && t.userId === user.id) || (user?.phone && t.phone === user.phone) || (user?.email && t.email === user.email)
+  );
+
+  const realContract = realTenant
+    ? contracts.find((c) => c.tenantId === realTenant.id && c.status === 'ACTIVE')
+    : undefined;
+
+  const isResidentAuthorized = Boolean(isManagement || (realTenant && realContract));
+
+  const fallbackTenant: ITenant = {
+    id: 0,
+    fullName: user?.fullName || 'Khách vãn lai',
+    currentRoomNumber: '',
+    phone: user?.phone || '',
+    roommates: [],
+    citizenId: '',
+    email: user?.email || '',
+    hometown: '',
+    emergencyContacts: [],
+    totalHeldDeposit: 0,
+    creditScore: 0,
+    isBadDebt: false,
+    createdAt: '',
+  };
+
+  const fallbackContract: IContract = {
+    id: 0,
+    contractCode: '',
+    apartmentId: 0,
+    roomNumber: '',
+    buildingName: '',
+    tenantId: 0,
+    tenantName: user?.fullName || '',
+    tenantCitizenId: '',
+    tenantPhone: user?.phone || '',
+    tenantEmail: user?.email || '',
+    startDate: '',
+    endDate: '',
+    rentalPrice: 0,
+    depositAmount: 0,
+    paymentCycleMonths: 1,
+    paymentDueDay: 5,
+    status: 'ACTIVE',
+    createdBy: 0,
+    createdAt: '',
+    aiSummary: {
+      term1_duration: '',
+      term2_rentalPrice: '',
+      term3_paymentObligation: '',
+      term4_penalties: '',
+      term5_termination: '',
+      confidenceScore: 0,
+      extractedAt: '',
+    },
+  };
+
+  // Active Resident Context: Nếu user không có quyền, guard bên dưới sẽ chặn hiển thị
+  const currentTenant: ITenant = isManagement
+    ? (realTenant || tenants.find((t) => t.fullName === 'Nguyễn Văn An') || tenants[0] || fallbackTenant)
+    : (realTenant || fallbackTenant);
+
+  const activeContract: IContract = isManagement
+    ? (realContract || contracts.find((c) => c.status === 'ACTIVE') || contracts[0] || fallbackContract)
+    : (realContract || fallbackContract);
+
+  const activeApartment = apartments.find((a) => a.id === activeContract.apartmentId || a.roomNumber === activeContract.roomNumber)
     || apartments[0];
-  const activeBill = receivables.find((r) => (r.contractId === activeContract?.id || r.tenantId === currentTenant?.id || r.roomNumber === activeApartment?.roomNumber) && r.status !== 'PAID')
-    || receivables.find((r) => r.contractId === activeContract?.id || r.tenantId === currentTenant?.id || r.roomNumber === activeApartment?.roomNumber)
+
+  const activeBill = receivables.find((r) => (r.contractId === activeContract.id || r.tenantId === currentTenant.id || r.roomNumber === activeApartment?.roomNumber) && r.status !== 'PAID')
+    || receivables.find((r) => r.contractId === activeContract.id || r.tenantId === currentTenant.id || r.roomNumber === activeApartment?.roomNumber)
     || receivables[0];
   const myTickets = maintenanceList.filter((m) =>
     m.apartmentId === activeApartment?.id ||
@@ -251,6 +306,43 @@ export const ResidentPortalPage: React.FC = () => {
       toast.error('Lỗi', 'Không thể xác nhận giao dịch');
     }
   };
+
+  if (!isManagement && (!currentTenant || !activeContract)) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200/90 p-8 shadow-sm text-center space-y-4">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto border border-amber-100 shadow-xs">
+            <Lock className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Chưa Kích Hoạt Cổng Cư Dân</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Tài khoản <strong className="text-slate-800">{user?.fullName || user?.username}</strong> ({user?.phone}) chưa có hợp đồng thuê căn hộ ở trạng thái kích hoạt (ACTIVE).
+          </p>
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-600 text-left space-y-2">
+            <p className="font-semibold text-slate-800 flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4 text-sky-600 shrink-0" />
+              <span>Quy trình kích hoạt cư dân:</span>
+            </p>
+            <ol className="list-decimal list-inside space-y-1.5 text-slate-500 text-[11px] leading-relaxed">
+              <li>Khách vãn lai chọn căn hộ và gửi yêu cầu hẹn giờ xem phòng.</li>
+              <li>Nhân viên & Ban Quản Lý phê duyệt lịch hẹn và liên hệ tư vấn.</li>
+              <li>Ban Quản Lý lập và kích hoạt hợp đồng thuê căn hộ.</li>
+              <li>Hệ thống tự động mở quyền Cổng Cư Dân cho tài khoản của bạn!</li>
+            </ol>
+          </div>
+          <div className="pt-2">
+            <button
+              onClick={() => navigate('/explore')}
+              className="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              <span>Quay Lại Trang Tìm Căn Hộ & Đặt Lịch</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

@@ -196,3 +196,30 @@ def add_figure(doc, img_path, caption="", width=Inches(6.0)):
         format_run(r_cap, size_pt=10.5, italic=True, color_rgb=COLOR_MUTED)
         return p_cap
     return p_img
+
+def add_hyperlink(paragraph, url, text, color="1F497D", underline=True):
+    """Add a clickable hyperlink into a Word paragraph"""
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+
+    hyperlink = parse_xml(f'<w:hyperlink {nsdecls("w")} r:id="{r_id}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>')
+    new_run = parse_xml(f'<w:r {nsdecls("w")}/>')
+    rPr = parse_xml(f'<w:rPr {nsdecls("w")}/>')
+
+    if color:
+        c = parse_xml(f'<w:color {nsdecls("w")} w:val="{color}"/>')
+        rPr.append(c)
+    if underline:
+        u = parse_xml(f'<w:u {nsdecls("w")} w:val="single"/>')
+        rPr.append(u)
+    
+    font = parse_xml(f'<w:rFonts {nsdecls("w")} w:ascii="{FONT_FAMILY}" w:hAnsi="{FONT_FAMILY}"/>')
+    rPr.append(font)
+
+    new_run.append(rPr)
+    text_node = parse_xml(f'<w:t {nsdecls("w")}>{text}</w:t>')
+    new_run.append(text_node)
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
+    return hyperlink
+

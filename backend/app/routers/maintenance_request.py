@@ -17,6 +17,7 @@ from app.models.maintenance_request import (
 from app.models.apartment import Apartment
 from app.models.tenant import Tenant
 from app.models.contract import Contract
+from app.models.booking import Booking
 from app.models.user import User
 from app.models.role import Role
 
@@ -85,11 +86,18 @@ def restore_apartment_status(
         Contract.status == "ACTIVE"
     ).first()
 
-    apartment.status = (
-        "OCCUPIED"
-        if active_contract is not None
-        else "AVAILABLE"
-    )
+    if active_contract is not None:
+        apartment.status = "OCCUPIED"
+    else:
+        confirmed_booking = db.query(Booking).filter(
+            Booking.apartment_id == apartment_id,
+            Booking.status == "CONFIRMED"
+        ).first()
+        apartment.status = (
+            "RESERVED"
+            if confirmed_booking is not None
+            else "AVAILABLE"
+        )
 
 
 # =========================================================
@@ -781,13 +789,10 @@ def complete_maintenance(
                 detail="Bạn không có quyền nghiệm thu phiếu của căn hộ khác"
             )
 
-    if maintenance.status != "IN_PROGRESS":
+    if maintenance.status == "CANCELLED":
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Phiếu phải ở trạng thái "
-                "IN_PROGRESS"
-            )
+            detail="Phiếu bảo trì đã bị hủy bỏ, không thể nghiệm thu"
         )
 
     if data.repair_cost < 0:
@@ -797,64 +802,36 @@ def complete_maintenance(
         )
 
     # -----------------------------------------------------
-    # Nghiệm thu KHÔNG ĐẠT
-    # giữ IN_PROGRESS
+    # Nghiệm thu KHÔNG ĐẠT -> chuyển/giữ IN_PROGRESS
     # -----------------------------------------------------
     if not data.is_pass:
+        maintenance.status = "IN_PROGRESS"
+        apartment = db.query(Apartment).filter(
+            Apartment.id == maintenance.apartment_id
+        ).first()
+        if apartment:
+            apartment.status = "MAINTENANCE"
+        db.commit()
+        db.refresh(maintenance)
         return maintenance
 
     # -----------------------------------------------------
     # Nghiệm thu ĐẠT
     # -----------------------------------------------------
-    maintenance.repair_cost = (
-        data.repair_cost
-    )
+    maintenance.repair_cost = data.repair_cost
+    maintenance.status = "COMPLETED"
+    if not maintenance.resolved_at:
+        maintenance.resolved_at = datetime.now()
 
-    maintenance.status = (
-        "COMPLETED"
-    )
+    if not maintenance.assigned_staff_id and current_user:
+        maintenance.assigned_staff_id = current_user.id
 
-    maintenance.resolved_at = (
-        datetime.now()
-    )
-
-    apartment = db.query(Apartment).filter(
-        Apartment.id
-        == maintenance.apartment_id
-    ).first()
-
-    if apartment is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Không tìm thấy căn hộ"
-        )
-
-    # -----------------------------------------------------
-    # Nếu phòng đang MAINTENANCE
-    # kiểm tra còn hợp đồng ACTIVE không
-    # -----------------------------------------------------
-    if apartment.status == "MAINTENANCE":
-
-        active_contract = db.query(
-            Contract
-        ).filter(
-            Contract.apartment_id
-            == apartment.id,
-
-            Contract.status
-            == "ACTIVE"
-        ).first()
-
-        # Có người đang thuê
-        if active_contract:
-            apartment.status = "OCCUPIED"
-
-        # Không còn người thuê
-        else:
-            apartment.status = "AVAILABLE"
+    restore_apartment_status(db, maintenance.apartment_id)
 
     db.commit()
     db.refresh(maintenance)
+
+    return maintenance
 
     return maintenance
 

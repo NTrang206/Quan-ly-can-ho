@@ -64,6 +64,41 @@ class Receivable(Base):
         default=0
     )
 
+    electricity_cost = Column(
+        Numeric(12, 2),
+        default=0
+    )
+
+    electricity_usage_kwh = Column(
+        Numeric(10, 2),
+        default=0
+    )
+
+    water_cost = Column(
+        Numeric(12, 2),
+        default=0
+    )
+
+    water_usage_m3 = Column(
+        Numeric(10, 2),
+        default=0
+    )
+
+    management_cost = Column(
+        Numeric(12, 2),
+        default=0
+    )
+
+    parking_cost = Column(
+        Numeric(12, 2),
+        default=0
+    )
+
+    internet_cost = Column(
+        Numeric(12, 2),
+        default=0
+    )
+
     total_amount = Column(
         Numeric(12, 2),
         nullable=False

@@ -83,6 +83,28 @@ if "rejection_reason" not in contract_columns:
             )
         )
 
+receivable_columns = {
+    column["name"]
+    for column in inspect(engine).get_columns("receivables")
+}
+
+needed_receivable_columns = [
+    ("electricity_cost", "NUMERIC(12, 2) DEFAULT 0"),
+    ("electricity_usage_kwh", "NUMERIC(10, 2) DEFAULT 0"),
+    ("water_cost", "NUMERIC(12, 2) DEFAULT 0"),
+    ("water_usage_m3", "NUMERIC(10, 2) DEFAULT 0"),
+    ("management_cost", "NUMERIC(12, 2) DEFAULT 0"),
+    ("parking_cost", "NUMERIC(12, 2) DEFAULT 0"),
+    ("internet_cost", "NUMERIC(12, 2) DEFAULT 0"),
+]
+
+with engine.begin() as connection:
+    for col_name, col_type in needed_receivable_columns:
+        if col_name not in receivable_columns:
+            connection.execute(
+                text(f"ALTER TABLE receivables ADD COLUMN {col_name} {col_type}")
+            )
+
 
 app = FastAPI(
     title="Hệ thống quản lý thuê căn hộ",

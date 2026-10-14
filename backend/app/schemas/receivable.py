@@ -8,6 +8,13 @@ class ReceivableCreate(BaseModel):
     billing_month: int
     billing_year: int
     service_amount: Decimal = Decimal("0")
+    electricity_cost: Decimal = Decimal("0")
+    electricity_usage_kwh: Decimal = Decimal("0")
+    water_cost: Decimal = Decimal("0")
+    water_usage_m3: Decimal = Decimal("0")
+    management_cost: Decimal = Decimal("0")
+    parking_cost: Decimal = Decimal("0")
+    internet_cost: Decimal = Decimal("0")
 
 
 class MonthlyReceivableGenerateRequest(BaseModel):
@@ -32,6 +39,13 @@ class ReceivableResponse(BaseModel):
 
     room_amount: Decimal
     service_amount: Decimal
+    electricity_cost: Decimal | None = Decimal("0")
+    electricity_usage_kwh: Decimal | None = Decimal("0")
+    water_cost: Decimal | None = Decimal("0")
+    water_usage_m3: Decimal | None = Decimal("0")
+    management_cost: Decimal | None = Decimal("0")
+    parking_cost: Decimal | None = Decimal("0")
+    internet_cost: Decimal | None = Decimal("0")
     total_amount: Decimal
     paid_amount: Decimal
 

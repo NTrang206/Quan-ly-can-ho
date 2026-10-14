@@ -143,3 +143,41 @@ export const isSamePersonName = (name1?: string | null, name2?: string | null): 
   return clean1 === clean2;
 };
 
+/**
+ * Định dạng khoảng thời gian tương đối (Relative Time):
+ * Ví dụ: "Vừa xong", "5 phút trước", "2 giờ trước", "Hôm qua 14:30", "3 ngày trước", "14/10/2026"
+ */
+export const formatTimeAgo = (dateInput?: string | Date | null): string => {
+  if (!dateInput) return 'Vừa xong';
+  try {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(date.getTime())) return 'Gần đây';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return 'Vừa xong';
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    if (diffSec < 45) return 'Vừa xong';
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    if (diffHour < 24) return `${diffHour} giờ trước`;
+    if (diffDay === 1) {
+      const hh = date.getHours().toString().padStart(2, '0');
+      const mm = date.getMinutes().toString().padStart(2, '0');
+      return `Hôm qua ${hh}:${mm}`;
+    }
+    if (diffDay < 7) return `${diffDay} ngày trước`;
+    const dd = date.getDate().toString().padStart(2, '0');
+    const MM = (date.getMonth() + 1).toString().padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const hh = date.getHours().toString().padStart(2, '0');
+    const mm = date.getMinutes().toString().padStart(2, '0');
+    return `${dd}/${MM}/${yyyy} ${hh}:${mm}`;
+  } catch {
+    return 'Gần đây';
+  }
+};
+
+

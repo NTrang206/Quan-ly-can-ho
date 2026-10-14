@@ -20,6 +20,7 @@ import {
   UserPlus,
   CreditCard,
   QrCode,
+  Lock,
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -170,19 +171,14 @@ export const ContractsPage: React.FC = () => {
       const custPhone = searchParams.get('customerPhone');
       const custEmail = searchParams.get('customerEmail');
       if (custName || custPhone) {
-        const matched = tenants.find((t) => t.phone === custPhone);
-        if (matched) {
-          setSelectedTenantId(matched.id);
-          setTenantMode('EXISTING');
-        } else {
-          setTenantMode('NEW');
-          if (custName) setTenantName(decodeURIComponent(custName));
-          if (custPhone) setTenantPhone(custPhone);
-          if (custEmail) setTenantEmail(decodeURIComponent(custEmail));
-        }
+        setTenantMode('NEW');
+        setSelectedTenantId(null);
+        if (custName) setTenantName(decodeURIComponent(custName));
+        if (custPhone) setTenantPhone(custPhone);
+        if (custEmail) setTenantEmail(decodeURIComponent(custEmail));
       }
     }
-  }, [searchParams, apartments, tenants]);
+  }, [searchParams, apartments]);
 
   const filteredContracts = contractsByStatus.filter((c) => {
     if (searchQuery) {
@@ -347,10 +343,13 @@ export const ContractsPage: React.FC = () => {
         throw new Error('Chưa xác định được ID khách thuê');
       }
 
+      const targetApt = apartments.find((a) => a.id === Number(aptId));
+      const fixedRentalPrice = targetApt ? targetApt.price : Number(rentalPrice);
+
       await createContract({
         apartmentId: Number(aptId),
         tenantId: finalTenantId,
-        rentalPrice: Number(rentalPrice),
+        rentalPrice: Number(fixedRentalPrice),
         depositAmount: Number(depositAmount),
         startDate,
         endDate,
@@ -362,6 +361,13 @@ export const ContractsPage: React.FC = () => {
         `Đã tạo HĐ dự thảo cho khách ${customerLabel} tại phòng ${selectedApt?.roomNumber} và phân tích AI 5 điều khoản!`
       );
       handleCloseCreateModal();
+
+      // Tự động thoát trang lập hợp đồng khi tạo thành công
+      if (searchParams.get('from') === 'bookings' || searchParams.get('customerName')) {
+        navigate('/admin/bookings', { replace: true });
+      } else {
+        navigate('/admin/contracts', { replace: true });
+      }
     } catch (err: any) {
       const parsed = parseApiError(err, 'Không thể tạo hợp đồng');
       setContractErrors({ general: parsed.message, ...parsed.fieldErrors });
@@ -371,9 +377,8 @@ export const ContractsPage: React.FC = () => {
 
   const handleOpenCreateModal = () => {
     setContractErrors({});
-    if (tenants.length > 0 && !selectedTenantId) {
-      setSelectedTenantId(tenants[0].id);
-    }
+    setSelectedTenantId(null); // Tuyệt đối không tự động chọn khách thuê
+    setTenantMode('EXISTING');
     const availApt = apartments.find((a) => a.status === 'AVAILABLE' || a.status === 'RESERVED');
     if (availApt) {
       setAptId(availApt.id);
@@ -386,10 +391,14 @@ export const ContractsPage: React.FC = () => {
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false);
     setContractErrors({});
+    setSelectedTenantId(null);
     setTenantName('');
     setTenantCitizenId('');
     setTenantPhone('');
     setTenantEmail('');
+    if (searchParams.get('action') === 'create') {
+      navigate('/admin/contracts', { replace: true });
+    }
   };
 
   const handleOpenDepositModal = (c: IContract) => {
@@ -761,37 +770,24 @@ export const ContractsPage: React.FC = () => {
                           <span>AI Tóm Tắt 5 ĐK</span>
                         </button>
 
-                        {/* Approval & Deposit for DRAFT */}
+                        {/* Approval for DRAFT */}
                         {c.status === 'DRAFT' && (
-                          <div className="flex items-center gap-1">
-                            {!isDepositHeld && (
-                              <button
-                                onClick={() => handleOpenDepositModal(contractItem)}
-                                className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1"
-                                title="Ghi nhận nộp tiền cọc hợp đồng"
-                              >
-                                <CreditCard className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Nộp Cọc</span>
-                              </button>
-                            )}
-
-                            <button
-                              onClick={() => handleApprove(contractItem)}
-                              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 ${
-                                isDepositHeld
-                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft'
-                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
-                              }`}
-                              title={
-                                isDepositHeld
-                                  ? 'Kích hoạt hợp đồng ngay (Tiền cọc đã ghi nhận HELD)'
-                                  : 'Thu tiền cọc và duyệt kích hoạt hợp đồng'
-                              }
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>{isDepositHeld ? 'Kích Hoạt HĐ' : 'Duyệt HĐ'}</span>
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => handleApprove(contractItem)}
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center gap-1 ${
+                              isDepositHeld
+                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft'
+                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            }`}
+                            title={
+                              isDepositHeld
+                                ? 'Kích hoạt hợp đồng ngay (Tiền cọc đã ghi nhận HELD)'
+                                : 'Thu tiền cọc và duyệt kích hoạt hợp đồng'
+                            }
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{isDepositHeld ? 'Kích Hoạt HĐ' : 'Duyệt HĐ'}</span>
+                          </button>
                         )}
 
                         {/* Renew SQ03 - Only for Staff and Admin */}
@@ -897,7 +893,10 @@ export const ContractsPage: React.FC = () => {
           <div className="bg-slate-100/80 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setTenantMode('EXISTING')}
+              onClick={() => {
+                setTenantMode('EXISTING');
+                setSelectedTenantId(null);
+              }}
               className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 tenantMode === 'EXISTING'
                   ? 'bg-white text-brand-700 shadow-xs border border-slate-200/80'
@@ -949,7 +948,7 @@ export const ContractsPage: React.FC = () => {
                 )}
               </div>
 
-              {selectedTenant && (
+              {Boolean(selectedTenantId) && selectedTenant && (
                 <div className="p-3.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50/50 border border-sky-200/80 flex items-start justify-between gap-3 text-xs animate-in fade-in">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -1078,15 +1077,15 @@ export const ContractsPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Giá thuê thỏa thuận (VNĐ/tháng)"
-              type="number"
+              label="Giá thuê cố định theo phòng (VNĐ/tháng)"
+              type="text"
               required
-              value={rentalPrice}
-              error={contractErrors.rentalPrice}
-              onChange={(e) => {
-                setRentalPrice(Number(e.target.value));
-                if (contractErrors.rentalPrice) setContractErrors({ ...contractErrors, rentalPrice: '' });
-              }}
+              disabled
+              readOnly
+              leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
+              value={formatCurrency(rentalPrice)}
+              helperText="Cố định theo giá căn hộ, không được phép chỉnh sửa"
+              className="bg-slate-100/90 font-bold text-slate-700 cursor-not-allowed select-none"
             />
             <Input
               label="Số tiền cọc thỏa thuận (VNĐ)"

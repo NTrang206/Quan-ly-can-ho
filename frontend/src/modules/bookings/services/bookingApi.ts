@@ -58,6 +58,12 @@ export const bookingApi = baseApi.injectEndpoints({
       ],
     }),
 
+    getMyBookings: builder.query<IBooking[], void>({
+      query: () => '/bookings/my',
+      transformResponse: (res: any[]) => (res || []).map(adaptBooking),
+      providesTags: ['Booking'],
+    }),
+
     updateBookingStatus: builder.mutation<IBooking, { id: number; status: BookingStatus }>({
       query: ({ id, status }) => {
         const action = status === 'CONFIRMED' ? 'confirm' : 'cancel';
@@ -78,6 +84,7 @@ export const bookingApi = baseApi.injectEndpoints({
 
 export const {
   useGetBookingsQuery,
+  useGetMyBookingsQuery,
   useLookupBookingQuery,
   useGetBookingByIdQuery,
   useCreateBookingMutation,
